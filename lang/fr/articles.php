@@ -1,0 +1,93 @@
+<?php
+
+return [
+    'meta' => [
+        'title' => 'Articles',
+    ],
+    'page' => [
+        'label' => 'Articles',
+        'title' => 'Découvrez nos articles, conseils et actualités',
+        'subtitle' => 'Explorez des contenus pratiques, inspirants et stratégiques pour votre parcours professionnel, spirituel et personnel.',
+        'stat_total' => 'articles publiés',
+        'stat_featured' => 'articles en vedette',
+        'stat_visible' => 'résultats visibles',
+    ],
+    'search' => [
+        'placeholder' => 'Rechercher un article, un sujet, un mot-clé...',
+        'aria' => 'Rechercher un article',
+        'live' => 'Recherche dynamique active',
+        'searching' => 'Mise à jour...',
+    ],
+    'filters' => [
+        'all_categories' => 'Toutes les catégories',
+        'reset' => 'Réinitialiser',
+    ],
+    'results' => [
+        'count' => '{0} Aucun article trouvé|{1} :count article trouvé|[2,*] :count articles trouvés',
+    ],
+    'badges' => [
+        'featured' => 'En vedette',
+    ],
+    'card' => [
+        'default_badge' => 'Article',
+        'published' => 'Publié le',
+        'reading_time' => 'Lecture',
+        'reading_time_fallback' => '5 min',
+        'views' => 'Vues',
+        'view_details' => 'Lire l’article',
+    ],
+    'empty' => [
+        'title' => 'Aucun article ne correspond à votre recherche',
+        'text' => 'Essayez un autre mot-clé ou une catégorie plus large.',
+    ],
+    'pagination' => [
+        'label' => 'Pagination des articles',
+        'previous' => 'Précédent',
+        'next' => 'Suivant',
+        'page' => 'Page :current sur :last',
+    ],
+    'detail' => [
+        'back' => 'Retour aux articles',
+        'side_label' => 'Lecture',
+        'side_title' => 'Continuez votre exploration',
+        'side_text' => 'Retrouvez d’autres articles utiles pour nourrir votre vision, votre progression et vos décisions.',
+        'all_articles' => 'Voir tous les articles',
+        'summary' => 'Résumé rapide',
+        'standard' => 'Article standard',
+        'gallery_title' => 'Galerie d’images',
+        'gallery_count' => '{1} :count image|[2,*] :count images',
+        'labels' => [
+            'category' => 'Catégorie',
+            'status' => 'Mise en avant',
+            'reading_time' => 'Temps de lecture',
+            'comments' => 'Commentaires',
+        ],
+        'related_label' => 'À lire ensuite',
+        'related_title' => 'Articles similaires',
+    ],
+    'comments' => [
+        'label' => 'Commentaires',
+        'title' => 'Partagez votre réaction',
+        'subtitle' => 'Les commentaires sont relus par l’équipe avant publication sur l’article.',
+        'count' => '{0} Aucun commentaire approuvé|{1} :count commentaire approuvé|[2,*] :count commentaires approuvés',
+        'empty' => 'Aucun commentaire approuvé pour le moment.',
+        'success' => 'Votre commentaire a bien été reçu. Il sera relu avant publication.',
+        'closed' => 'Les commentaires sont actuellement désactivés pour cet article.',
+        'logged_in_as' => 'Vous commentez en tant que :author.',
+        'login_required' => 'Connectez-vous ou créez un compte pour laisser un commentaire.',
+        'login_action' => 'Se connecter',
+        'register_action' => 'Créer un compte',
+        'reply_to' => 'Réponse à :author',
+        'cancel_reply' => 'Annuler la réponse',
+        'reply_action' => 'Répondre',
+        'submit' => 'Envoyer mon commentaire',
+        'fields' => [
+            'author_name' => 'Votre nom',
+            'author_email' => 'Votre email',
+            'content' => 'Votre commentaire',
+        ],
+        'validation' => [
+            'parent' => 'Le commentaire auquel vous répondez n’est pas valide.',
+        ],
+    ],
+];

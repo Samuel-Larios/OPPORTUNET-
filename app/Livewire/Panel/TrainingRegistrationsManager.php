@@ -4,6 +4,7 @@ namespace App\Livewire\Panel;
 
 use App\Models\Formation;
 use App\Models\InscriptionFormation;
+use App\Support\SubmissionGuard;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -28,6 +29,7 @@ class TrainingRegistrationsManager extends Component
     #[Url(except: '')]
     public string $formationFilter = '';
 
+    #[Url(as: 'registration', except: null)]
     public ?int $selectedRegistrationId = null;
     public string $processingStatus = 'en_attente';
     public string $paymentStatus = 'en_attente';
@@ -98,6 +100,18 @@ class TrainingRegistrationsManager extends Component
             ->with('formation')
             ->findOrFail($this->selectedRegistrationId);
 
+        SubmissionGuard::ensureSafePayload([
+            'paymentReference' => $this->paymentReference,
+            'suspensionReason' => $this->suspensionReason,
+            'adminNotes' => $this->adminNotes,
+            'replyMessage' => $this->replyMessage,
+        ], [
+            'paymentReference',
+            'suspensionReason',
+            'adminNotes',
+            'replyMessage',
+        ]);
+
         $occupiedBefore = $registration->statut === 'confirme' && ! $registration->est_suspendue;
         $occupiedAfter = $this->processingStatus === 'confirme' && ! $this->isSuspended;
 
@@ -141,7 +155,7 @@ class TrainingRegistrationsManager extends Component
         }
 
         if ($this->replyMessage !== '' || $this->replyAttachment) {
-            $attachmentPath = $this->replyAttachment?->store('formations/messages', 'public');
+            $attachmentPath = $this->replyAttachment?->store('formations/messages', 'local');
 
             $registration->messages()->create([
                 'sender_id' => auth()->id(),

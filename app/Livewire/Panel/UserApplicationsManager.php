@@ -5,6 +5,7 @@ namespace App\Livewire\Panel;
 use App\Models\CandidatureOffre;
 use App\Notifications\PlatformDatabaseNotification;
 use App\Support\NotificationRecipients;
+use App\Support\SubmissionGuard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Url;
@@ -44,6 +45,10 @@ class UserApplicationsManager extends Component
         $application = CandidatureOffre::query()
             ->visibleToUser(auth()->user())
             ->findOrFail($this->selectedApplicationId);
+
+        SubmissionGuard::ensureSafePayload([
+            'replyMessage' => $this->replyMessage,
+        ], ['replyMessage']);
 
         $attachmentPath = $this->replyAttachment?->store('offer-applications/messages', 'local');
 

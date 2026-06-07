@@ -24,6 +24,7 @@ class EditorOffersManager extends Component
     #[Url(except: '')]
     public string $statusFilter = '';
 
+    #[Url(as: 'offer', except: null)]
     public ?int $editingOfferId = null;
 
     public string $categorieId = '';
@@ -214,7 +215,7 @@ class EditorOffersManager extends Component
                     'message' => __('admin.notifications.events.offer_pending_validation.message', [
                         'offer' => $offer->titre,
                     ]),
-                    'action_url' => route('panel.editor.offers'),
+                    'action_url' => route('panel.editor.offers', ['offer' => $offer->id]),
                     'action_label' => __('admin.notifications.open'),
                     'category' => 'offer',
                     'level' => 'warning',
@@ -236,7 +237,7 @@ class EditorOffersManager extends Component
                     'offer' => $offer->titre,
                     'status' => $offer->statusLabel(),
                 ]),
-                'action_url' => route('panel.company.offers'),
+                'action_url' => route('panel.company.offers', ['offer' => $offer->id]),
                 'action_label' => __('admin.notifications.open'),
                 'category' => 'offer',
                 'level' => $targetStatus === 'publie' ? 'success' : ($targetStatus === 'rejete' ? 'danger' : 'info'),
@@ -260,6 +261,10 @@ class EditorOffersManager extends Component
 
     public function render(): View
     {
+        if ($this->editingOfferId !== null && $this->titreFr === '' && $this->descriptionFr === '') {
+            $this->editOffer($this->editingOfferId);
+        }
+
         $search = trim($this->search);
 
         $offers = Opportunite::query()

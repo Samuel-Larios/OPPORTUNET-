@@ -3,6 +3,7 @@
 namespace App\Livewire\Panel;
 
 use App\Models\CvDepot;
+use App\Support\SubmissionGuard;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -62,6 +63,14 @@ class CvDepotsManager extends Component
 
         $cvDepot = CvDepot::query()->findOrFail($this->selectedCvDepotId);
 
+        SubmissionGuard::ensureSafePayload([
+            'adminNotes' => $this->adminNotes,
+            'replyMessage' => $this->replyMessage,
+        ], [
+            'adminNotes',
+            'replyMessage',
+        ]);
+
         $cvDepot->update([
             'statut' => $this->processingStatus,
             'notes_admin' => $this->adminNotes !== '' ? $this->adminNotes : null,
@@ -70,7 +79,7 @@ class CvDepotsManager extends Component
         ]);
 
         if ($this->replyMessage !== '' || $this->replyAttachment) {
-            $attachmentPath = $this->replyAttachment?->store('cv-depots/messages', 'public');
+            $attachmentPath = $this->replyAttachment?->store('cv-depots/messages', 'local');
 
             $cvDepot->messages()->create([
                 'sender_id' => auth()->id(),

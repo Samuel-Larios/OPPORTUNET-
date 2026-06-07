@@ -23,7 +23,7 @@
 
     <section class="offers-search-section">
         <div class="container">
-            <div class="offers-search-shell reveal">
+            <div class="offers-search-shell reveal visible">
                 <div class="offers-search-bar">
                     <div class="offers-search-field">
                         <input
@@ -82,13 +82,13 @@
 
     <section class="offers-list-section">
         <div class="container">
-            <div class="offers-results-head reveal">
+            <div class="offers-results-head reveal visible">
                 <p>{{ trans_choice('offers.results.count', $filteredCount, ['count' => $filteredCount]) }}</p>
             </div>
 
             <div class="offers-grid" wire:loading.class="offers-grid-loading" wire:target="search,type,contrat,pays,teletravail,urgent">
                 @forelse ($opportunities as $index => $opportunity)
-                    <article class="offer-list-card reveal reveal-delay-{{ min(($index % 4) + 1, 4) }}" wire:key="offer-{{ $opportunity->id }}">
+                    <article class="offer-list-card reveal visible reveal-delay-{{ min(($index % 4) + 1, 4) }}" wire:key="offer-{{ $opportunity->id }}">
                         <div class="offer-card-top">
                             <div class="offer-badges">
                                 <span class="opportunity-type">{{ __('home.opportunity_types.' . $opportunity->type) }}</span>
@@ -121,9 +121,14 @@
                         <div class="offer-card-actions">
                             <a href="{{ route('offers.show', $opportunity->slug) }}" class="solid-submit">{{ __('offers.card.view_details') }}</a>
                         </div>
+                        <x-share-buttons
+                            :url="route('offers.show', $opportunity->slug)"
+                            :title="$opportunity->titre"
+                            variant="compact"
+                        />
                     </article>
                 @empty
-                    <article class="empty-card reveal">
+                    <article class="empty-card reveal visible">
                         <h2>{{ __('offers.empty.title') }}</h2>
                         <p>{{ __('offers.empty.text') }}</p>
                     </article>
@@ -131,7 +136,7 @@
             </div>
 
             @if ($opportunities->hasPages())
-                <nav class="offers-pagination reveal" aria-label="{{ __('offers.pagination.label') }}">
+                <nav class="offers-pagination reveal visible" aria-label="{{ __('offers.pagination.label') }}">
                     @if ($opportunities->onFirstPage())
                         <span class="pagination-btn disabled">{{ __('offers.pagination.previous') }}</span>
                     @else

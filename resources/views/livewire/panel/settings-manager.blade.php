@@ -3,6 +3,14 @@
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
 
+    @if ($errors->any())
+        <div class="panel-alert-error">
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
     <article class="panel-card">
         <div class="panel-card-head">
             <h2>{{ __('admin.pages.settings') }}</h2>

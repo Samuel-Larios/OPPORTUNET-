@@ -11,6 +11,7 @@ use App\Mail\ContactReceivedMail;
 use App\Mail\TrainingRegistrationReceivedMail;
 use App\Notifications\PlatformDatabaseNotification;
 use App\Support\NotificationRecipients;
+use App\Support\SubmissionGuard;
 use App\Models\Banniere;
 use App\Models\BlogArticle;
 use App\Models\BlogCommentaire;
@@ -28,6 +29,7 @@ use App\Models\Service;
 use App\Models\Temoignage;
 use App\Models\User;
 use App\Models\Verset;
+use App\Support\Seo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
@@ -44,6 +46,12 @@ $siteSettings = function () {
             'site_adresse',
             'whatsapp_numero',
             'whatsapp_message_defaut',
+            'support_kkiapay_url',
+            'support_bank_name',
+            'support_bank_account_name',
+            'support_bank_account_number',
+            'support_bank_iban',
+            'support_bank_swift',
             'facebook_url',
             'instagram_url',
             'linkedin_url',
@@ -82,6 +90,114 @@ $resolveRedirectTarget = function (Request $request, string $fallbackRoute, stri
     return $fallbackFragment !== '' ? $target . '#' . $fallbackFragment : $target;
 };
 
+$resolvePrayerWhatsappGroupUrl = function (): ?string {
+    $rawUrl = trim((string) (ParametreSite::query()->where('cle', 'whatsapp_groupe_priere_url')->value('valeur') ?? ''));
+
+    if ($rawUrl === '') {
+        return null;
+    }
+
+    $normalizedUrl = preg_match('#^https?://#i', $rawUrl) ? $rawUrl : 'https://' . ltrim($rawUrl, '/');
+
+    return filter_var($normalizedUrl, FILTER_VALIDATE_URL) ? $normalizedUrl : null;
+};
+
+$siteInfoPage = function (string $key) {
+    $page = __("site.{$key}");
+    abort_unless(is_array($page), 404);
+
+    return view('site.info', [
+        'title' => $page['title'] ?? 'Opportunet Mondiale',
+        'description' => $page['description'] ?? null,
+        'intro' => $page['intro'] ?? '',
+        'sections' => $page['sections'] ?? [],
+    ]);
+};
+
+Route::get('/robots.txt', function (Request $request) {
+    $baseUrl = rtrim(
+        config('app.url') && config('app.url') !== 'http://localhost'
+            ? (string) config('app.url')
+            : $request->root(),
+        '/'
+    );
+
+    return response(
+        "User-agent: *\n"
+        . "Allow: /\n"
+        . "Disallow: /admin\n"
+        . "Disallow: /espace-administration\n"
+        . "Disallow: /connexion\n"
+        . "Disallow: /inscription\n"
+        . "Disallow: /inscription-entreprise\n"
+        . "Disallow: /inscription-utilisateur\n"
+        . "Disallow: /verification-email\n"
+        . "Disallow: /mon-espace\n"
+        . "Disallow: /espace-entreprise\n"
+        . "Sitemap: {$baseUrl}/sitemap.xml\n",
+        200,
+        ['Content-Type' => 'text/plain; charset=UTF-8']
+    );
+})->name('seo.robots');
+
+Route::get('/sitemap.xml', function () {
+    $locales = ['fr', 'en'];
+    $entries = collect();
+
+    $staticUrls = [
+        route('home'),
+        route('offers.index'),
+        route('cv.services.index'),
+        route('trainings.index'),
+        route('articles.index'),
+        route('contact.prayer.index'),
+        route('community.prayers.index'),
+        route('community.testimonials.index'),
+    ];
+
+    foreach ($locales as $locale) {
+        foreach ($staticUrls as $url) {
+            $entries->push([
+                'loc' => Seo::localizedUrl($url, $locale),
+                'lastmod' => null,
+            ]);
+        }
+    }
+
+    foreach (Opportunite::query()->where('statut', 'publie')->get(['slug', 'updated_at']) as $opportunity) {
+        foreach ($locales as $locale) {
+            $entries->push([
+                'loc' => Seo::localizedUrl(route('offers.show', $opportunity->slug), $locale),
+                'lastmod' => optional($opportunity->updated_at)->toAtomString(),
+            ]);
+        }
+    }
+
+    foreach (BlogArticle::query()->where('statut', 'publie')->get(['slug', 'updated_at']) as $article) {
+        foreach ($locales as $locale) {
+            $entries->push([
+                'loc' => Seo::localizedUrl(route('articles.show', $article->slug), $locale),
+                'lastmod' => optional($article->updated_at)->toAtomString(),
+            ]);
+        }
+    }
+
+    foreach (Formation::query()->whereIn('statut', ['ouverte', 'complete', 'terminee'])->get(['id', 'updated_at']) as $training) {
+        foreach ($locales as $locale) {
+            $entries->push([
+                'loc' => Seo::localizedUrl(route('trainings.index'), $locale, ['formation' => $training->id]),
+                'lastmod' => optional($training->updated_at)->toAtomString(),
+            ]);
+        }
+    }
+
+    return response()->view('seo.sitemap', [
+        'entries' => $entries->unique('loc')->values(),
+    ], 200, [
+        'Content-Type' => 'application/xml; charset=UTF-8',
+    ]);
+})->name('seo.sitemap');
+
 Route::get('/locale/{locale}', function (Request $request, string $locale) {
     abort_unless(in_array($locale, ['fr', 'en'], true), 404);
 
@@ -90,15 +206,37 @@ Route::get('/locale/{locale}', function (Request $request, string $locale) {
     return redirect()->back();
 })->name('locale.switch');
 
+Route::get('/a-propos', fn () => $siteInfoPage('about'))->name('site.about');
+Route::get('/centre-aide', fn () => $siteInfoPage('help'))->name('site.help');
+Route::get('/documentation', fn () => $siteInfoPage('documentation'))->name('site.documentation');
+Route::get('/securite', fn () => $siteInfoPage('security'))->name('site.security');
+Route::get('/politique-confidentialite', fn () => $siteInfoPage('privacy'))->name('site.privacy');
+Route::get('/conditions-utilisation', fn () => $siteInfoPage('terms'))->name('site.terms');
+Route::get('/politique-cookies', fn () => $siteInfoPage('cookies'))->name('site.cookies');
+
+Route::get('/admin', function (Request $request) {
+    $user = $request->user();
+
+    if (! $user) {
+        abort(404);
+    }
+
+    if (! $user->isAdmin()) {
+        return redirect()->route($user->dashboardRouteName());
+    }
+
+    return redirect()->route('panel.admin.dashboard');
+})->name('panel.admin.entry');
+
 Route::middleware('guest')->group(function () {
     Route::get('/connexion', [AuthController::class, 'createLogin'])->name('login');
-    Route::post('/connexion', [AuthController::class, 'login'])->name('login.store');
+    Route::post('/connexion', [AuthController::class, 'login'])->middleware('throttle:auth-login')->name('login.store');
     Route::get('/inscription', [AuthController::class, 'createRegister'])->name('register');
-    Route::post('/inscription', [AuthController::class, 'register'])->name('register.store');
+    Route::post('/inscription', [AuthController::class, 'register'])->middleware('throttle:auth-register')->name('register.store');
     Route::get('/inscription-entreprise', [AuthController::class, 'createRegister'])->name('register.company');
-    Route::post('/inscription-entreprise', [AuthController::class, 'register'])->name('register.company.store');
+    Route::post('/inscription-entreprise', [AuthController::class, 'register'])->middleware('throttle:auth-register')->name('register.company.store');
     Route::get('/inscription-utilisateur', [AuthController::class, 'createUserRegister'])->name('register.user');
-    Route::post('/inscription-utilisateur', [AuthController::class, 'register'])->name('register.user.store');
+    Route::post('/inscription-utilisateur', [AuthController::class, 'register'])->middleware('throttle:auth-register')->name('register.user.store');
 });
 
 Route::get('/offres-opportunites/{opportunite:slug}/postuler', [OfferApplicationController::class, 'entry'])
@@ -118,7 +256,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/offres-opportunites/{opportunite:slug}/candidatures', [OfferApplicationController::class, 'store'])
-        ->middleware('role:user')
+        ->middleware(['role:user', 'throttle:user-form'])
         ->name('offers.apply.store');
 
     Route::get('/tableau-de-bord', function () {
@@ -130,7 +268,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/notifications/{notification}/open', NotificationRedirectController::class)
         ->name('panel.notifications.open');
 
-    Route::view('/admin', 'panel.admin.dashboard')
+    Route::view('/espace-administration', 'panel.admin.dashboard')
         ->middleware('role:super_admin,admin')
         ->name('panel.admin.dashboard');
 
@@ -208,6 +346,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('/admin/parametres', 'panel.admin.settings')
         ->middleware('role:super_admin,admin')
         ->name('panel.admin.settings');
+    Route::view('/admin/securite', 'panel.admin.security')
+        ->middleware('role:super_admin,admin')
+        ->name('panel.admin.security');
 
     Route::view('/espace-entreprise', 'panel.company.dashboard')
         ->middleware('role:entreprise')
@@ -282,6 +423,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'contenu' => ['required', 'string', 'max:4000'],
         ]);
 
+        SubmissionGuard::ensureSafeRequest($request, [
+            'prenom',
+            'nom',
+            'pays',
+            'profession',
+            'contenu',
+        ]);
+
         Temoignage::query()->create([
             ...$data,
             'user_id' => $user->id,
@@ -295,7 +444,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect()
             ->to(route('home') . '#testimonial-form')
             ->with('testimonial_success', __('home.forms.testimonial.success'));
-    })->name('testimonials.store');
+    })->middleware('throttle:user-form')->name('testimonials.store');
 });
 
 Route::post('/contact-rapide', function (Request $request) use ($resolveRedirectTarget) {
@@ -312,6 +461,14 @@ Route::post('/contact-rapide', function (Request $request) use ($resolveRedirect
         'sujet_personnalise' => ['nullable', 'string', 'max:200', 'required_if:sujet,autre'],
         'message' => ['required', 'string', 'max:2000'],
     ]);
+
+    SubmissionGuard::ensureSafeRequest($request, [
+        'prenom',
+        'nom',
+        'pays',
+        'sujet_personnalise',
+        'message',
+    ], true);
 
     $contact = Contact::query()->create([
         ...$data,
@@ -331,7 +488,7 @@ Route::post('/contact-rapide', function (Request $request) use ($resolveRedirect
         new PlatformDatabaseNotification([
             'title' => __('admin.notifications.events.contact_received.title'),
             'message' => __('admin.notifications.events.contact_received.message', ['name' => $contact->fullName()]),
-            'action_url' => route('panel.admin.contacts'),
+            'action_url' => route('panel.admin.contacts', ['contact' => $contact->id]),
             'action_label' => __('admin.notifications.open'),
             'category' => 'contact',
             'level' => $contact->priorite === 'urgente' ? 'warning' : 'info',
@@ -341,7 +498,7 @@ Route::post('/contact-rapide', function (Request $request) use ($resolveRedirect
     );
 
     return redirect()->to($resolveRedirectTarget($request, 'home', 'home-contact'))->with('contact_success', __('home.forms.contact.success'));
-})->name('contact.quick');
+})->middleware('throttle:public-form')->name('contact.quick');
 
 Route::post('/mur-de-priere', function (Request $request) use ($resolveRedirectTarget) {
     $user = $request->user();
@@ -353,6 +510,12 @@ Route::post('/mur-de-priere', function (Request $request) use ($resolveRedirectT
         'sujet' => ['required', 'string', 'max:2000'],
         'anonyme' => ['nullable', 'boolean'],
     ]);
+
+    SubmissionGuard::ensureSafeRequest($request, [
+        'prenom',
+        'pays',
+        'sujet',
+    ], true);
 
     MurDePriere::query()->create([
         'user_id' => $user?->id,
@@ -367,13 +530,14 @@ Route::post('/mur-de-priere', function (Request $request) use ($resolveRedirectT
     ]);
 
     return redirect()->to($resolveRedirectTarget($request, 'home', 'home-prayer'))->with('prayer_success', __('home.forms.prayer.success'));
-})->name('prayer.store');
+})->middleware('throttle:public-form')->name('prayer.store');
 
-Route::post('/mur-de-priere/{prayer}/soutien', function (Request $request, MurDePriere $prayer) use ($resolveRedirectTarget) {
+Route::post('/mur-de-priere/{prayer}/soutien', function (Request $request, MurDePriere $prayer) use ($resolveRedirectTarget, $resolvePrayerWhatsappGroupUrl) {
     abort_unless($prayer->statut === 'approuve' && $prayer->type === 'priere', 404);
 
     $user = $request->user();
     $ipAddress = $request->ip();
+    $whatsappGroupUrl = $resolvePrayerWhatsappGroupUrl();
 
     $existingSupport = PriereSoutien::query()
         ->where('priere_id', $prayer->id)
@@ -385,9 +549,13 @@ Route::post('/mur-de-priere/{prayer}/soutien', function (Request $request, MurDe
         ->first();
 
     if ($existingSupport) {
+        if ($whatsappGroupUrl) {
+            return redirect()->away($whatsappGroupUrl);
+        }
+
         return redirect()
             ->to($resolveRedirectTarget($request, 'contact.prayer.index', 'prayer-wall'))
-            ->with('prayer_support_info', __('contact_prayer.wall.support_already_sent'));
+            ->with('prayer_support_info', __('contact_prayer.wall.support_group_missing'));
     }
 
     PriereSoutien::query()->create([
@@ -398,16 +566,22 @@ Route::post('/mur-de-priere/{prayer}/soutien', function (Request $request, MurDe
 
     $prayer->increment('priants');
 
+    if ($whatsappGroupUrl) {
+        return redirect()->away($whatsappGroupUrl);
+    }
+
     return redirect()
         ->to($resolveRedirectTarget($request, 'contact.prayer.index', 'prayer-wall'))
-        ->with('prayer_support_success', __('contact_prayer.wall.support_success'));
-})->name('prayer.support');
+        ->with('prayer_support_success', __('contact_prayer.wall.support_group_missing'));
+})->middleware('throttle:public-action')->name('prayer.support');
 
 Route::post('/newsletter/abonnement', function (Request $request) use ($resolveRedirectTarget) {
     $data = $request->validate([
         'prenom' => ['nullable', 'string', 'max:80'],
         'email' => ['required', 'email', 'max:191'],
     ]);
+
+    SubmissionGuard::ensureSafeRequest($request, ['prenom'], true);
 
     NewsletterSubscriber::query()->updateOrCreate(
         ['email' => strtolower($data['email'])],
@@ -423,7 +597,7 @@ Route::post('/newsletter/abonnement', function (Request $request) use ($resolveR
     return redirect()
         ->to($resolveRedirectTarget($request, 'home'))
         ->with('newsletter_success', __('home.forms.newsletter.success'));
-})->name('newsletter.subscribe');
+})->middleware('throttle:public-form')->name('newsletter.subscribe');
 
 Route::post('/depot-cv-services', function (Request $request) {
     $data = $request->validate([
@@ -455,7 +629,22 @@ Route::post('/depot-cv-services', function (Request $request) {
         'cv_fichier' => ['required', 'file', 'mimes:pdf', 'max:5120'],
     ]);
 
-    $cvPath = $request->file('cv_fichier')->store('cv-depots', 'public');
+    SubmissionGuard::ensureSafeRequest($request, [
+        'prenom',
+        'nom',
+        'pays',
+        'ville',
+        'titre_poste',
+        'niveau_etude',
+        'domaine_etude',
+        'competences',
+        'langues',
+        'objectif_professionnel',
+        'secteurs_interet',
+        'message',
+    ]);
+
+    $cvPath = $request->file('cv_fichier')->store('cv-depots', 'local');
 
     $cvDepot = CvDepot::query()->create([
         'user_id' => auth()->id(),
@@ -493,7 +682,7 @@ Route::post('/depot-cv-services', function (Request $request) {
     );
 
     return redirect()->to(route('cv.services.index') . '#cv-form')->with('cv_success', __('cv_services.form.success'));
-})->middleware(['auth', 'verified'])->name('cv.services.store');
+})->middleware(['auth', 'verified', 'throttle:user-form'])->name('cv.services.store');
 
 Route::post('/formations/inscription', function (Request $request) {
     $user = $request->user();
@@ -510,6 +699,15 @@ Route::post('/formations/inscription', function (Request $request) {
         'profession' => ['nullable', 'string', 'max:120'],
         'niveau_etude' => ['nullable', 'string', 'max:80'],
         'motivation' => ['nullable', 'string', 'max:2000'],
+    ]);
+
+    SubmissionGuard::ensureSafeRequest($request, [
+        'prenom',
+        'nom',
+        'pays',
+        'profession',
+        'niveau_etude',
+        'motivation',
     ]);
 
     $formation = Formation::query()->findOrFail((int) $data['formation_id']);
@@ -578,7 +776,7 @@ Route::post('/formations/inscription', function (Request $request) {
                 'name' => trim($registration->prenom . ' ' . $registration->nom),
                 'training' => $formation->titre,
             ]),
-            'action_url' => route('panel.admin.training-registrations'),
+            'action_url' => route('panel.admin.training-registrations', ['registration' => $registration->id]),
             'action_label' => __('admin.notifications.open'),
             'category' => 'training',
             'level' => 'info',
@@ -591,7 +789,7 @@ Route::post('/formations/inscription', function (Request $request) {
         'training_success',
         __('trainings.form.success', ['formation' => $formation->titre])
     );
-})->middleware(['auth', 'verified'])->name('trainings.register');
+})->middleware(['auth', 'verified', 'throttle:user-form'])->name('trainings.register');
 
 Route::get('/offres-opportunites', function () use ($siteSettings) {
     $settings = $siteSettings();
@@ -607,8 +805,8 @@ Route::get('/offres-opportunites', function () use ($siteSettings) {
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
         'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
         'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
-        'siteAddress' => $settings->get('site_adresse')?->valeur ?? 'En face de la Mairie de Missérété, Ouémé, BJ',
-        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+229XXXXXXXXX',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'services' => $services,
     ]);
@@ -646,8 +844,8 @@ Route::get('/offres-opportunites/{opportunite:slug}', function (Opportunite $opp
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
         'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
         'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
-        'siteAddress' => $settings->get('site_adresse')?->valeur ?? 'En face de la Mairie de MissÃ©rÃ©tÃ©, OuÃ©mÃ©, BJ',
-        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+229XXXXXXXXX',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'opportunity' => $opportunite,
         'currentApplication' => $currentApplication,
@@ -670,8 +868,8 @@ Route::get('/depot-cv-services', function () use ($siteSettings) {
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
         'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
         'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
-        'siteAddress' => $settings->get('site_adresse')?->valeur ?? 'En face de la Mairie de Missérété, Ouémé, BJ',
-        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+229XXXXXXXXX',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'services' => $services,
     ]);
@@ -707,8 +905,8 @@ Route::get('/formations', function (Request $request) use ($siteSettings) {
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
         'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
         'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
-        'siteAddress' => $settings->get('site_adresse')?->valeur ?? 'En face de la Mairie de Missérété, Ouémé, BJ',
-        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+229XXXXXXXXX',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'trainings' => $trainings,
         'selectedTraining' => $selectedTraining,
@@ -724,8 +922,8 @@ Route::get('/articles', function () use ($siteSettings) {
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
         'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
         'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
-        'siteAddress' => $settings->get('site_adresse')?->valeur ?? 'En face de la Mairie de MissÃ©rÃ©tÃ©, OuÃ©mÃ©, BJ',
-        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+229XXXXXXXXX',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
     ]);
 })->name('articles.index');
@@ -767,8 +965,8 @@ Route::get('/articles/{article:slug}', function (BlogArticle $article) use ($sit
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
         'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
         'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
-        'siteAddress' => $settings->get('site_adresse')?->valeur ?? 'En face de la Mairie de MissÃ©rÃ©tÃ©, OuÃ©mÃ©, BJ',
-        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+229XXXXXXXXX',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'article' => $article->load(['category', 'images', 'featuredImage']),
         'approvedComments' => $approvedComments,
@@ -815,6 +1013,8 @@ Route::post('/articles/{article:slug}/commentaires', function (Request $request,
         'contenu' => ['required', 'string', 'max:4000'],
     ]);
 
+    SubmissionGuard::ensureSafeRequest($request, ['contenu']);
+
     $parentId = $data['parent_id'] ?? null;
 
     BlogCommentaire::query()->create([
@@ -831,7 +1031,7 @@ Route::post('/articles/{article:slug}/commentaires', function (Request $request,
     return redirect()
         ->to(route('articles.show', $article->slug) . '#article-comments')
         ->with('article_comment_success', __('articles.comments.success'));
-})->name('articles.comments.store');
+})->middleware('throttle:user-form')->name('articles.comments.store');
 
 Route::get('/contact-priere', function () use ($siteSettings) {
     $settings = $siteSettings();
@@ -887,8 +1087,8 @@ Route::get('/contact-priere', function () use ($siteSettings) {
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
         'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
         'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
-        'siteAddress' => $settings->get('site_adresse')?->valeur ?? 'En face de la Mairie de Missérété, Ouémé, BJ',
-        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+229XXXXXXXXX',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'featuredVerse' => $featuredVerse,
         'prayerEncouragement' => $prayerEncouragement,
@@ -898,6 +1098,88 @@ Route::get('/contact-priere', function () use ($siteSettings) {
         'supportedPrayerIds' => $supportedPrayerIds,
     ]);
 })->name('contact.prayer.index');
+
+Route::get('/mur-de-priere/communaute', function () use ($siteSettings) {
+    $settings = $siteSettings();
+    $user = auth()->user();
+    $ipAddress = request()->ip();
+
+    $prayerRequests = MurDePriere::query()
+        ->where('statut', 'approuve')
+        ->where('type', 'priere')
+        ->latest()
+        ->paginate(12);
+
+    $approvedPrayerTotal = MurDePriere::query()
+        ->where('statut', 'approuve')
+        ->where('type', 'priere')
+        ->count();
+
+    $approvedPrayerSupportTotal = MurDePriere::query()
+        ->where('statut', 'approuve')
+        ->where('type', 'priere')
+        ->sum('priants');
+
+    $supportedPrayerIds = PriereSoutien::query()
+        ->whereIn('priere_id', $prayerRequests->getCollection()->pluck('id'))
+        ->when(
+            $user,
+            fn ($query) => $query->where('user_id', $user->id),
+            fn ($query) => $query->whereNull('user_id')->where('ip_address', $ipAddress)
+        )
+        ->pluck('priere_id')
+        ->map(fn ($id) => (int) $id)
+        ->all();
+
+    return view('community.prayers', [
+        'title' => __('community.prayers.meta.title'),
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'prayerRequests' => $prayerRequests,
+        'approvedPrayerTotal' => $approvedPrayerTotal,
+        'approvedPrayerSupportTotal' => (int) $approvedPrayerSupportTotal,
+        'supportedPrayerIds' => $supportedPrayerIds,
+    ]);
+})->name('community.prayers.index');
+
+Route::get('/temoignages/communaute', function () use ($siteSettings) {
+    $settings = $siteSettings();
+
+    $testimonials = Temoignage::query()
+        ->where('statut', 'approuve')
+        ->orderByDesc('en_vedette')
+        ->orderBy('ordre')
+        ->latest()
+        ->paginate(9);
+
+    $approvedTestimonialTotal = Temoignage::query()
+        ->where('statut', 'approuve')
+        ->count();
+
+    $featuredTestimonialTotal = Temoignage::query()
+        ->where('statut', 'approuve')
+        ->where('en_vedette', true)
+        ->count();
+
+    return view('community.testimonials', [
+        'title' => __('community.testimonials.meta.title'),
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'testimonials' => $testimonials,
+        'approvedTestimonialTotal' => $approvedTestimonialTotal,
+        'featuredTestimonialTotal' => $featuredTestimonialTotal,
+    ]);
+})->name('community.testimonials.index');
 
 Route::get('/', function () use ($siteSettings) {
     $settings = $siteSettings();
@@ -983,9 +1265,15 @@ Route::get('/', function () use ($siteSettings) {
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
         'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
         'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
-        'siteAddress' => $settings->get('site_adresse')?->valeur ?? 'En face de la Mairie de Missérété, Ouémé, BJ',
-        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+229XXXXXXXXX',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'supportKkiapayUrl' => $settings->get('support_kkiapay_url')?->valeur ?? '',
+        'supportBankName' => $settings->get('support_bank_name')?->valeur ?? '',
+        'supportBankAccountName' => $settings->get('support_bank_account_name')?->valeur ?? '',
+        'supportBankAccountNumber' => $settings->get('support_bank_account_number')?->valeur ?? '',
+        'supportBankIban' => $settings->get('support_bank_iban')?->valeur ?? '',
+        'supportBankSwift' => $settings->get('support_bank_swift')?->valeur ?? '',
         'socialLinks' => [
             'facebook' => $settings->get('facebook_url')?->valeur,
             'instagram' => $settings->get('instagram_url')?->valeur,

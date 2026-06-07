@@ -1,12 +1,21 @@
 @props([
     'title' => null,
+    'description' => null,
+    'keywords' => null,
+    'canonical' => null,
+    'robots' => 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1',
+    'image' => null,
+    'type' => 'website',
+    'schemaData' => [],
+    'pageBannerTitle' => null,
     'siteName' => 'Opportunet Mondiale',
     'siteSlogan' => null,
     'siteEmail' => 'contact@opportunetmondiale.com',
     'siteHours' => 'Lundi - Samedi 08:00 - 22:00',
-    'siteAddress' => 'En face de la Mairie de Missérété, Ouémé, BJ',
-    'siteWhatsapp' => '+229XXXXXXXXX',
+    'siteAddress' => "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+    'siteWhatsapp' => '+2290167229575',
     'siteWhatsappMessage' => null,
+    'socialLinks' => [],
     'banner' => null,
     'headerVerses' => null,
     'featuredVerse' => null,
@@ -14,12 +23,72 @@
 ])
 
 @php
-    $homeUrl = route('home');
-    $offersUrl = route('offers.index');
-    $cvServicesUrl = route('cv.services.index');
-    $trainingsUrl = route('trainings.index');
-    $articlesUrl = route('articles.index');
-    $contactPrayerUrl = route('contact.prayer.index');
+    $locale = app()->getLocale();
+    $homeBaseUrl = route('home');
+    $offersBaseUrl = route('offers.index');
+    $cvServicesBaseUrl = route('cv.services.index');
+    $trainingsBaseUrl = route('trainings.index');
+    $articlesBaseUrl = route('articles.index');
+    $contactPrayerBaseUrl = route('contact.prayer.index');
+    $homeUrl = \App\Support\Seo::localizedUrl($homeBaseUrl, $locale);
+    $offersUrl = \App\Support\Seo::localizedUrl($offersBaseUrl, $locale);
+    $cvServicesUrl = \App\Support\Seo::localizedUrl($cvServicesBaseUrl, $locale);
+    $trainingsUrl = \App\Support\Seo::localizedUrl($trainingsBaseUrl, $locale);
+    $articlesUrl = \App\Support\Seo::localizedUrl($articlesBaseUrl, $locale);
+    $contactPrayerUrl = \App\Support\Seo::localizedUrl($contactPrayerBaseUrl, $locale);
+    $currentUrl = url()->current();
+    $titleText = $title ? $title . ' | ' . $siteName : $siteName;
+    $metaDescription = \App\Support\Seo::description($description ?: $siteSlogan ?: $siteName);
+    $canonicalUrl = $canonical ?: \App\Support\Seo::localizedUrl($currentUrl, $locale, request()->query());
+    $alternateLocaleUrls = \App\Support\Seo::alternateLocaleUrls($currentUrl, request()->query());
+    $metaImage = \App\Support\Seo::absoluteImageUrl($image ?: 'images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png');
+    $metaKeywords = is_array($keywords)
+        ? collect($keywords)->filter()->implode(', ')
+        : trim((string) $keywords);
+    $pageHeading = trim(strip_tags((string) ($pageBannerTitle ?? $title ?? '')));
+    $siteLogo = \App\Support\Seo::absoluteImageUrl('images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png');
+    $socialLinks = array_filter(is_array($socialLinks) ? $socialLinks : []);
+    $aboutUrl = \App\Support\Seo::localizedUrl(route('site.about'), $locale);
+    $helpUrl = \App\Support\Seo::localizedUrl(route('site.help'), $locale);
+    $docsUrl = \App\Support\Seo::localizedUrl(route('site.documentation'), $locale);
+    $securityUrl = \App\Support\Seo::localizedUrl(route('site.security'), $locale);
+    $communityUrl = \App\Support\Seo::localizedUrl(route('community.testimonials.index'), $locale);
+    $privacyUrl = \App\Support\Seo::localizedUrl(route('site.privacy'), $locale);
+    $termsUrl = \App\Support\Seo::localizedUrl(route('site.terms'), $locale);
+    $cookiesUrl = \App\Support\Seo::localizedUrl(route('site.cookies'), $locale);
+    $statusUrl = url('/up');
+    $schemaBlocks = array_values(array_filter(array_merge([
+        \App\Support\Seo::schema('Organization', [
+            'name' => $siteName,
+            'url' => $homeUrl,
+            'description' => $siteSlogan,
+            'email' => $siteEmail,
+            'logo' => $siteLogo,
+            'address' => $siteAddress ? [
+                '@type' => 'PostalAddress',
+                'streetAddress' => $siteAddress,
+                'addressCountry' => 'BJ',
+            ] : null,
+            'contactPoint' => [[
+                '@type' => 'ContactPoint',
+                'contactType' => 'customer support',
+                'email' => $siteEmail,
+                'telephone' => $siteWhatsapp,
+                'availableLanguage' => ['fr', 'en'],
+            ]],
+        ]),
+        \App\Support\Seo::schema('WebSite', [
+            'name' => $siteName,
+            'url' => $homeUrl,
+            'description' => $siteSlogan ?: $metaDescription,
+            'inLanguage' => $locale,
+            'potentialAction' => [
+                '@type' => 'SearchAction',
+                'target' => $offersBaseUrl . '?lang=' . $locale . '&q={search_term_string}',
+                'query-input' => 'required name=search_term_string',
+            ],
+        ]),
+    ], is_array($schemaData) ? $schemaData : [])));
     $whatsappHref = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp);
     $whatsappCtaHref = $siteWhatsappMessage
         ? $whatsappHref . '?text=' . urlencode($siteWhatsappMessage)
@@ -67,12 +136,40 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', $locale) }}">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{{ $title ? $title . ' | ' . $siteName : $siteName }}</title>
+    <title>{{ $titleText }}</title>
+    <meta name="description" content="{{ $metaDescription }}" />
+    <meta name="robots" content="{{ $robots }}" />
+    @if ($metaKeywords !== '')
+        <meta name="keywords" content="{{ $metaKeywords }}" />
+    @endif
+    <link rel="canonical" href="{{ $canonicalUrl }}" />
+    @foreach ($alternateLocaleUrls as $hrefLang => $href)
+        <link rel="alternate" hreflang="{{ $hrefLang }}" href="{{ $href }}" />
+    @endforeach
+
+    <meta property="og:type" content="{{ $type }}" />
+    <meta property="og:title" content="{{ $titleText }}" />
+    <meta property="og:description" content="{{ $metaDescription }}" />
+    <meta property="og:url" content="{{ $canonicalUrl }}" />
+    <meta property="og:site_name" content="{{ $siteName }}" />
+    <meta property="og:locale" content="{{ $locale === 'fr' ? 'fr_FR' : 'en_US' }}" />
+    <meta property="og:locale:alternate" content="{{ $locale === 'fr' ? 'en_US' : 'fr_FR' }}" />
+    @if ($metaImage)
+        <meta property="og:image" content="{{ $metaImage }}" />
+        <meta property="og:image:alt" content="{{ $titleText }}" />
+    @endif
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ $titleText }}" />
+    <meta name="twitter:description" content="{{ $metaDescription }}" />
+    @if ($metaImage)
+        <meta name="twitter:image" content="{{ $metaImage }}" />
+    @endif
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -85,6 +182,9 @@
 
     <link rel="icon" type="image/png" href="{{ asset('images/logo/imgi_4_LE-TRANSFIGURANT-2.png') }}" />
     <link rel="apple-touch-icon" type="image/png" href="{{ asset('images/logo/imgi_4_LE-TRANSFIGURANT-2.png') }}" />
+    @foreach ($schemaBlocks as $schemaBlock)
+        <script type="application/ld+json">{!! json_encode($schemaBlock, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
+    @endforeach
 </head>
 
 <body>
@@ -93,18 +193,20 @@
             <div class="site-topbar-left">
                 <a href="mailto:{{ $siteEmail }}" class="topbar-link">{{ __('home.topbar.email') }}:
                     {{ $siteEmail }}</a>
+                <a href="tel:{{ preg_replace('/\s+/', '', $siteWhatsapp) }}" class="topbar-link">{{ __('home.topbar.phone') }}:
+                    {{ $siteWhatsapp }}</a>
                 <span class="topbar-link">{{ __('home.topbar.hours') }}: {{ $siteHours }}</span>
             </div>
             <div class="site-topbar-right">
                 <span class="topbar-locale-text">{{ __('home.nav.language') }}</span>
                 <div class="topbar-locale-switcher" aria-label="{{ __('home.nav.language_switcher') }}">
-                    <a href="{{ route('locale.switch', ['locale' => 'fr']) }}"
+                    <a href="{{ \App\Support\Seo::localizedUrl(url()->current(), 'fr', request()->query()) }}"
                         class="locale-flag-link{{ app()->getLocale() === 'fr' ? ' active' : '' }}"
                         aria-label="{{ __('home.nav.switch_to_french') }}">
                         <span class="flag-icon flag-fr" aria-hidden="true"></span>
                         <span>FR</span>
                     </a>
-                    <a href="{{ route('locale.switch', ['locale' => 'en']) }}"
+                    <a href="{{ \App\Support\Seo::localizedUrl(url()->current(), 'en', request()->query()) }}"
                         class="locale-flag-link{{ app()->getLocale() === 'en' ? ' active' : '' }}"
                         aria-label="{{ __('home.nav.switch_to_english') }}">
                         <span class="flag-icon flag-en" aria-hidden="true"></span>
@@ -154,10 +256,10 @@
                     <a href="{{ $homeUrl }}" class="nav-logo" aria-label="{{ __('home.nav.brand') }}">
                         <img src="{{ asset('images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png') }}"
                             alt="{{ __('home.nav.brand') }}" class="nav-logo-mark" />
-                        {{-- <div class="nav-logo-copy">
+                        <div class="nav-logo-copy nav-logo-copy-mobile">
                             <span>{{ __('home.nav.kicker') }}</span>
                             <strong>{{ $siteName }}</strong>
-                        </div> --}}
+                        </div>
                     </a>
                     {{-- <div class="nav-status">
                         <span class="nav-status-dot"></span>
@@ -292,6 +394,25 @@
                 </div>
             </div>
         </section>
+    @elseif ($pageHeading !== '')
+        <section class="page-banner">
+            <div class="page-banner-glow page-banner-glow-one" aria-hidden="true"></div>
+            <div class="page-banner-glow page-banner-glow-two" aria-hidden="true"></div>
+            <div class="container">
+                <div class="page-banner-inner reveal visible">
+                    <div class="page-banner-copy">
+                        <span class="page-banner-kicker">{{ __('home.nav.kicker') }}</span>
+                        <h1 class="page-banner-title">{{ $pageHeading }}</h1>
+                        <p class="page-banner-subtitle">{{ $siteSlogan ?: __('home.topbar.focus') }}</p>
+                    </div>
+                    <div class="page-banner-breadcrumbs" aria-label="{{ __('home.nav.label') }}">
+                        <a href="{{ $homeUrl }}">{{ __('home.nav.app') }}</a>
+                        <span>/</span>
+                        <strong>{{ $pageHeading }}</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
     @endif
 
     {{ $slot }}
@@ -302,39 +423,43 @@
                 <div class="footer-brand">
                     <a href="{{ $homeUrl }}" class="nav-logo" aria-label="{{ __('home.nav.brand') }}">
                         <img src="{{ asset('images/logo/imgi_4_LE-TRANSFIGURANT-2.png') }}"
-                            alt="{{ __('home.nav.brand') }}" style="height:28px; width:auto; display:block;" />
+                            alt="{{ __('home.nav.brand') }}" class="footer-logo-mark" />
                     </a>
                     <p class="footer-brand-desc">{{ $siteSlogan ?: __('home.footer.description') }}</p>
                     <div class="footer-contact-meta">
+                        <p>{{ __('home.footer.phone') }}: <a href="tel:{{ preg_replace('/\s+/', '', $siteWhatsapp) }}">{{ $siteWhatsapp }}</a></p>
                         <p>{{ __('home.footer.hours') }}: {{ $siteHours }}</p>
                         <p>{{ __('home.footer.location') }}: {{ $siteAddress }}</p>
                     </div>
-                    <div class="footer-socials">
-                        <a href="#" class="social-btn" aria-label="Twitter / X">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                            </svg>
-                        </a>
-                        <a href="#" class="social-btn" aria-label="LinkedIn">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                            </svg>
-                        </a>
-                        <a href="#" class="social-btn" aria-label="YouTube">
-                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-                            </svg>
-                        </a>
-                        <a href="#" class="social-btn" aria-label="TikTok">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-                            </svg>
-                        </a>
-                    </div>
+                    @if ($socialLinks !== [])
+                        <div class="footer-socials">
+                            @if (! empty($socialLinks['facebook']))
+                                <a href="{{ $socialLinks['facebook'] }}" class="social-btn" aria-label="Facebook" target="_blank" rel="noopener">
+                                    <span>Fb</span>
+                                </a>
+                            @endif
+                            @if (! empty($socialLinks['instagram']))
+                                <a href="{{ $socialLinks['instagram'] }}" class="social-btn" aria-label="Instagram" target="_blank" rel="noopener">
+                                    <span>Ig</span>
+                                </a>
+                            @endif
+                            @if (! empty($socialLinks['linkedin']))
+                                <a href="{{ $socialLinks['linkedin'] }}" class="social-btn" aria-label="LinkedIn" target="_blank" rel="noopener">
+                                    <span>In</span>
+                                </a>
+                            @endif
+                            @if (! empty($socialLinks['youtube']))
+                                <a href="{{ $socialLinks['youtube'] }}" class="social-btn" aria-label="YouTube" target="_blank" rel="noopener">
+                                    <span>Yt</span>
+                                </a>
+                            @endif
+                            @if (! empty($socialLinks['tiktok']))
+                                <a href="{{ $socialLinks['tiktok'] }}" class="social-btn" aria-label="TikTok" target="_blank" rel="noopener">
+                                    <span>Tk</span>
+                                </a>
+                            @endif
+                        </div>
+                    @endif
                 </div>
                 <div>
                     <div class="footer-col-label">{{ __('home.footer.product') }}</div>
@@ -350,21 +475,21 @@
                 <div>
                     <div class="footer-col-label">{{ __('home.footer.company') }}</div>
                     <div class="footer-links">
-                        <a href="#">{{ __('home.footer.about') }}</a>
+                        <a href="{{ $aboutUrl }}">{{ __('home.footer.about') }}</a>
                         <a href="{{ $articlesUrl }}">{{ __('home.footer.blog') }}</a>
-                        <a href="#">{{ __('home.footer.careers') }}</a>
-                        <a href="#">{{ __('home.footer.press_kit') }}</a>
-                        <a href="#">{{ __('home.footer.status') }}</a>
+                        <a href="{{ $offersUrl }}">{{ __('home.footer.careers') }}</a>
+                        <a href="{{ $docsUrl }}">{{ __('home.footer.press_kit') }}</a>
+                        <a href="{{ $statusUrl }}">{{ __('home.footer.status') }}</a>
                     </div>
                 </div>
                 <div>
                     <div class="footer-col-label">{{ __('home.footer.support') }}</div>
                     <div class="footer-links">
-                        <a href="#">{{ __('home.footer.help_center') }}</a>
-                        <a href="#">{{ __('home.footer.documentation') }}</a>
-                        <a href="#">{{ __('home.footer.security') }}</a>
+                        <a href="{{ $helpUrl }}">{{ __('home.footer.help_center') }}</a>
+                        <a href="{{ $docsUrl }}">{{ __('home.footer.documentation') }}</a>
+                        <a href="{{ $securityUrl }}">{{ __('home.footer.security') }}</a>
                         <a href="{{ $contactPrayerUrl }}">{{ __('home.footer.contact') }}</a>
-                        <a href="#">{{ __('home.footer.community') }}</a>
+                        <a href="{{ $communityUrl }}">{{ __('home.footer.community') }}</a>
                     </div>
                 </div>
                 <div>
@@ -377,6 +502,8 @@
 
                     <form method="POST" action="{{ route('newsletter.subscribe') }}" class="footer-newsletter-form">
                         @csrf
+                        <x-honeypot />
+                        <x-form-captcha wrapper-class="footer-captcha-field" error-class="footer-newsletter-error" />
                         <input type="hidden" name="redirect_to" value="{{ url()->full() }}">
 
                         <input
@@ -406,13 +533,12 @@
             </div>
             <div class="footer-bottom">
                 <div class="footer-copy">
-                    {{ __('home.footer.copyright') }} <a rel="nofollow" href=""
-                        target="_blank">@SamuelLarios</a>
+                    {{ __('home.footer.copyright') }} <a rel="nofollow" href="{{ $aboutUrl }}">Opportunet Mondiale</a>
                 </div>
                 <div class="footer-legal">
-                    <a href="#">{{ __('home.footer.privacy') }}</a>
-                    <a href="#">{{ __('home.footer.terms') }}</a>
-                    <a href="#">{{ __('home.footer.cookies') }}</a>
+                    <a href="{{ $privacyUrl }}">{{ __('home.footer.privacy') }}</a>
+                    <a href="{{ $termsUrl }}">{{ __('home.footer.terms') }}</a>
+                    <a href="{{ $cookiesUrl }}">{{ __('home.footer.cookies') }}</a>
                 </div>
             </div>
         </div>

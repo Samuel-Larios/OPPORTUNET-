@@ -24,7 +24,7 @@ class TrainingRegistrationFlowTest extends TestCase
 
     public function test_user_can_register_for_training_and_exchange_messages_with_admin(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
         Mail::fake();
 
         $userRole = $this->firstOrCreateRole('user', 'Utilisateur');
@@ -130,7 +130,7 @@ class TrainingRegistrationFlowTest extends TestCase
             'reference_paiement' => 'MOMO-REF-123',
         ]);
         $this->assertEquals(9, $formation->fresh()->places_restantes);
-        Storage::disk('public')->assertExists($adminMessage->attachment_path);
+        Storage::disk('local')->assertExists($adminMessage->attachment_path);
 
         $this->actingAs($user);
 
@@ -151,7 +151,7 @@ class TrainingRegistrationFlowTest extends TestCase
 
         $this->assertNotNull($userReply);
         $this->assertEquals(3, FormationRegistrationMessage::query()->where('inscription_formation_id', $registration->id)->count());
-        Storage::disk('public')->assertExists($userReply->attachment_path);
+        Storage::disk('local')->assertExists($userReply->attachment_path);
 
         $this->get(route('panel.user.trainings.download-message', ['registration' => $registration->id, 'message' => $adminMessage->id]))
             ->assertOk();

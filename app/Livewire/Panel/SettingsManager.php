@@ -3,6 +3,8 @@
 namespace App\Livewire\Panel;
 
 use App\Models\ParametreSite;
+use App\Support\SecuritySettings;
+use App\Support\SubmissionGuard;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -33,15 +35,33 @@ class SettingsManager extends Component
 
     public function save(): void
     {
+        $this->resetValidation();
+
         foreach ($this->settings as $settingId => $values) {
+            $frenchValue = (string) $values['valeur_fr'];
+            $englishValue = (string) $values['valeur_en'];
+
+            if (str_ends_with((string) $values['cle'], '_url')) {
+                try {
+                    $frenchValue = SubmissionGuard::normalizeExternalUrl($frenchValue) ?? '';
+                    $englishValue = SubmissionGuard::normalizeExternalUrl($englishValue) ?? '';
+                } catch (\Illuminate\Validation\ValidationException $exception) {
+                    $this->addError('settings.' . $settingId . '.valeur_fr', $exception->errors()['url'][0] ?? __('security.validation.invalid_external_url'));
+
+                    return;
+                }
+            }
+
             ParametreSite::query()
                 ->whereKey($settingId)
                 ->update([
-                    'valeur' => $values['valeur_fr'],
-                    'valeur_fr' => $values['valeur_fr'],
-                    'valeur_en' => $values['valeur_en'],
+                    'valeur' => $frenchValue,
+                    'valeur_fr' => $frenchValue,
+                    'valeur_en' => $englishValue,
                 ]);
         }
+
+        SecuritySettings::flush();
 
         session()->flash('panel_success', __('admin.flash.settings_saved'));
     }

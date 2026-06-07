@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->appendToGroup('web', \App\Http\Middleware\SetLocaleFromBrowser::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\SecurityShield::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\SecureHeaders::class);
+        $middleware->appendToGroup('web', \App\Http\Middleware\TrackPublicVisits::class);
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRoleAccess::class,
         ]);

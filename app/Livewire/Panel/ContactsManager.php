@@ -30,6 +30,7 @@ class ContactsManager extends Component
     #[Url(except: '')]
     public string $subjectFilter = '';
 
+    #[Url(as: 'contact', except: null)]
     public ?int $selectedContactId = null;
     public string $processingStatus = 'non_lu';
     public string $processingPriority = 'normale';

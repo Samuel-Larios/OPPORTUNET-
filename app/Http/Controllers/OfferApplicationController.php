@@ -6,6 +6,7 @@ use App\Models\CandidatureOffre;
 use App\Models\Opportunite;
 use App\Notifications\PlatformDatabaseNotification;
 use App\Support\NotificationRecipients;
+use App\Support\SubmissionGuard;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Notification;
@@ -37,6 +38,11 @@ class OfferApplicationController extends Controller
 
         $user = $request->user();
 
+        SubmissionGuard::ensureSafeRequest($request, [
+            'pays',
+            'message',
+        ]);
+
         $validated = $request->validate([
             'telephone' => ['nullable', 'string', 'max:20'],
             'whatsapp' => ['nullable', 'string', 'max:20'],
@@ -59,12 +65,12 @@ class OfferApplicationController extends Controller
                 ->withErrors(['application' => __('offers.application.validation.already_applied')]);
         }
 
-        $letterPath = $validated['lettre_motivation']->store('offer-applications/letters');
+        $letterPath = $validated['lettre_motivation']->store('offer-applications/letters', 'local');
         $diplomaPaths = collect($request->file('diplomes', []))
-            ->map(fn ($file) => $file->store('offer-applications/diplomas'))
+            ->map(fn ($file) => $file->store('offer-applications/diplomas', 'local'))
             ->all();
         $certificatePaths = collect($request->file('attestations', []))
-            ->map(fn ($file) => $file->store('offer-applications/certificates'))
+            ->map(fn ($file) => $file->store('offer-applications/certificates', 'local'))
             ->all();
 
         $application = CandidatureOffre::query()->create([

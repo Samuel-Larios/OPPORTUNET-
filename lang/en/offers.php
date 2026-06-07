@@ -2,7 +2,9 @@
 
 return [
     'meta' => [
-        'title' => 'Offers & Opportunities',
+        'title' => 'Jobs in Benin and international opportunities',
+        'description' => 'Browse jobs, internships, scholarships, volunteering roles and global opportunities for people in Benin, Africa and beyond.',
+        'keywords' => 'jobs in Benin, international jobs, internship Benin, scholarship opportunities, volunteering, remote work',
     ],
     'page' => [
         'label' => 'Offers & Opportunities',
@@ -183,9 +185,8 @@ return [
         'stage' => 'Internship',
         'freelance' => 'Freelance',
         'temps_partiel' => 'Part-time',
-        'bénévolat' => 'Volunteer',
+        'benevolat' => 'Volunteer',
         'bÃ©nÃ©volat' => 'Volunteer',
-        'bÃƒÂ©nÃƒÂ©volat' => 'Volunteer',
         'non_applicable' => 'Not applicable',
     ],
 ];

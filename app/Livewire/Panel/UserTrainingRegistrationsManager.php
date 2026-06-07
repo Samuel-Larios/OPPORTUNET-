@@ -3,6 +3,7 @@
 namespace App\Livewire\Panel;
 
 use App\Models\InscriptionFormation;
+use App\Support\SubmissionGuard;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -40,7 +41,11 @@ class UserTrainingRegistrationsManager extends Component
             ->visibleToUser(auth()->user())
             ->findOrFail($this->selectedRegistrationId);
 
-        $attachmentPath = $this->replyAttachment?->store('formations/messages', 'public');
+        SubmissionGuard::ensureSafePayload([
+            'replyMessage' => $this->replyMessage,
+        ], ['replyMessage']);
+
+        $attachmentPath = $this->replyAttachment?->store('formations/messages', 'local');
 
         $registration->messages()->create([
             'sender_id' => auth()->id(),

@@ -37,13 +37,13 @@ class PrayerWallFlowTest extends TestCase
             'actif' => true,
         ]);
 
-        $response = $this->actingAs($user)->post(route('prayer.store'), [
+        $response = $this->withFormCaptcha()->actingAs($user)->post(route('prayer.store'), $this->captchaPayload([
             'prenom' => 'Grace',
             'email' => 'grace.prayer@example.com',
             'pays' => 'Togo',
             'sujet' => 'Merci de prier pour une orientation claire.',
             'anonyme' => '1',
-        ]);
+        ]));
 
         $response->assertRedirect(route('home') . '#home-prayer');
 

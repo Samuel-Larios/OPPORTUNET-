@@ -4,14 +4,30 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+229XXXXXXXXX';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
     $defaultWhatsappHref = $whatsappBase . '?text=' . urlencode($siteWhatsappMessage ?? __('home.forms.whatsapp_default'));
+    $seoDescription = \App\Support\Seo::description(__('cv_services.page.subtitle'));
+    $seoSchema = [
+        \App\Support\Seo::breadcrumb([
+            ['name' => $siteName, 'url' => \App\Support\Seo::localizedUrl(route('home'), app()->getLocale())],
+            ['name' => __('cv_services.page.label'), 'url' => \App\Support\Seo::localizedUrl(route('cv.services.index'), app()->getLocale())],
+        ]),
+        \App\Support\Seo::schema('CollectionPage', [
+            'name' => __('cv_services.meta.title'),
+            'url' => \App\Support\Seo::localizedUrl(route('cv.services.index'), app()->getLocale()),
+            'description' => $seoDescription,
+            'inLanguage' => app()->getLocale(),
+        ]),
+    ];
 @endphp
 
 <x-layouts.app
     :title="__('cv_services.meta.title')"
+    :description="$seoDescription"
+    :canonical="\App\Support\Seo::localizedUrl(route('cv.services.index'), app()->getLocale())"
+    :schema-data="$seoSchema"
     :site-name="$siteName"
     :site-slogan="$siteSlogan"
     :site-email="$siteEmail"
@@ -75,6 +91,11 @@
                                 </strong>
                                 <a href="{{ $serviceWhatsappHref }}" class="opportunity-link" target="_blank" rel="noopener">{{ __('cv_services.services.whatsapp_cta') }}</a>
                             </div>
+                            <x-share-buttons
+                                :url="route('cv.services.index')"
+                                :title="$service->titre"
+                                variant="compact"
+                            />
                         </article>
                     @endforeach
                 </div>

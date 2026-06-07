@@ -3,6 +3,8 @@
 return [
     'meta' => [
         'title' => 'Articles',
+        'description' => 'Read articles about jobs, faith, discipline, personal growth and practical opportunities to move forward with clarity.',
+        'keywords' => 'job articles Benin, Christian spirituality, career advice, faith and work, personal growth',
     ],
     'page' => [
         'label' => 'Articles',

@@ -3,11 +3,46 @@
     $siteSlogan = $siteSlogan ?? __('home.hero.badge');
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
-    $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+229XXXXXXXXX';
+    $siteAddress = $siteAddress ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ";
+    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
     $whatsappHref = $whatsappBase . '?text=' . urlencode($siteWhatsappMessage ?? __('home.forms.whatsapp_default'));
+    $localizedHomeUrl = \App\Support\Seo::localizedUrl(route('home'), app()->getLocale());
+    $localizedArticlesUrl = \App\Support\Seo::localizedUrl(route('articles.index'), app()->getLocale());
+    $isFrench = app()->getLocale() === 'fr';
+    $supportWhatsappMessage = $isFrench
+        ? 'Bonjour Opportunet Mondiale, je souhaite confirmer un soutien financier par Mobile Money.'
+        : 'Hello Opportunet Mondiale, I would like to confirm a financial support through Mobile Money.';
+    $supportWhatsappHref = $whatsappBase . '?text=' . urlencode($supportWhatsappMessage);
+    $supportSection = [
+        'label' => $isFrench ? 'Nous soutenir' : 'Support us',
+        'title' => $isFrench ? 'Soutenez la mission par Mobile Money' : 'Support the mission through Mobile Money',
+        'subtitle' => $isFrench
+            ? "Envoyez tout soutien financier uniquement sur les num\u{00E9}ros officiels ci-dessous."
+            : 'Please send all financial support only to the official numbers below.',
+        'note' => $isFrench
+            ? "Deux canaux sont valid\u{00E9}s pour les soutiens financiers: MTN et Moov."
+            : 'Two channels are approved for financial support: MTN and Moov.',
+        'helper' => $isFrench
+            ? "Apr\u{00E8}s votre envoi, vous pouvez \u{00E9}crire \u{00E0} l'\u{00E9}quipe sur WhatsApp pour confirmer votre soutien."
+            : 'After sending, you can contact the team on WhatsApp to confirm your support.',
+        'cta' => $isFrench ? "Contacter l'\u{00E9}quipe" : 'Contact the team',
+    ];
+    $supportChannels = [
+        [
+            'operator' => 'MTN Mobile Money',
+            'number' => '0167229575',
+            'badge' => $isFrench ? 'Canal MTN' : 'MTN channel',
+            'tone' => 'mtn',
+        ],
+        [
+            'operator' => 'Moov Money',
+            'number' => '0195757065',
+            'badge' => $isFrench ? 'Canal Moov' : 'Moov channel',
+            'tone' => 'moov',
+        ],
+    ];
     $welcomeVerses = collect($welcomeVerses ?? [])->take(3)->values();
     $approvedPrayerRequests = collect($approvedPrayerRequests ?? [])->values();
     $prayerRequestSlides = $approvedPrayerRequests->count() > 1
@@ -18,6 +53,35 @@
         ? $testimonials->concat($testimonials)
         : $testimonials;
     $prayerTestimonies = collect($prayerTestimonies ?? [])->take(4)->values();
+    $seoDescription = __('home.meta.description');
+    $seoKeywords = __('home.meta.keywords');
+    $seoSchema = [
+        \App\Support\Seo::schema('WebPage', [
+            'name' => __('home.meta.title'),
+            'url' => \App\Support\Seo::localizedUrl(route('home'), app()->getLocale()),
+            'description' => $seoDescription,
+            'inLanguage' => app()->getLocale(),
+            'about' => [
+                ['@type' => 'Thing', 'name' => 'Emploi au Benin'],
+                ['@type' => 'Thing', 'name' => 'Opportunites internationales'],
+                ['@type' => 'Thing', 'name' => 'Spiritualite chretienne'],
+                ['@type' => 'Thing', 'name' => 'Priere et temoignages'],
+            ],
+        ]),
+        \App\Support\Seo::schema('ItemList', [
+            'name' => __('home.sections.opportunities.title'),
+            'itemListElement' => collect($latestOpportunities ?? [])
+                ->take(3)
+                ->values()
+                ->map(fn ($opportunity, $index) => [
+                    '@type' => 'ListItem',
+                    'position' => $index + 1,
+                    'name' => $opportunity->titre,
+                    'url' => route('offers.show', $opportunity->slug),
+                ])
+                ->all(),
+        ]),
+    ];
 
     $serviceCards = [
         [
@@ -261,10 +325,286 @@
             flex-wrap: wrap;
         }
     }
+
+    .prayer-verse-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+    }
+
+    .prayer-verse-grid .prayer-verse-card,
+    .prayer-verse-grid .prayer-empty-card {
+        grid-column: auto;
+    }
+
+    .prayer-verse-grid .prayer-empty-card {
+        grid-column: 1 / -1;
+    }
+
+    .prayer-request-shell {
+        margin-top: 10px;
+    }
+
+    @media (max-width: 1024px) {
+        .prayer-verse-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .prayer-verse-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .home-support {
+        padding: 44px 0 18px;
+    }
+
+    .home-support-shell {
+        position: relative;
+        overflow: hidden;
+        padding: 38px;
+        border-radius: 36px;
+        background:
+            radial-gradient(circle at top left, rgba(40, 255, 216, 0.14), transparent 28%),
+            radial-gradient(circle at 88% 14%, rgba(68, 98, 255, 0.18), transparent 24%),
+            linear-gradient(135deg, #04111f 0%, #091a2f 48%, #071423 100%);
+        border: 1px solid rgba(104, 222, 255, 0.18);
+        box-shadow:
+            0 32px 80px rgba(3, 12, 26, 0.42),
+            inset 0 1px 0 rgba(180, 245, 255, 0.08);
+    }
+
+    .home-support-shell::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+            linear-gradient(180deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+        background-size: 22px 22px;
+        opacity: 0.22;
+        pointer-events: none;
+    }
+
+    .home-support-grid {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+        gap: 28px;
+        align-items: stretch;
+    }
+
+    .home-support-copy .section-label {
+        background: rgba(84, 235, 255, 0.12);
+        border-color: rgba(84, 235, 255, 0.2);
+        color: #8df3ff;
+    }
+
+    .home-support-copy .section-label::before {
+        background: #53f2ff;
+    }
+
+    .home-support-copy .section-title,
+    .home-support-copy .section-sub {
+        color: #f4fbff;
+    }
+
+    .home-support-copy .section-sub {
+        max-width: 540px;
+        color: rgba(224, 244, 255, 0.78);
+    }
+
+    .home-support-lead {
+        margin-top: 22px;
+        padding: 18px 20px;
+        border-radius: 20px;
+        background: rgba(11, 31, 52, 0.58);
+        border: 1px solid rgba(92, 233, 255, 0.12);
+        color: #9adff0;
+        line-height: 1.75;
+    }
+
+    .home-support-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 22px;
+    }
+
+    .home-support-note {
+        margin-top: 18px;
+        color: rgba(222, 243, 255, 0.72);
+        line-height: 1.75;
+        max-width: 540px;
+    }
+
+    .home-support-display {
+        position: relative;
+        display: grid;
+        gap: 18px;
+        padding: 24px;
+        border-radius: 28px;
+        background:
+            linear-gradient(180deg, rgba(5, 13, 28, 0.94), rgba(9, 20, 39, 0.9));
+        border: 1px solid rgba(95, 229, 255, 0.18);
+        box-shadow:
+            inset 0 1px 0 rgba(255,255,255,0.05),
+            0 18px 45px rgba(0, 0, 0, 0.28);
+    }
+
+    .home-support-display::after {
+        content: '';
+        position: absolute;
+        left: 18px;
+        right: 18px;
+        top: 18px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(90, 245, 255, 0.52), transparent);
+        box-shadow: 0 0 18px rgba(90, 245, 255, 0.44);
+    }
+
+    .home-support-display-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 8px;
+    }
+
+    .home-support-kicker,
+    .home-support-signal {
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+    }
+
+    .home-support-kicker {
+        color: #7be7ff;
+    }
+
+    .home-support-signal {
+        color: rgba(192, 240, 255, 0.7);
+    }
+
+    .home-support-lanes {
+        display: grid;
+        gap: 16px;
+    }
+
+    .home-support-lane {
+        position: relative;
+        overflow: hidden;
+        padding: 22px;
+        border-radius: 24px;
+        border: 1px solid rgba(122, 224, 255, 0.14);
+        background: linear-gradient(135deg, rgba(13, 30, 58, 0.94), rgba(7, 18, 34, 0.98));
+    }
+
+    .home-support-lane::before {
+        content: '';
+        position: absolute;
+        inset: auto -12% 0 auto;
+        width: 160px;
+        height: 160px;
+        border-radius: 50%;
+        opacity: 0.18;
+        filter: blur(8px);
+    }
+
+    .home-support-lane.is-mtn::before {
+        background: radial-gradient(circle, rgba(255, 214, 72, 0.95), transparent 66%);
+    }
+
+    .home-support-lane.is-moov::before {
+        background: radial-gradient(circle, rgba(71, 118, 255, 0.95), transparent 66%);
+    }
+
+    .home-support-lane-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .home-support-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(92, 245, 255, 0.12);
+        border: 1px solid rgba(92, 245, 255, 0.16);
+        color: #9af5ff;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .home-support-operator {
+        color: rgba(226, 246, 255, 0.76);
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+    }
+
+    .home-support-number {
+        margin-top: 18px;
+        color: #ffffff;
+        font-size: clamp(1.9rem, 3vw, 2.65rem);
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-shadow: 0 0 18px rgba(101, 236, 255, 0.22);
+    }
+
+    .home-support-caption {
+        margin: 10px 0 0;
+        color: rgba(206, 232, 245, 0.74);
+        line-height: 1.7;
+    }
+
+    .home-support-mini-note {
+        margin: 0;
+        color: rgba(208, 238, 248, 0.72);
+        line-height: 1.72;
+    }
+
+    @media (max-width: 1024px) {
+        .home-support-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .home-support-shell {
+            padding: 24px;
+            border-radius: 28px;
+        }
+
+        .home-support-display-head,
+        .home-support-lane-top {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .home-support-number {
+            font-size: 1.8rem;
+            letter-spacing: 0.08em;
+            word-break: break-word;
+        }
+    }
 </style>
 
 <x-layouts.app
     :title="__('home.meta.title')"
+    :description="$seoDescription"
+    :keywords="$seoKeywords"
+    :canonical="\App\Support\Seo::localizedUrl(route('home'), app()->getLocale())"
+    :schema-data="$seoSchema"
     :site-name="$siteName"
     :site-slogan="$siteSlogan"
     :site-email="$siteEmail"
@@ -371,6 +711,11 @@
                             <a href="{{ route('offers.show', $opportunity->slug) }}" class="opportunity-link">
                                 {{ __('home.sections.opportunities.cta') }}
                             </a>
+                            <x-share-buttons
+                                :url="route('offers.show', $opportunity->slug)"
+                                :title="$opportunity->titre"
+                                variant="compact"
+                            />
                         </article>
                     @empty
                         <article class="empty-card reveal">
@@ -388,6 +733,11 @@
                     <span class="section-label">{{ __('home.sections.articles.label') }}</span>
                     <h2 class="section-title">{{ __('home.sections.articles.title') }}</h2>
                     <p class="section-sub">{{ __('home.sections.articles.subtitle') }}</p>
+                    <div class="contact-form-actions" style="margin-top: 18px;">
+                        <a href="{{ $localizedArticlesUrl }}" class="ghost-submit">
+                            {{ __('home.sections.articles.all_cta') }}
+                        </a>
+                    </div>
                 </div>
 
                 <div class="articles-grid">
@@ -437,6 +787,11 @@
                                         {{ __('home.sections.articles.cta') }}
                                     </a>
                                 </div>
+                                <x-share-buttons
+                                    :url="route('articles.show', $article->slug)"
+                                    :title="$article->titre"
+                                    variant="compact"
+                                />
                             </div>
                         </article>
                     @empty
@@ -458,6 +813,20 @@
                 </div>
 
                 @if ($testimonials->isNotEmpty())
+                    <div class="home-prayer-stream reveal" style="margin-bottom: 18px;">
+                        <div class="home-prayer-stream-head">
+                            <div>
+                                <span class="prayer-card-label">{{ __('home.sections.testimonials.label') }}</span>
+                                <h3>{{ __('home.sections.testimonials.title') }}</h3>
+                                <p>{{ __('home.sections.testimonials.subtitle') }}</p>
+                            </div>
+                            <a href="{{ route('community.testimonials.index') }}" class="home-prayer-stream-cta">
+                                {{ __('community.testimonials.cta') }}
+                                <span>&gt;</span>
+                            </a>
+                        </div>
+                    </div>
+
                     <div class="home-testimonial-marquee reveal" aria-label="{{ __('home.sections.testimonials.title') }}">
                         <div class="home-testimonial-marquee-track{{ $testimonials->count() === 1 ? ' is-static' : '' }}">
                             @foreach ($testimonialSlides as $testimonial)
@@ -501,6 +870,8 @@
                         @else
                             <form method="POST" action="{{ route('testimonials.store') }}" class="contact-form-card">
                                 @csrf
+                                <x-honeypot />
+                                <x-form-captcha />
 
                                 <div class="field-row">
                                     <input type="text" name="prenom" value="{{ old('prenom', auth()->user()->prenom) }}" placeholder="{{ __('home.forms.testimonial.prenom') }}" />
@@ -544,6 +915,32 @@
             </div>
         </section>
 
+        <section class="home-prayer" id="home-verse">
+            <div class="container">
+                <div class="home-section-head reveal">
+                    <span class="section-label">{{ __('home.sections.verse.label') }}</span>
+                    <h2 class="section-title">{{ __('home.sections.verse.title') }}</h2>
+                    <p class="section-sub">{{ __('home.sections.verse.subtitle') }}</p>
+                </div>
+
+                <div class="prayer-verse-grid">
+                    @forelse ($welcomeVerses as $index => $verse)
+                        <article class="prayer-card prayer-verse prayer-verse-card reveal reveal-delay-{{ min($index + 1, 3) }}">
+                            <span class="prayer-card-label">{{ __('home.sections.prayer.verse_label') }}</span>
+                            <h3>{{ $verse->reference }}</h3>
+                            <p>{{ $verse->texte }}</p>
+                            <strong class="prayer-verse-version">{{ $verse->version }}</strong>
+                        </article>
+                    @empty
+                        <article class="empty-card prayer-empty-card reveal">
+                            <h3>{{ __('home.sections.prayer.verse_empty_title') }}</h3>
+                            <p>{{ __('home.sections.prayer.verse_empty_text') }}</p>
+                        </article>
+                    @endforelse
+                </div>
+            </div>
+        </section>
+
         <section class="home-prayer" id="home-prayer">
             <div class="container">
                 <div class="home-section-head reveal">
@@ -561,7 +958,7 @@
                                 <h3>{{ __('home.sections.prayer.requests_title') }}</h3>
                                 <p>{{ __('home.sections.prayer.requests_subtitle') }}</p>
                             </div>
-                            <a href="{{ route('contact.prayer.index') . '#prayer-wall' }}" class="home-prayer-stream-cta">
+                            <a href="{{ route('community.prayers.index') }}" class="home-prayer-stream-cta">
                                 {{ __('home.sections.prayer.requests_cta') }}
                                 <span>&gt;</span>
                             </a>
@@ -583,56 +980,55 @@
                         </div>
                     </div>
                 @endif
+            </div>
+        </section>
 
-                <div class="prayer-grid">
-                    @forelse ($welcomeVerses as $index => $verse)
-                        <article class="prayer-card prayer-verse prayer-verse-card reveal reveal-delay-{{ min($index + 1, 3) }}">
-                            <span class="prayer-card-label">{{ __('home.sections.prayer.verse_label') }}</span>
-                            <h3>{{ $verse->reference }}</h3>
-                            <p>{{ $verse->texte }}</p>
-                            <strong class="prayer-verse-version">{{ $verse->version }}</strong>
-                        </article>
-                    @empty
-                        <article class="empty-card prayer-empty-card reveal">
-                            <h3>{{ __('home.sections.prayer.verse_empty_title') }}</h3>
-                            <p>{{ __('home.sections.prayer.verse_empty_text') }}</p>
-                        </article>
-                    @endforelse
+        <section class="home-contact home-prayer-request" id="prayer-request-form">
+            <div class="container">
+                <div class="contact-shell prayer-request-shell reveal">
+                    <div class="contact-copy">
+                        <span class="section-label">{{ __('home.sections.prayer_request.label') }}</span>
+                        <h2 class="section-title">{{ __('home.sections.prayer_request.title') }}</h2>
+                        <p class="section-sub">{{ __('home.sections.prayer_request.subtitle') }}</p>
 
-                    <article class="prayer-form-card reveal reveal-delay-4">
-                        <span class="prayer-card-label">{{ __('home.sections.prayer.form_label') }}</span>
-                        <h3>{{ __('home.sections.prayer.form_title') }}</h3>
-                        <form method="POST" action="{{ route('prayer.store') }}" class="stack-form">
+                        <div class="contact-cards">
+                            <article class="contact-info-card">
+                                <span>{{ __('home.sections.prayer_request.card_one_label') }}</span>
+                                <strong>{{ __('home.sections.prayer_request.card_one_text') }}</strong>
+                            </article>
+                            <article class="contact-info-card">
+                                <span>{{ __('home.sections.prayer_request.card_two_label') }}</span>
+                                <strong>{{ __('home.sections.prayer_request.card_two_text') }}</strong>
+                            </article>
+                            <article class="contact-info-card">
+                                <span>{{ __('home.sections.prayer_request.card_three_label') }}</span>
+                                <strong>{{ __('home.sections.prayer_request.card_three_text') }}</strong>
+                            </article>
+                        </div>
+                    </div>
+
+                    <div class="contact-form-wrap">
+                        <form method="POST" action="{{ route('prayer.store') }}" class="contact-form-card">
                             @csrf
+                            <x-honeypot />
+                            <x-form-captcha />
+                            <input type="hidden" name="redirect_to" value="{{ $localizedHomeUrl . '#prayer-request-form' }}" />
                             <div class="field-row">
                                 <input type="text" name="prenom" value="{{ old('prenom') }}" placeholder="{{ __('home.forms.prayer.prenom') }}" />
                                 <input type="text" name="pays" value="{{ old('pays') }}" placeholder="{{ __('home.forms.prayer.pays') }}" />
                             </div>
                             <input type="email" name="email" value="{{ old('email') }}" placeholder="{{ __('home.forms.prayer.email') }}" />
-                            <textarea name="sujet" rows="5" placeholder="{{ __('home.forms.prayer.sujet') }}">{{ old('sujet') }}</textarea>
+                            <textarea name="sujet" rows="6" placeholder="{{ __('home.forms.prayer.sujet') }}">{{ old('sujet') }}</textarea>
                             <label class="checkbox-line">
                                 <input type="checkbox" name="anonyme" value="1" @checked(old('anonyme')) />
                                 <span>{{ __('home.forms.prayer.anonyme') }}</span>
                             </label>
-                            <button type="submit" class="solid-submit">{{ __('home.forms.prayer.submit') }}</button>
+                            <div class="contact-form-actions">
+                                <button type="submit" class="solid-submit">{{ __('home.forms.prayer.submit') }}</button>
+                                <a href="{{ route('community.prayers.index') }}" class="ghost-submit">{{ __('home.sections.prayer.requests_cta') }}</a>
+                            </div>
                         </form>
-                    </article>
-
-                    @forelse ($prayerTestimonies as $index => $prayerTestimony)
-                        <article class="prayer-card prayer-testimony-card reveal reveal-delay-{{ min($index + 1, 4) }}">
-                            <span class="prayer-card-label">{{ __('home.sections.prayer.testimony_label') }}</span>
-                            <h3>{{ $prayerTestimony->publicAuthorName() }}</h3>
-                            <p>{{ $prayerTestimony->sujet }}</p>
-                            @if ($prayerTestimony->pays)
-                                <span class="prayer-testimony-meta">{{ $prayerTestimony->pays }}</span>
-                            @endif
-                        </article>
-                    @empty
-                        <article class="empty-card prayer-empty-card prayer-empty-card-wide reveal">
-                            <h3>{{ __('home.sections.prayer.testimonies_empty_title') }}</h3>
-                            <p>{{ __('home.sections.prayer.testimonies_empty_text') }}</p>
-                        </article>
-                    @endforelse
+                    </div>
                 </div>
             </div>
         </section>
@@ -664,7 +1060,9 @@
                     <div class="contact-form-wrap">
                         <form method="POST" action="{{ route('contact.quick') }}" class="contact-form-card">
                             @csrf
-                            <input type="hidden" name="redirect_to" value="{{ route('home') . '#home-contact' }}" />
+                            <x-honeypot />
+                            <x-form-captcha />
+                            <input type="hidden" name="redirect_to" value="{{ $localizedHomeUrl . '#home-contact' }}" />
                             <div class="field-row">
                                 <input type="text" name="prenom" value="{{ old('prenom', auth()->user()?->prenom) }}" placeholder="{{ __('home.forms.contact.prenom') }}" />
                                 <input type="text" name="nom" value="{{ old('nom', auth()->user()?->nom) }}" placeholder="{{ __('home.forms.contact.nom') }}" />
@@ -696,6 +1094,56 @@
                                 <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('home.forms.contact.whatsapp') }}</a>
                             </div>
                         </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-support" id="home-support">
+            <div class="container">
+                <div class="home-support-shell reveal">
+                    <div class="home-support-grid">
+                        <div class="home-support-copy">
+                            <span class="section-label">{{ $supportSection['label'] }}</span>
+                            <h2 class="section-title">{{ $supportSection['title'] }}</h2>
+                            <p class="section-sub">{{ $supportSection['subtitle'] }}</p>
+
+                            <p class="home-support-lead">{{ $supportSection['note'] }}</p>
+
+                            <div class="home-support-actions">
+                                <a href="{{ $supportWhatsappHref }}" class="solid-submit" target="_blank" rel="noopener">
+                                    {{ $supportSection['cta'] }}
+                                </a>
+                            </div>
+
+                            <p class="home-support-note">{{ $supportSection['helper'] }}</p>
+                        </div>
+
+                        <div class="home-support-display reveal-delay-1">
+                            <div class="home-support-display-head">
+                                <span class="home-support-kicker">{{ $isFrench ? 'Soutien financier' : 'Financial support' }}</span>
+                                <span class="home-support-signal">{{ $isFrench ? "Canaux valid\u{00E9}s" : 'Approved channels' }}</span>
+                            </div>
+
+                            <div class="home-support-lanes">
+                                @foreach ($supportChannels as $channel)
+                                    <article class="home-support-lane is-{{ $channel['tone'] }}">
+                                        <div class="home-support-lane-top">
+                                            <span class="home-support-chip">{{ $channel['badge'] }}</span>
+                                            <strong class="home-support-operator">{{ $channel['operator'] }}</strong>
+                                        </div>
+                                        <div class="home-support-number">{{ $channel['number'] }}</div>
+                                        <p class="home-support-caption">
+                                            {{ $isFrench ? "Envoyez votre soutien sur ce num\u{00E9}ro Mobile Money." : 'Send your support to this Mobile Money number.' }}
+                                        </p>
+                                    </article>
+                                @endforeach
+                            </div>
+
+                            <p class="home-support-mini-note">
+                                {{ $isFrench ? "Utilisez uniquement ces deux num\u{00E9}ros pour tout soutien financier affich\u{00E9} sur cette page." : 'Use only these two numbers for any financial support shown on this page.' }}
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

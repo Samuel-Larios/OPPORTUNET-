@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\CvDepot;
 use App\Notifications\PlatformDatabaseNotification;
 use App\Support\NotificationRecipients;
+use App\Support\SubmissionGuard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Component;
@@ -98,7 +99,22 @@ class CvDepotForm extends Component
             'cvFichier' => ['required', 'file', 'mimes:pdf', 'max:5120'],
         ]);
 
-        $cvPath = $this->cvFichier?->store('cv-depots', 'public');
+        SubmissionGuard::ensureSafePayload($validated, [
+            'prenom',
+            'nom',
+            'pays',
+            'ville',
+            'titrePoste',
+            'niveauEtude',
+            'domaineEtude',
+            'competences',
+            'langues',
+            'objectifProfessionnel',
+            'secteursInteret',
+            'message',
+        ]);
+
+        $cvPath = $this->cvFichier?->store('cv-depots', 'local');
 
         $cvDepot = CvDepot::query()->create([
             'user_id' => auth()->id(),

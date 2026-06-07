@@ -316,6 +316,36 @@ class OfferApplicationFlowTest extends TestCase
         $this->assertNotNull($notification->fresh()->read_at);
     }
 
+    public function test_notification_open_route_can_rebuild_detail_query_from_resource_type(): void
+    {
+        $role = $this->firstOrCreateRole('admin', 'Administrateur');
+
+        $user = User::factory()->create([
+            'role_id' => $role->id,
+            'prenom' => 'Alice',
+            'nom' => 'Admin',
+            'actif' => true,
+        ]);
+
+        $user->notify(new PlatformDatabaseNotification([
+            'title' => 'Notification contact',
+            'message' => 'Ouverture du détail',
+            'action_url' => route('panel.admin.contacts'),
+            'action_label' => __('admin.notifications.open'),
+            'category' => 'contact',
+            'resource_type' => 'contact',
+            'resource_id' => 42,
+        ]));
+
+        $notification = $user->fresh()->unreadNotifications()->first();
+
+        $this->assertNotNull($notification);
+
+        $this->actingAs($user)
+            ->get(route('panel.notifications.open', $notification))
+            ->assertRedirect(route('panel.admin.contacts', ['contact' => 42]));
+    }
+
     private function createOpportunity(array $attributes = []): Opportunite
     {
         return Opportunite::query()->create(array_merge([

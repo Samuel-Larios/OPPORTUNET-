@@ -23,7 +23,7 @@ class CvDepotFlowTest extends TestCase
 
     public function test_user_can_submit_cv_and_exchange_messages_with_admin(): void
     {
-        Storage::fake('public');
+        Storage::fake('local');
 
         $userRole = $this->firstOrCreateRole('user', 'Utilisateur');
         $adminRole = $this->firstOrCreateRole('admin', 'Administrateur');
@@ -77,7 +77,7 @@ class CvDepotFlowTest extends TestCase
             'demande_coaching' => true,
             'statut' => 'nouveau',
         ]);
-        Storage::disk('public')->assertExists($cvDepot->cv_fichier);
+        Storage::disk('local')->assertExists($cvDepot->cv_fichier);
         $this->assertDatabaseHas('cv_depot_messages', [
             'cv_depot_id' => $cvDepot->id,
             'sender_role' => 'user',
@@ -111,7 +111,7 @@ class CvDepotFlowTest extends TestCase
             'statut' => 'en_traitement',
             'traite_par' => $admin->id,
         ]);
-        Storage::disk('public')->assertExists($adminMessage->attachment_path);
+        Storage::disk('local')->assertExists($adminMessage->attachment_path);
 
         $this->actingAs($user);
 
@@ -132,7 +132,7 @@ class CvDepotFlowTest extends TestCase
 
         $this->assertNotNull($userReply);
         $this->assertEquals(3, CvDepotMessage::query()->where('cv_depot_id', $cvDepot->id)->count());
-        Storage::disk('public')->assertExists($userReply->attachment_path);
+        Storage::disk('local')->assertExists($userReply->attachment_path);
         $this->assertSame(
             route('panel.admin.cv-depots', ['cv' => $cvDepot->id]),
             $admin->fresh()->unreadNotifications()->latest()->first()?->data['action_url']

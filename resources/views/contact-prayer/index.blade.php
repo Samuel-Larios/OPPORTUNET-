@@ -4,16 +4,47 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+229XXXXXXXXX';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
     $whatsappHref = $whatsappBase . '?text=' . urlencode($siteWhatsappMessage ?? __('home.forms.whatsapp_default'));
-    $contactRedirect = route('contact.prayer.index') . '#contact-form';
-    $prayerRedirect = route('contact.prayer.index') . '#prayer-form';
+    $localizedContactPrayerUrl = \App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale());
+    $contactRedirect = $localizedContactPrayerUrl . '#contact-form';
+    $prayerRedirect = $localizedContactPrayerUrl . '#prayer-form';
+    $showPrayerEncouragement = (bool) $prayerEncouragement;
+    $prayerNoteTitle = $showPrayerEncouragement
+        ? __('contact_prayer.prayer.approved_note_title')
+        : __('contact_prayer.prayer.note_title');
+    $prayerNoteText = $showPrayerEncouragement
+        ? (app()->getLocale() === 'en'
+            ? __('contact_prayer.prayer.approved_note_text')
+            : $prayerEncouragement->sujet)
+        : __('contact_prayer.prayer.note_text');
+    $seoDescription = \App\Support\Seo::description(__('contact_prayer.page.subtitle'));
+    $seoSchema = [
+        \App\Support\Seo::breadcrumb([
+            ['name' => $siteName, 'url' => \App\Support\Seo::localizedUrl(route('home'), app()->getLocale())],
+            ['name' => __('contact_prayer.page.label'), 'url' => \App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale())],
+        ]),
+        \App\Support\Seo::schema('WebPage', [
+            'name' => __('contact_prayer.meta.title'),
+            'url' => \App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale()),
+            'description' => $seoDescription,
+            'inLanguage' => app()->getLocale(),
+            'about' => [
+                ['@type' => 'Thing', 'name' => 'Prayer requests'],
+                ['@type' => 'Thing', 'name' => 'Christian spirituality'],
+                ['@type' => 'Thing', 'name' => 'Personal guidance'],
+            ],
+        ]),
+    ];
 @endphp
 
 <x-layouts.app
     :title="__('contact_prayer.meta.title')"
+    :description="$seoDescription"
+    :canonical="\App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale())"
+    :schema-data="$seoSchema"
     :site-name="$siteName"
     :site-slogan="$siteSlogan"
     :site-email="$siteEmail"
@@ -90,6 +121,8 @@
 
                         <form method="POST" action="{{ route('contact.quick') }}" class="contact-form-card">
                             @csrf
+                            <x-honeypot />
+                            <x-form-captcha />
                             <input type="hidden" name="redirect_to" value="{{ $contactRedirect }}" />
 
                             <div class="field-row">
@@ -151,10 +184,10 @@
                                 <span>{{ $featuredVerse->reference }}</span>
                                 <p>{{ $featuredVerse->texte }}</p>
                             </div>
-                        @elseif ($prayerEncouragement)
+                        @elseif ($prayerNoteText !== '')
                             <div class="contact-prayer-verse-card">
-                                <span>{{ __('contact_prayer.prayer.approved_encouragement_label') }}</span>
-                                <p>{{ $prayerEncouragement->sujet }}</p>
+                                <span>{{ $prayerNoteTitle }}</span>
+                                <p>{{ $prayerNoteText }}</p>
                             </div>
                         @endif
                     </aside>
@@ -171,13 +204,15 @@
                         <p class="section-sub">{{ __('contact_prayer.prayer.subtitle') }}</p>
 
                         <div class="contact-prayer-request-note">
-                            <strong>{{ $prayerEncouragement ? __('contact_prayer.prayer.approved_note_title') : __('contact_prayer.prayer.note_title') }}</strong>
-                            <p>{{ $prayerEncouragement?->sujet ?? __('contact_prayer.prayer.note_text') }}</p>
+                            <strong>{{ $prayerNoteTitle }}</strong>
+                            <p>{{ $prayerNoteText }}</p>
                         </div>
                     </div>
 
                     <form method="POST" action="{{ route('prayer.store') }}" class="contact-form-card">
                         @csrf
+                        <x-honeypot />
+                        <x-form-captcha />
                         <input type="hidden" name="redirect_to" value="{{ $prayerRedirect }}" />
 
                         <div class="field-row">
@@ -250,7 +285,7 @@
                                 @else
                                     <form method="POST" action="{{ route('prayer.support', $prayer->id) }}">
                                         @csrf
-                                        <input type="hidden" name="redirect_to" value="{{ route('contact.prayer.index') . '#prayer-wall' }}" />
+                                        <input type="hidden" name="redirect_to" value="{{ $localizedContactPrayerUrl . '#prayer-wall' }}" />
                                         <button type="submit" class="solid-submit contact-prayer-wall-button">{{ __('contact_prayer.wall.support_cta') }}</button>
                                     </form>
                                 @endif

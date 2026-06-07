@@ -2,6 +2,8 @@
 
 return [
     'meta' => [
+        'description' => "Consultez des offres d'emploi, stages, bourses, volontariats et opportunités internationales pour le Bénin, l'Afrique et le reste du monde.",
+        'keywords' => 'offres emploi Bénin, emploi international, stage Bénin, bourse et opportunité, volontariat, télétravail',
         'title' => 'Offres & opportunités',
     ],
     'page' => [
@@ -44,11 +46,11 @@ return [
         'view_details' => 'Voir les détails',
         'apply' => 'Postuler',
         'apply_email' => 'Postuler par email',
-        'ask_more' => 'Demander plus d’informations',
+        'ask_more' => "Demander plus d'informations",
     ],
     'empty' => [
         'title' => 'Aucune offre ne correspond à votre recherche',
-        'text' => 'Essayez d’élargir vos filtres ou de relancer une recherche plus simple.',
+        'text' => 'Essayez d’élargir vos filtres ou relancez une recherche plus simple.',
     ],
     'pagination' => [
         'label' => 'Pagination des offres',
@@ -79,14 +81,14 @@ return [
     'detail' => [
         'back' => 'Retour aux offres',
         'action_label' => 'Candidature',
-        'action_title' => 'Passez à l’action',
-        'action_text' => 'Consultez les détails de l’offre puis utilisez le canal de candidature disponible.',
+        'action_title' => "Passez à l'action",
+        'action_text' => "Consultez les détails de l'offre puis utilisez le canal de candidature disponible.",
         'all_offers' => 'Voir toutes les offres',
         'external_link' => 'Consulter le lien externe',
         'views' => 'Vues de cette offre',
         'summary' => 'Résumé rapide',
         'related_label' => 'Opportunités similaires',
-        'related_title' => 'D’autres offres à consulter',
+        'related_title' => "D'autres offres à consulter",
         'sections' => [
             'description' => 'Description',
             'profile' => 'Profil recherché',
@@ -108,7 +110,7 @@ return [
         'login_prompt' => 'Vous devez vous connecter ou créer un compte pour envoyer votre candidature.',
         'create_account' => 'Créer un compte utilisateur',
         'submit' => 'Envoyer ma candidature',
-        'success' => 'Votre candidature a bien été envoyée. L’administrateur principal la recevra pour traitement.',
+        'success' => "Votre candidature a bien été envoyée. L'administrateur principal la recevra pour traitement.",
         'already_applied_title' => 'Candidature déjà envoyée',
         'already_applied_text' => 'Vous avez déjà postulé à cette offre. Vous serez informé par email après traitement.',
         'fields' => [
@@ -131,7 +133,7 @@ return [
             'greeting' => 'Bonjour :name,',
             'intro' => 'Votre candidature pour l’offre ":offer" a été traitée par notre équipe.',
             'status_label' => 'Statut actuel',
-            'note_label' => 'Message de l’administrateur',
+            'note_label' => "Message de l'administrateur",
             'closing' => 'Merci pour votre confiance. Nous restons disponibles pour la suite.',
         ],
         'company_mail' => [
@@ -140,7 +142,7 @@ return [
             'intro' => 'Notre équipe vous propose un profil pour votre offre ":offer".',
             'candidate_label' => 'Profil proposé',
             'status_label' => 'Statut actuel',
-            'note_label' => 'Note de l’administrateur',
+            'note_label' => "Note de l'administrateur",
             'cta' => 'Consulter les profils proposés',
             'closing' => 'Connectez-vous à votre espace entreprise pour consulter le dossier complet et donner votre validation.',
             'company_fallback' => 'Entreprise partenaire',
@@ -151,7 +153,7 @@ return [
             'intro' => 'Bonne nouvelle. L’entreprise a validé votre profil pour l’offre ":offer".',
             'company_label' => 'Entreprise',
             'status_label' => 'Statut actuel',
-            'note_label' => 'Message de l’entreprise',
+            'note_label' => "Message de l'entreprise",
             'closing' => 'Notre équipe reviendra vers vous pour les prochaines étapes si nécessaire.',
             'company_fallback' => 'Entreprise partenaire',
         ],
@@ -162,7 +164,7 @@ return [
             'company_label' => 'Entreprise',
             'candidate_label' => 'Candidat retenu',
             'status_label' => 'Statut actuel',
-            'note_label' => 'Retour de l’entreprise',
+            'note_label' => "Retour de l'entreprise",
             'cta' => 'Ouvrir les candidatures admin',
             'closing' => 'Vous pouvez poursuivre le suivi depuis le tableau de bord administrateur.',
             'company_fallback' => 'Entreprise partenaire',
@@ -185,9 +187,6 @@ return [
         'temps_partiel' => 'Temps partiel',
         'benevolat' => 'Bénévolat',
         'bénévolat' => 'Bénévolat',
-        'bÃ©nÃ©volat' => 'Bénévolat',
-        'bÃƒÂ©nÃƒÂ©volat' => 'Bénévolat',
-        'bÃƒÆ’Ã‚Â©nÃƒÆ’Ã‚Â©volat' => 'Bénévolat',
         'non_applicable' => 'Non applicable',
     ],
 ];

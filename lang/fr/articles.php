@@ -3,6 +3,8 @@
 return [
     'meta' => [
         'title' => 'Articles',
+        'description' => 'Des articles sur l emploi, la foi, la discipline, la croissance personnelle et les opportunites pour avancer avec clarté.',
+        'keywords' => 'articles emploi Benin, spiritualite chretienne, conseils de carriere, foi et travail, croissance personnelle',
     ],
     'page' => [
         'label' => 'Articles',

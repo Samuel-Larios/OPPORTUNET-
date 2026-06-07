@@ -1,6 +1,8 @@
 <x-layouts.auth :title="__('admin.auth.company_register_title')">
     <form method="POST" action="{{ route('register.store') }}" class="panel-auth-form panel-auth-form-grid">
         @csrf
+        <x-honeypot />
+        <x-form-captcha />
         <input type="hidden" name="redirect_to" value="{{ request('redirect_to', old('redirect_to')) }}" />
 
         <label class="panel-field">

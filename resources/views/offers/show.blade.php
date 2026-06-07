@@ -4,22 +4,73 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+229XXXXXXXXX';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
     $whatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappHref = $whatsappBase . '?text=' . urlencode($whatsappMessage);
     $location = trim(($opportunity->lieu ? $opportunity->lieu . ', ' : '') . ($opportunity->pays ?: ''));
+    $localizedOffersUrl = \App\Support\Seo::localizedUrl(route('offers.index'), app()->getLocale());
+    $localizedOfferUrl = \App\Support\Seo::localizedUrl(route('offers.show', $opportunity->slug), app()->getLocale());
     $uploadTooLargeMessage = app()->getLocale() === 'fr'
         ? 'Les fichiers envoyes sont trop volumineux. Gardez chaque fichier sous 5 Mo et le total de la candidature sous 64 Mo.'
         : 'The uploaded files are too large. Keep each file under 5 MB and the full application under 64 MB.';
     $uploadLimitsHint = app()->getLocale() === 'fr'
         ? 'Chaque fichier doit rester sous 5 Mo. Pour cette candidature, gardez le total des fichiers sous 64 Mo.'
         : 'Each file must stay under 5 MB. For this application, keep the total upload under 64 MB.';
+    $seoDescription = \App\Support\Seo::description($opportunity->description);
+    $employmentTypeMap = [
+        'cdi' => 'FULL_TIME',
+        'cdd' => 'TEMPORARY',
+        'stage' => 'INTERN',
+        'freelance' => 'CONTRACTOR',
+        'temps_partiel' => 'PART_TIME',
+        'benevolat' => 'VOLUNTEER',
+        'bénévolat' => 'VOLUNTEER',
+    ];
+    $seoSchema = [
+        \App\Support\Seo::breadcrumb([
+            ['name' => $siteName, 'url' => \App\Support\Seo::localizedUrl(route('home'), app()->getLocale())],
+            ['name' => __('offers.page.label'), 'url' => $localizedOffersUrl],
+            ['name' => $opportunity->titre, 'url' => $localizedOfferUrl],
+        ]),
+        \App\Support\Seo::schema(in_array($opportunity->type, ['emploi', 'stage', 'volontariat'], true) ? 'JobPosting' : 'WebPage', [
+            'title' => $opportunity->titre,
+            'name' => $opportunity->titre,
+            'url' => $localizedOfferUrl,
+            'description' => $seoDescription,
+            'datePosted' => $opportunity->date_publication?->toDateString(),
+            'validThrough' => $opportunity->date_expiration?->toDateString(),
+            'employmentType' => $employmentTypeMap[$opportunity->contrat] ?? null,
+            'industry' => __('home.opportunity_types.' . $opportunity->type),
+            'directApply' => $opportunity->lien_candidature ? true : null,
+            'jobLocationType' => $opportunity->teletravail ? 'TELECOMMUTE' : null,
+            'hiringOrganization' => [
+                '@type' => 'Organization',
+                'name' => $opportunity->organisation ?: $siteName,
+            ],
+            'jobLocation' => ! $opportunity->teletravail ? [
+                '@type' => 'Place',
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'addressLocality' => $opportunity->lieu,
+                    'addressCountry' => $opportunity->pays,
+                ],
+            ] : null,
+            'applicantLocationRequirements' => $opportunity->pays ? [[
+                '@type' => 'Country',
+                'name' => $opportunity->pays,
+            ]] : null,
+        ]),
+    ];
 @endphp
 
 <x-layouts.app
     :title="$opportunity->titre"
+    :description="$seoDescription"
+    :canonical="$localizedOfferUrl"
+    :type="in_array($opportunity->type, ['emploi', 'stage', 'volontariat'], true) ? 'article' : 'website'"
+    :schema-data="$seoSchema"
     :site-name="$siteName"
     :site-slogan="$siteSlogan"
     :site-email="$siteEmail"
@@ -34,7 +85,7 @@
             <div class="container">
                 <div class="offers-detail-hero-shell reveal">
                     <div class="offers-detail-copy">
-                        <a href="{{ route('offers.index') }}" class="offers-detail-back">{{ __('offers.detail.back') }}</a>
+                        <a href="{{ $localizedOffersUrl }}" class="offers-detail-back">{{ __('offers.detail.back') }}</a>
                         <div class="offers-detail-badges">
                             <span class="opportunity-type">{{ __('home.opportunity_types.' . $opportunity->type) }}</span>
                             @if ($opportunity->urgent)
@@ -77,6 +128,10 @@
                                     <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('offers.card.ask_more') }}</a>
                                 @endif
                             </div>
+                            <x-share-buttons
+                                :url="$localizedOfferUrl"
+                                :title="$opportunity->titre"
+                            />
                         </article>
 
                         <article class="offers-detail-stat-card">
@@ -138,6 +193,7 @@
                                 @else
                                     <form method="POST" action="{{ route('offers.apply.store', $opportunity->slug) }}" enctype="multipart/form-data" class="contact-form-card offers-application-form">
                                         @csrf
+                                        <x-honeypot />
                                         <div class="field-row">
                                             <input type="text" name="telephone" value="{{ old('telephone', auth()->user()->telephone) }}" placeholder="{{ __('offers.application.fields.phone') }}" />
                                             <input type="text" name="whatsapp" value="{{ old('whatsapp', auth()->user()->whatsapp) }}" placeholder="{{ __('offers.application.fields.whatsapp') }}" />
@@ -179,7 +235,7 @@
 
                                         <div class="offers-application-actions">
                                             <button type="submit" class="solid-submit">{{ __('offers.application.submit') }}</button>
-                                            <a href="{{ route('offers.index') }}" class="ghost-submit">{{ __('offers.detail.all_offers') }}</a>
+                                            <a href="{{ $localizedOffersUrl }}" class="ghost-submit">{{ __('offers.detail.all_offers') }}</a>
                                         </div>
                                     </form>
                                 @endif
@@ -253,9 +309,14 @@
                                     <span>{{ $relatedOpportunity->organisation ?: __('offers.card.organization_fallback') }}</span>
                                     <span>{{ trim(($relatedOpportunity->lieu ? $relatedOpportunity->lieu . ', ' : '') . ($relatedOpportunity->pays ?: '')) ?: __('offers.card.location_fallback') }}</span>
                                 </div>
-                                <a href="{{ route('offers.show', $relatedOpportunity->slug) }}" class="opportunity-link">
+                                <a href="{{ \App\Support\Seo::localizedUrl(route('offers.show', $relatedOpportunity->slug), app()->getLocale()) }}" class="opportunity-link">
                                     {{ __('offers.card.view_details') }}
                                 </a>
+                                <x-share-buttons
+                                    :url="\App\Support\Seo::localizedUrl(route('offers.show', $relatedOpportunity->slug), app()->getLocale())"
+                                    :title="$relatedOpportunity->titre"
+                                    variant="compact"
+                                />
                             </article>
                         @endforeach
                     </div>

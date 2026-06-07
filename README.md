@@ -1,61 +1,123 @@
-# OPPORTUNET-
+# Opportunet Mondiale
 
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+Plateforme Laravel bilingue pour les opportunités, articles, formations, services CV, prières, témoignages et espaces privés utilisateur, entreprise et administration.
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Fonctionnalités principales
 
-## About Laravel
+- Offres et opportunités avec filtres, candidatures et suivi
+- Articles avec commentaires modérés
+- Dépôt CV et échanges avec l’équipe
+- Formations avec inscription et suivi
+- Mur de prière et témoignages communautaires
+- Administration par rôles
+- SEO public: `robots.txt`, `sitemap.xml`, canonicals, `hreflang`, `schema.org`
+- Sécurité: headers sécurisés, captcha, honeypot, rate limiting, contrôle d’accès par rôle
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Démarrage local
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+1. Copier `.env.example` vers `.env`
+2. Générer la clé:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+php artisan key:generate
+```
 
-## Learning Laravel
+3. Configurer la base MySQL dans `.env`
+4. Installer les dépendances si nécessaire:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+```bash
+composer install
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+5. Lancer les migrations et seeders:
 
-## Laravel Sponsors
+```bash
+php artisan migrate --seed
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+6. Créer le lien de stockage public:
 
-### Premium Partners
+```bash
+php artisan storage:link
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+7. Démarrer l’application:
 
-## Contributing
+```bash
+php artisan serve
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Important avec XAMPP / Apache
 
-## Code of Conduct
+Si `http://localhost` affiche la page XAMPP, ce n’est pas un bug Laravel: Apache ne pointe simplement pas encore vers ce projet.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Pour tester correctement le site dans le navigateur, il faut:
 
-## Security Vulnerabilities
+- soit utiliser `php artisan serve`
+- soit créer un VirtualHost Apache dont le `DocumentRoot` pointe vers le dossier `public`
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Le site ne doit jamais être servi depuis la racine du dépôt, mais depuis `public`.
 
-## License
+## Préparation production
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Le dépôt contient maintenant un exemple prêt pour la prod: `.env.production.example`.
+
+Points à régler avant mise en ligne:
+
+1. Renseigner `APP_URL` avec le vrai domaine HTTPS
+2. Générer une vraie `APP_KEY`
+3. Mettre `APP_ENV=production` et `APP_DEBUG=false`
+4. Configurer la base MySQL de production
+5. Configurer le SMTP réel
+6. Exécuter `php artisan storage:link`
+7. Exécuter `php artisan migrate --force`
+8. Exécuter `php artisan optimize`
+9. Lancer un worker de queue:
+
+```bash
+php artisan queue:work --tries=3
+```
+
+10. Planifier le scheduler Laravel si utilisé:
+
+```bash
+php artisan schedule:run
+```
+
+## Checklist de déploiement
+
+```bash
+composer install --no-dev --optimize-autoloader
+php artisan key:generate
+php artisan migrate --force
+php artisan storage:link
+php artisan optimize
+php artisan test
+```
+
+## Vérification rapide après déploiement
+
+- `/` charge correctement
+- `/robots.txt` répond
+- `/sitemap.xml` répond
+- `/up` répond
+- les uploads publics s’affichent correctement via `/storage/...`
+- la connexion fonctionne en HTTPS
+- les formulaires contact, prière et newsletter répondent
+
+## Tests
+
+Lancer toute la suite:
+
+```bash
+php artisan test
+```
+
+## Notes de déploiement web
+
+- `DocumentRoot` doit pointer vers `public`
+- activer HTTPS côté serveur ou reverse proxy
+- si le SSL est terminé en amont, garder `APP_FORCE_HTTPS=true`
+- démarrer un worker de queue en continu pour les tâches asynchrones
+- surveiller les logs dans `storage/logs`
+- des exemples serveur sont fournis dans `deploy/apache-vhost.example.conf` et `deploy/nginx.example.conf`

@@ -44,7 +44,7 @@ return [
     'wall' => [
         'label' => 'Mur de prière',
         'title' => 'Portons ensemble les sujets approuvés',
-        'subtitle' => 'Les sujets publiés ici ont été relus par l’équipe. Vous pouvez vous joindre dans la prière et encourager discrètement les personnes concernées.',
+        'subtitle' => 'Les sujets publiés ici ont été relus par l’équipe. Vous pouvez vous joindre dans la prière et, après un clic sur "Je prie aussi", rejoindre le groupe WhatsApp de prière si le lien est configuré.',
         'status_note' => 'Seuls les sujets approuvés de type prière apparaissent ici. Les sujets en attente ou rejetés restent non visibles publiquement.',
         'empty_title' => 'Le mur attend de nouveaux sujets approuvés',
         'empty' => 'Aucun sujet approuvé n’est visible pour le moment.',
@@ -56,6 +56,7 @@ return [
         'support_count' => ':count personne(s) en prière',
         'support_success' => 'Votre soutien a bien été pris en compte.',
         'support_already_sent' => 'Votre soutien a déjà été enregistré pour ce sujet.',
+        'support_group_missing' => 'Votre soutien a été enregistré, mais le lien du groupe WhatsApp de prière n’est pas encore configuré.',
         'stats' => [
             'approved_label' => 'Sujets approuvés',
             'approved_text' => 'Nombre total de requêtes visibles',

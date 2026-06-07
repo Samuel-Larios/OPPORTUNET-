@@ -19,10 +19,10 @@ class NewsletterPublishingTest extends TestCase
 
     public function test_visitor_can_subscribe_to_newsletter(): void
     {
-        $response = $this->post(route('newsletter.subscribe'), [
+        $response = $this->withFormCaptcha()->post(route('newsletter.subscribe'), $this->captchaPayload([
             'prenom' => 'Ruth',
             'email' => 'ruth@example.com',
-        ]);
+        ]));
 
         $response->assertRedirect(route('home'));
 

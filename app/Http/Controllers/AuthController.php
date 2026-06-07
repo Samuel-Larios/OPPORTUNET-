@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Role;
 use App\Models\User;
+use App\Support\SubmissionGuard;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,6 +23,8 @@ class AuthController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
+        SubmissionGuard::ensureSafeRequest($request, ['email'], true);
+
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
@@ -62,6 +65,8 @@ class AuthController extends Controller
 
     public function register(Request $request): RedirectResponse
     {
+        SubmissionGuard::ensureSafeRequest($request, ['prenom', 'nom', 'email', 'pays'], true);
+
         $data = $request->validate([
             'prenom' => ['required', 'string', 'max:80'],
             'nom' => ['required', 'string', 'max:80'],

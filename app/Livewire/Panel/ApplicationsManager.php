@@ -131,7 +131,7 @@ class ApplicationsManager extends Component
                     'name' => trim($application->prenom . ' ' . $application->nom),
                     'offer' => $application->opportunite->titre,
                 ]),
-                'action_url' => route('panel.company.applications'),
+                'action_url' => route('panel.company.applications', ['application' => $application->id]),
                 'action_label' => __('admin.notifications.open'),
                 'category' => 'company',
                 'level' => 'info',

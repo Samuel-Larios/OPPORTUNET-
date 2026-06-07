@@ -4,14 +4,44 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+229XXXXXXXXX';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
     $defaultWhatsappHref = $whatsappBase . '?text=' . urlencode($siteWhatsappMessage ?? __('home.forms.whatsapp_default'));
+    $localizedTrainingsUrl = \App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale());
+    $seoTitle = $selectedTraining?->titre ?: __('trainings.meta.title');
+    $seoDescription = \App\Support\Seo::description($selectedTraining?->description_courte ?: __('trainings.page.subtitle'));
+    $seoCanonical = \App\Support\Seo::localizedUrl(
+        route('trainings.index'),
+        app()->getLocale(),
+        $selectedTraining ? ['formation' => $selectedTraining->id] : []
+    );
+    $seoSchema = [
+        \App\Support\Seo::breadcrumb([
+            ['name' => $siteName, 'url' => \App\Support\Seo::localizedUrl(route('home'), app()->getLocale())],
+            ['name' => __('trainings.page.label'), 'url' => $localizedTrainingsUrl],
+        ]),
+        \App\Support\Seo::schema($selectedTraining ? 'Course' : 'CollectionPage', [
+            'name' => $seoTitle,
+            'url' => $seoCanonical,
+            'description' => $seoDescription,
+            'inLanguage' => app()->getLocale(),
+            'provider' => $selectedTraining ? [
+                '@type' => 'Organization',
+                'name' => $siteName,
+            ] : null,
+            'startDate' => $selectedTraining?->date_debut?->toDateString(),
+            'endDate' => $selectedTraining?->date_fin?->toDateString(),
+        ]),
+    ];
 @endphp
 
 <x-layouts.app
-    :title="__('trainings.meta.title')"
+    :title="$seoTitle"
+    :description="$seoDescription"
+    :canonical="$seoCanonical"
+    :image="$selectedTraining?->publicCoverUrl()"
+    :schema-data="$seoSchema"
     :site-name="$siteName"
     :site-slogan="$siteSlogan"
     :site-email="$siteEmail"
@@ -84,9 +114,14 @@
                             </div>
 
                             <div class="training-card-actions">
-                                <a href="{{ route('trainings.index', ['formation' => $training->id]) }}#training-details" class="solid-submit">{{ __('trainings.list.details') }}</a>
+                                <a href="{{ \App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), ['formation' => $training->id]) }}#training-details" class="solid-submit">{{ __('trainings.list.details') }}</a>
                                 <a href="{{ $trainingWhatsappHref }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('trainings.card.whatsapp') }}</a>
                             </div>
+                            <x-share-buttons
+                                :url="\App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), ['formation' => $training->id]) . '#training-details'"
+                                :title="$training->titre"
+                                variant="compact"
+                            />
                         </article>
                     @empty
                         <article class="empty-card reveal">
@@ -138,6 +173,10 @@
                                 @endif
                                 <a href="{{ $selectedTrainingWhatsappHref }}" class="solid-submit" target="_blank" rel="noopener">{{ __('trainings.card.whatsapp') }}</a>
                             </div>
+                            <x-share-buttons
+                                :url="\App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), ['formation' => $selectedTraining->id]) . '#training-details'"
+                                :title="$selectedTraining->titre"
+                            />
                         </div>
 
                         <div class="training-details-panels">
@@ -231,6 +270,7 @@
                     @else
                         <form method="POST" action="{{ route('trainings.register') }}" class="contact-form-card">
                             @csrf
+                            <x-honeypot />
 
                             <select name="formation_id">
                                 <option value="">{{ __('trainings.form.fields.formation_placeholder') }}</option>

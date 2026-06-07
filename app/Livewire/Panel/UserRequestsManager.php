@@ -5,6 +5,7 @@ namespace App\Livewire\Panel;
 use App\Models\Contact;
 use App\Models\DemandeAccompagnement;
 use App\Models\Service;
+use App\Support\SubmissionGuard;
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
 
@@ -41,6 +42,13 @@ class UserRequestsManager extends Component
             'budget' => ['nullable', 'string', 'max:100'],
             'modeContactPrefere' => ['required', 'in:whatsapp,email,telephone,presentiel'],
             'disponibilite' => ['required', 'in:matin,apres_midi,soir,flexible'],
+        ]);
+
+        SubmissionGuard::ensureSafePayload($validated, [
+            'pays',
+            'besoin',
+            'objectif',
+            'budget',
         ]);
 
         $user = auth()->user();

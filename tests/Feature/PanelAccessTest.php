@@ -33,7 +33,7 @@ class PanelAccessTest extends TestCase
             'actif' => true,
         ]);
 
-        $response = $this->post('/inscription', [
+        $response = $this->withFormCaptcha()->post('/inscription', $this->captchaPayload([
             'prenom' => 'Marie',
             'nom' => 'K.',
             'email' => 'marie@example.com',
@@ -41,7 +41,7 @@ class PanelAccessTest extends TestCase
             'pays' => 'Benin',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
-        ]);
+        ]));
 
         $response->assertRedirect(route('verification.notice'));
         $this->assertAuthenticated();
@@ -67,6 +67,28 @@ class PanelAccessTest extends TestCase
         $this->actingAs($user)
             ->get(route('panel.admin.dashboard'))
             ->assertOk();
+    }
+
+    public function test_authenticated_admin_can_still_use_legacy_admin_entrypoint(): void
+    {
+        $role = Role::query()->firstOrCreate([
+            'nom' => 'super_admin',
+        ], [
+            'libelle' => 'Super Administrateur',
+            'permissions' => json_encode(['*']),
+            'actif' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'role_id' => $role->id,
+            'prenom' => 'Admin',
+            'nom' => 'Principal',
+            'actif' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get('/admin')
+            ->assertRedirect(route('panel.admin.dashboard'));
     }
 
     public function test_editor_can_manage_offers_but_not_users(): void

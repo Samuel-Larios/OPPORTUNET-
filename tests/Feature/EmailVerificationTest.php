@@ -27,7 +27,7 @@ class EmailVerificationTest extends TestCase
             'actif' => true,
         ]);
 
-        $response = $this->post(route('register.user.store'), [
+        $response = $this->withFormCaptcha()->post(route('register.user.store'), $this->captchaPayload([
             'prenom' => 'Samuel',
             'nom' => 'Etudiant',
             'email' => 'samuel.etudiant@example.com',
@@ -35,7 +35,7 @@ class EmailVerificationTest extends TestCase
             'pays' => 'Benin',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
-        ]);
+        ]));
 
         $user = User::query()->where('email', 'samuel.etudiant@example.com')->first();
 
@@ -64,7 +64,7 @@ class EmailVerificationTest extends TestCase
                 ->andThrow(new TransportException('SMTP unreachable'));
         });
 
-        $response = $this->post(route('register.user.store'), [
+        $response = $this->withFormCaptcha()->post(route('register.user.store'), $this->captchaPayload([
             'prenom' => 'Samuel',
             'nom' => 'Etudiant',
             'email' => 'samuel.echec@example.com',
@@ -72,7 +72,7 @@ class EmailVerificationTest extends TestCase
             'pays' => 'Benin',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
-        ]);
+        ]));
 
         $user = User::query()->where('email', 'samuel.echec@example.com')->first();
 

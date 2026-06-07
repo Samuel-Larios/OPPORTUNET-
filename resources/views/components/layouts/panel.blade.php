@@ -10,7 +10,7 @@
         ->keyBy('cle');
     $siteEmail = $siteSettings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteSettings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00';
-    $siteAddress = $siteSettings->get('site_adresse')?->valeur ?? 'En face de la Mairie de Misserete, Oueme, BJ';
+    $siteAddress = $siteSettings->get('site_adresse')?->valeur ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
     $unreadNotificationsCount = $user?->unreadNotifications()->count() ?? 0;
     $menuBadges = [
         'panel.notifications' => $unreadNotificationsCount,
@@ -26,6 +26,15 @@
             'panel.admin.article-comments' => \App\Models\BlogCommentaire::query()->where('statut', 'en_attente')->count(),
             'panel.admin.testimonials' => \App\Models\Temoignage::query()->where('statut', 'en_attente')->count(),
             'panel.admin.prayers' => \App\Models\MurDePriere::query()->where('statut', 'en_attente')->count(),
+            'panel.admin.security' => \Illuminate\Support\Facades\Schema::hasTable('security_ip_blocks')
+                ? \App\Models\SecurityIpBlock::query()
+                    ->where(function ($query) {
+                        $query->where('is_manual', true)
+                            ->orWhereNull('blocked_until')
+                            ->orWhere('blocked_until', '>', now());
+                    })
+                    ->count()
+                : 0,
         ]);
     } elseif ($user?->canManageOffers()) {
         $menuBadges['panel.editor.offers'] = \App\Models\Opportunite::query()->where('statut', 'en_attente_validation')->count();
@@ -100,6 +109,7 @@
                 'items' => [
                     ['label' => __('admin.nav.users'), 'route' => 'panel.admin.users', 'visible' => true],
                     ['label' => __('admin.nav.settings'), 'route' => 'panel.admin.settings', 'visible' => true],
+                    ['label' => __('admin.nav_security'), 'route' => 'panel.admin.security', 'visible' => true, 'badge' => $menuBadges['panel.admin.security'] ?? 0],
                 ],
             ],
         ]);

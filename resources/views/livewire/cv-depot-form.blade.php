@@ -36,7 +36,7 @@
                 </div>
             </div>
         @else
-            <form wire:submit="submit" class="cv-form-card">
+            <form wire:submit="submit" class="cv-form-card" enctype="multipart/form-data">
                 <div class="field-row">
                     <input type="text" wire:model="prenom" placeholder="{{ __('cv_services.form.fields.prenom') }}" />
                     <input type="text" wire:model="nom" placeholder="{{ __('cv_services.form.fields.nom') }}" />

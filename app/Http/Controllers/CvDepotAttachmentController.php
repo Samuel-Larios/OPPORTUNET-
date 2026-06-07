@@ -15,9 +15,10 @@ class CvDepotAttachmentController extends Controller
         $this->ensureAccess($request, $cvDepot);
 
         abort_unless(is_string($cvDepot->cv_fichier) && $cvDepot->cv_fichier !== '', 404);
-        abort_unless(Storage::disk('public')->exists($cvDepot->cv_fichier), 404);
+        $disk = $this->resolveDisk($cvDepot->cv_fichier);
+        abort_unless($disk !== null, 404);
 
-        return Storage::disk('public')->download($cvDepot->cv_fichier, basename($cvDepot->cv_fichier));
+        return Storage::disk($disk)->download($cvDepot->cv_fichier, basename($cvDepot->cv_fichier));
     }
 
     public function downloadMessageAttachment(Request $request, CvDepot $cvDepot, CvDepotMessage $message): StreamedResponse
@@ -25,9 +26,10 @@ class CvDepotAttachmentController extends Controller
         $this->ensureAccess($request, $cvDepot);
         abort_unless($message->cv_depot_id === $cvDepot->id, 404);
         abort_unless(is_string($message->attachment_path) && $message->attachment_path !== '', 404);
-        abort_unless(Storage::disk('public')->exists($message->attachment_path), 404);
+        $disk = $this->resolveDisk($message->attachment_path);
+        abort_unless($disk !== null, 404);
 
-        return Storage::disk('public')->download(
+        return Storage::disk($disk)->download(
             $message->attachment_path,
             $message->attachment_name ?: basename($message->attachment_path)
         );
@@ -45,5 +47,16 @@ class CvDepotAttachmentController extends Controller
         }
 
         abort_unless((int) $cvDepot->user_id === (int) $user->id, 403);
+    }
+
+    protected function resolveDisk(string $path): ?string
+    {
+        foreach (['local', 'public'] as $disk) {
+            if (Storage::disk($disk)->exists($path)) {
+                return $disk;
+            }
+        }
+
+        return null;
     }
 }

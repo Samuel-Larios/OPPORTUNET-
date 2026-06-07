@@ -4,7 +4,7 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+229XXXXXXXXX';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $accent = $article->category?->couleur ?: '#1A7A6E';
     $galleryImages = $article->images->take(5);
@@ -13,10 +13,48 @@
     $commentsByParent = $approvedComments->groupBy(fn ($comment) => $comment->parent_id ?? 0);
     $topLevelComments = $commentsByParent->get(0, collect());
     $activeReplyComment = $replyComment ?? (old('parent_id') ? $approvedComments->firstWhere('id', (int) old('parent_id')) : null);
+    $seoDescription = \App\Support\Seo::description($article->meta_description ?: $article->extrait ?: $article->contenu);
+    $localizedArticlesUrl = \App\Support\Seo::localizedUrl(route('articles.index'), app()->getLocale());
+    $localizedArticleUrl = \App\Support\Seo::localizedUrl(route('articles.show', $article->slug), app()->getLocale());
+    $seoSchema = [
+        \App\Support\Seo::breadcrumb([
+            ['name' => $siteName, 'url' => \App\Support\Seo::localizedUrl(route('home'), app()->getLocale())],
+            ['name' => __('articles.page.label'), 'url' => $localizedArticlesUrl],
+            ['name' => $article->titre, 'url' => $localizedArticleUrl],
+        ]),
+        \App\Support\Seo::schema('Article', [
+            'headline' => $article->titre,
+            'description' => $seoDescription,
+            'url' => $localizedArticleUrl,
+            'datePublished' => $article->publie_le?->toIso8601String(),
+            'dateModified' => $article->updated_at?->toIso8601String(),
+            'inLanguage' => app()->getLocale(),
+            'image' => $primaryImageUrl ? [$primaryImageUrl] : null,
+            'author' => [
+                '@type' => 'Organization',
+                'name' => $siteName,
+            ],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => $siteName,
+                'logo' => [
+                    '@type' => 'ImageObject',
+                    'url' => \App\Support\Seo::absoluteImageUrl('images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png'),
+                ],
+            ],
+            'articleSection' => $article->category?->nom,
+            'mainEntityOfPage' => $localizedArticleUrl,
+        ]),
+    ];
 @endphp
 
 <x-layouts.app
     :title="$article->meta_titre ?: $article->titre"
+    :description="$seoDescription"
+    :canonical="$localizedArticleUrl"
+    :image="$primaryImageUrl"
+    type="article"
+    :schema-data="$seoSchema"
     :site-name="$siteName"
     :site-slogan="$siteSlogan"
     :site-email="$siteEmail"
@@ -31,7 +69,7 @@
             <div class="container">
                 <div class="article-detail-shell reveal">
                     <div class="article-detail-copy">
-                        <a href="{{ route('articles.index') }}" class="offers-detail-back">{{ __('articles.detail.back') }}</a>
+                        <a href="{{ $localizedArticlesUrl }}" class="offers-detail-back">{{ __('articles.detail.back') }}</a>
                         <div class="article-badges">
                             <span class="article-category-badge" style="--article-accent: {{ $accent }};">
                                 {{ $article->category?->nom ?: __('articles.card.default_badge') }}
@@ -58,8 +96,12 @@
                             <strong>{{ __('articles.detail.side_title') }}</strong>
                             <p>{{ __('articles.detail.side_text') }}</p>
                             <div class="offers-detail-actions">
-                                <a href="{{ route('articles.index') }}" class="solid-submit">{{ __('articles.detail.all_articles') }}</a>
+                                <a href="{{ $localizedArticlesUrl }}" class="solid-submit">{{ __('articles.detail.all_articles') }}</a>
                             </div>
+                            <x-share-buttons
+                                :url="$localizedArticleUrl"
+                                :title="$article->titre"
+                            />
                         </article>
                     </aside>
                 </div>
@@ -175,12 +217,13 @@
                                 @auth
                                     <form method="POST" action="{{ route('articles.comments.store', $article->slug) }}">
                                         @csrf
+                                        <x-honeypot />
 
                                         @if ($activeReplyComment)
                                             <div class="contact-form-card" style="margin-bottom: 16px;">
                                                 <strong>{{ __('articles.comments.reply_to', ['author' => $activeReplyComment->authorLabel()]) }}</strong>
                                                 <p>{{ \Illuminate\Support\Str::limit($activeReplyComment->contenu, 140) }}</p>
-                                                <a href="{{ route('articles.show', $article->slug) }}#article-comments" class="ghost-submit">{{ __('articles.comments.cancel_reply') }}</a>
+                                                <a href="{{ $localizedArticleUrl }}#article-comments" class="ghost-submit">{{ __('articles.comments.cancel_reply') }}</a>
                                             </div>
                                             <input type="hidden" name="parent_id" value="{{ $activeReplyComment->id }}" />
                                         @endif
@@ -196,8 +239,8 @@
                                     <strong>{{ __('articles.comments.label') }}</strong>
                                     <p style="margin-top: 12px;">{{ __('articles.comments.login_required') }}</p>
                                     <div class="contact-form-actions" style="margin-top: 16px;">
-                                        <a href="{{ route('login', ['redirect_to' => route('articles.show', $article->slug) . '#article-comments']) }}" class="solid-submit">{{ __('articles.comments.login_action') }}</a>
-                                        <a href="{{ route('register.user', ['redirect_to' => route('articles.show', $article->slug) . '#article-comments']) }}" class="ghost-submit">{{ __('articles.comments.register_action') }}</a>
+                                        <a href="{{ route('login', ['redirect_to' => $localizedArticleUrl . '#article-comments']) }}" class="solid-submit">{{ __('articles.comments.login_action') }}</a>
+                                        <a href="{{ route('register.user', ['redirect_to' => $localizedArticleUrl . '#article-comments']) }}" class="ghost-submit">{{ __('articles.comments.register_action') }}</a>
                                     </div>
                                 @endauth
                             @else
@@ -245,10 +288,15 @@
                                     <h3>{{ $relatedArticle->titre }}</h3>
                                     <p>{{ $relatedArticle->extrait ?: \Illuminate\Support\Str::limit(strip_tags($relatedArticle->contenu), 145) }}</p>
                                     <div class="article-card-actions">
-                                        <a href="{{ route('articles.show', $relatedArticle->slug) }}" class="solid-submit">
+                                        <a href="{{ \App\Support\Seo::localizedUrl(route('articles.show', $relatedArticle->slug), app()->getLocale()) }}" class="solid-submit">
                                             {{ __('articles.card.view_details') }}
                                         </a>
                                     </div>
+                                    <x-share-buttons
+                                        :url="\App\Support\Seo::localizedUrl(route('articles.show', $relatedArticle->slug), app()->getLocale())"
+                                        :title="$relatedArticle->titre"
+                                        variant="compact"
+                                    />
                                 </div>
                             </article>
                         @endforeach

@@ -18,7 +18,7 @@ class ArticlesPageTest extends TestCase
         ])->get(route('articles.index'));
 
         $response->assertOk();
-        $response->assertSeeText('Decouvrez nos articles, conseils et actualites');
+        $response->assertSeeText('Découvrez nos articles, conseils et actualités');
         $response->assertSeeText('5 erreurs qui bloquent votre candidature');
     }
 

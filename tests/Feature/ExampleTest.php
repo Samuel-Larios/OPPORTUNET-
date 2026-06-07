@@ -20,7 +20,7 @@ class ExampleTest extends TestCase
         $response->assertOk();
         $response->assertSee('lang="fr"', false);
         $response->assertSeeText('Des services concrets pour votre avenir');
-        $response->assertSeeText('Une plateforme nee au Benin, avec un coeur africain et une vision mondiale.');
+        $response->assertSeeText('Une plateforme née au Bénin, avec un cœur africain et une vision mondiale.');
         $response->assertSeeText('Car je connais les projets');
     }
 
@@ -46,7 +46,7 @@ class ExampleTest extends TestCase
         $response->assertOk();
         $response->assertSee('lang="fr"', false);
         $response->assertSeeText('Des services concrets pour votre avenir');
-        $response->assertSeeText('Une plateforme nee au Benin, avec un coeur africain et une vision mondiale.');
+        $response->assertSeeText('Une plateforme née au Bénin, avec un cœur africain et une vision mondiale.');
     }
 
     public function test_manual_language_switch_overrides_browser_language(): void
@@ -68,7 +68,7 @@ class ExampleTest extends TestCase
 
     public function test_quick_contact_form_is_saved(): void
     {
-        $response = $this->post('/contact-rapide', [
+        $response = $this->withFormCaptcha()->post('/contact-rapide', $this->captchaPayload([
             'prenom' => 'Samuel',
             'nom' => 'Larios',
             'email' => 'samuel@example.com',
@@ -76,7 +76,7 @@ class ExampleTest extends TestCase
             'pays' => 'Benin',
             'sujet' => 'service',
             'message' => 'Je souhaite etre aide pour mon CV.',
-        ]);
+        ]));
 
         $response->assertRedirect(route('home') . '#home-contact');
 
@@ -89,13 +89,13 @@ class ExampleTest extends TestCase
 
     public function test_prayer_wall_form_is_saved_as_pending(): void
     {
-        $response = $this->post('/mur-de-priere', [
+        $response = $this->withFormCaptcha()->post('/mur-de-priere', $this->captchaPayload([
             'prenom' => 'Grace',
             'email' => 'grace@example.com',
             'pays' => 'Togo',
             'sujet' => 'Merci de prier pour une orientation claire.',
             'anonyme' => '1',
-        ]);
+        ]));
 
         $response->assertRedirect(route('home') . '#home-prayer');
 
@@ -115,7 +115,7 @@ class ExampleTest extends TestCase
         ])->get('/offres-opportunites');
 
         $response->assertOk();
-        $response->assertSeeText('Explorez les offres et opportunites du moment');
+        $response->assertSeeText('Explorez les offres et opportunités du moment');
         $response->assertSeeText('Assistant Projet et Communication');
         $response->assertSeeText('Les services disponibles pour aller plus loin');
         $response->assertSeeText('Accompagnement Complet');
@@ -139,7 +139,7 @@ class ExampleTest extends TestCase
         ])->get('/');
 
         $response->assertOk();
-        $response->assertSeeText('Conseils, inspiration et actualites a lire');
+        $response->assertSeeText('Conseils, inspiration et actualités à lire');
         $response->assertSeeText('Opportunet Mondiale ouvre un espace articles');
     }
 
@@ -185,7 +185,7 @@ class ExampleTest extends TestCase
         ])->get('/formations');
 
         $response->assertOk();
-        $response->assertSeeText('Decouvrez les formations disponibles');
+        $response->assertSeeText('Découvrez les formations disponibles');
         $response->assertSeeText('Bootcamp Impact Professionnel');
     }
 
@@ -240,14 +240,29 @@ class ExampleTest extends TestCase
         ])->get('/contact-priere');
 
         $response->assertOk();
-        $response->assertSeeText('Parlons ensemble et partagez votre sujet de priere');
+        $response->assertSeeText('Parlons ensemble et partagez votre sujet de prière');
         $response->assertSeeText('Envoyez votre message');
-        $response->assertSeeText('Deposez votre sujet');
+        $response->assertSeeText('Déposez votre sujet');
+    }
+
+    public function test_contact_prayer_page_renders_form_text_in_english(): void
+    {
+        $response = $this->withHeaders([
+            'Accept-Language' => 'en-US,en;q=0.9,fr;q=0.8',
+        ])->get('/contact-priere');
+
+        $response->assertOk();
+        $response->assertSee('lang="en"', false);
+        $response->assertSeeText('Let us connect and share your prayer request');
+        $response->assertSeeText('Share your request');
+        $response->assertSeeText('Approved encouragement');
+        $response->assertSeeText('Take heart. God does not forget any effort sown in faith. Keep moving forward, even in small steps.');
+        $response->assertDontSeeText('Courage, Dieu n oublie aucun effort seme avec foi. Continue d avancer, meme a petits pas.');
     }
 
     public function test_contact_form_can_redirect_back_to_contact_prayer_page(): void
     {
-        $response = $this->post('/contact-rapide', [
+        $response = $this->withFormCaptcha()->post('/contact-rapide', $this->captchaPayload([
             'redirect_to' => '/contact-priere#contact-form',
             'prenom' => 'Samuel',
             'nom' => 'Larios',
@@ -256,21 +271,21 @@ class ExampleTest extends TestCase
             'pays' => 'Benin',
             'sujet' => 'information',
             'message' => 'Je souhaite etre oriente vers vos services.',
-        ]);
+        ]));
 
         $response->assertRedirect('/contact-priere#contact-form');
     }
 
     public function test_prayer_form_can_redirect_back_to_contact_prayer_page(): void
     {
-        $response = $this->post('/mur-de-priere', [
+        $response = $this->withFormCaptcha()->post('/mur-de-priere', $this->captchaPayload([
             'redirect_to' => '/contact-priere#prayer-form',
             'prenom' => 'Grace',
             'email' => 'grace.contact@example.com',
             'pays' => 'Togo',
             'sujet' => 'Merci de prier pour ma famille et ma direction.',
             'anonyme' => '1',
-        ]);
+        ]));
 
         $response->assertRedirect('/contact-priere#prayer-form');
     }

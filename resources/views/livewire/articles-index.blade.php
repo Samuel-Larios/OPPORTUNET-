@@ -28,7 +28,7 @@
 
     <section class="articles-search-section">
         <div class="container">
-            <div class="articles-search-shell reveal">
+            <div class="articles-search-shell reveal visible">
                 <div class="articles-search-bar">
                     <div class="articles-search-field">
                         <input
@@ -75,7 +75,7 @@
 
     <section class="articles-list-section">
         <div class="container">
-            <div class="articles-results-head reveal">
+            <div class="articles-results-head reveal visible">
                 <p>{{ trans_choice('articles.results.count', $filteredCount, ['count' => $filteredCount]) }}</p>
             </div>
 
@@ -88,7 +88,7 @@
                         $primaryImageAlt = $article->primaryImageAlt();
                     @endphp
 
-                    <article class="article-card reveal reveal-delay-{{ min(($index % 4) + 1, 4) }}" wire:key="article-{{ $article->id }}">
+                    <article class="article-card reveal visible reveal-delay-{{ min(($index % 4) + 1, 4) }}" wire:key="article-{{ $article->id }}">
                         <div class="article-card-visual" style="--article-accent: {{ $accent }};">
                             @if ($primaryImageUrl)
                                 <img src="{{ $primaryImageUrl }}" alt="{{ $primaryImageAlt }}">
@@ -131,10 +131,15 @@
                                     {{ __('articles.card.view_details') }}
                                 </a>
                             </div>
+                            <x-share-buttons
+                                :url="route('articles.show', $article->slug)"
+                                :title="$article->titre"
+                                variant="compact"
+                            />
                         </div>
                     </article>
                 @empty
-                    <article class="empty-card reveal">
+                    <article class="empty-card reveal visible">
                         <h2>{{ __('articles.empty.title') }}</h2>
                         <p>{{ __('articles.empty.text') }}</p>
                     </article>
@@ -142,7 +147,7 @@
             </div>
 
             @if ($articles->hasPages())
-                <nav class="offers-pagination reveal" aria-label="{{ __('articles.pagination.label') }}">
+                <nav class="offers-pagination reveal visible" aria-label="{{ __('articles.pagination.label') }}">
                     @if ($articles->onFirstPage())
                         <span class="pagination-btn disabled">{{ __('articles.pagination.previous') }}</span>
                     @else

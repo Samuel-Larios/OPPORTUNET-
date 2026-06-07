@@ -5,6 +5,7 @@ namespace App\Livewire\Panel;
 use App\Models\CvDepot;
 use App\Notifications\PlatformDatabaseNotification;
 use App\Support\NotificationRecipients;
+use App\Support\SubmissionGuard;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Notification;
 use Livewire\Component;
@@ -43,7 +44,11 @@ class UserCvDepotsManager extends Component
             ->where('user_id', auth()->id())
             ->findOrFail($this->selectedCvDepotId);
 
-        $attachmentPath = $this->replyAttachment?->store('cv-depots/messages', 'public');
+        SubmissionGuard::ensureSafePayload([
+            'replyMessage' => $this->replyMessage,
+        ], ['replyMessage']);
+
+        $attachmentPath = $this->replyAttachment?->store('cv-depots/messages', 'local');
 
         $cvDepot->messages()->create([
             'sender_id' => auth()->id(),

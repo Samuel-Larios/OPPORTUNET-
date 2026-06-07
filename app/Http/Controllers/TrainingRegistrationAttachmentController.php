@@ -16,9 +16,10 @@ class TrainingRegistrationAttachmentController extends Controller
 
         abort_unless($message->inscription_formation_id === $registration->id, 404);
         abort_unless(is_string($message->attachment_path) && $message->attachment_path !== '', 404);
-        abort_unless(Storage::disk('public')->exists($message->attachment_path), 404);
+        $disk = $this->resolveDisk($message->attachment_path);
+        abort_unless($disk !== null, 404);
 
-        return Storage::disk('public')->download(
+        return Storage::disk($disk)->download(
             $message->attachment_path,
             $message->attachment_name ?: basename($message->attachment_path)
         );
@@ -36,5 +37,16 @@ class TrainingRegistrationAttachmentController extends Controller
         }
 
         abort_unless($registration->belongsToUser($user), 403);
+    }
+
+    protected function resolveDisk(string $path): ?string
+    {
+        foreach (['local', 'public'] as $disk) {
+            if (Storage::disk($disk)->exists($path)) {
+                return $disk;
+            }
+        }
+
+        return null;
     }
 }

@@ -44,6 +44,22 @@
             <span>{{ __('admin.dashboard.applications') }}</span>
             <strong>{{ $stats['applications'] }}</strong>
         </article>
+        <article class="panel-stat-card">
+            <span>{{ __('admin.dashboard_newsletter_subscribers') }}</span>
+            <strong>{{ $stats['newsletter_subscribers'] }}</strong>
+        </article>
+        <article class="panel-stat-card">
+            <span>{{ __('admin.dashboard_notification_recipients') }}</span>
+            <strong>{{ $stats['notification_recipients'] }}</strong>
+        </article>
+        <article class="panel-stat-card">
+            <span>{{ __('admin.dashboard_security_incidents') }}</span>
+            <strong>{{ $stats['security_incidents'] }}</strong>
+        </article>
+        <article class="panel-stat-card">
+            <span>{{ __('admin.dashboard_security_blocks') }}</span>
+            <strong>{{ $stats['security_blocks'] }}</strong>
+        </article>
     </section>
 
     <section class="panel-grid-3">
@@ -208,6 +224,25 @@
                     </div>
                 @empty
                     <p class="panel-empty">Aucun service CV pour le moment.</p>
+                @endforelse
+            </div>
+        </article>
+
+        <article class="panel-card">
+            <div class="panel-card-head">
+                <h2>{{ __('admin.security.incidents.title') }}</h2>
+            </div>
+            <div class="panel-list">
+                @forelse ($recentSecurityIncidents as $incident)
+                    <div class="panel-list-row">
+                        <div>
+                            <strong>{{ $incident->ip_address ?: __('admin.security.incidents.unknown_ip') }}</strong>
+                            <span>{{ $incident->type }}</span>
+                        </div>
+                        <span class="panel-badge{{ $incident->severity === 'critical' ? ' is-danger' : '' }}">{{ $incident->severity }}</span>
+                    </div>
+                @empty
+                    <p class="panel-empty">{{ __('admin.security.incidents.empty') }}</p>
                 @endforelse
             </div>
         </article>

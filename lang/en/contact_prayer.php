@@ -37,6 +37,7 @@ return [
         'subtitle' => 'Submit your request with respect and discretion. Your message will be received and carefully reviewed.',
         'approved_encouragement_label' => 'Approved encouragement',
         'approved_note_title' => 'Approved encouragement',
+        'approved_note_text' => 'Take heart. God does not forget any effort sown in faith. Keep moving forward, even in small steps.',
         'note_title' => 'A word to encourage you',
         'note_text' => 'You can place everything before God with confidence. Even in waiting, hope remains a strength.',
         'whatsapp_cta' => 'Also chat on WhatsApp',
@@ -44,7 +45,7 @@ return [
     'wall' => [
         'label' => 'Prayer wall',
         'title' => 'Carry approved requests together',
-        'subtitle' => 'The requests published here have been reviewed by the team. You can join in prayer and quietly support the people concerned.',
+        'subtitle' => 'The requests published here have been reviewed by the team. You can join in prayer and, after clicking "I am praying too", join the prayer WhatsApp group if the link is configured.',
         'status_note' => 'Only approved requests of type prayer appear here. Pending or rejected requests remain hidden from the public.',
         'empty_title' => 'The wall is waiting for new approved requests',
         'empty' => 'No approved request is visible at the moment.',
@@ -56,6 +57,7 @@ return [
         'support_count' => ':count person(s) praying',
         'support_success' => 'Your support has been recorded.',
         'support_already_sent' => 'Your support has already been recorded for this request.',
+        'support_group_missing' => 'Your support was recorded, but the prayer WhatsApp group link is not configured yet.',
         'stats' => [
             'approved_label' => 'Approved requests',
             'approved_text' => 'Total number of visible requests',

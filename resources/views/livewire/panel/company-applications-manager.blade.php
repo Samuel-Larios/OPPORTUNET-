@@ -83,6 +83,9 @@
                     <div class="panel-card panel-card-soft">
                         <strong>{{ __('admin.applications.labels.files') }}</strong>
                         <div class="panel-file-links">
+                            @if ($selectedApplication->cv_fichier)
+                                <a href="{{ route('panel.company.applications.download', ['candidature' => $selectedApplication->id, 'type' => 'cv']) }}">{{ __('admin.applications.files.cv') }}</a>
+                            @endif
                             <a href="{{ route('panel.company.applications.download', ['candidature' => $selectedApplication->id, 'type' => 'lettre']) }}">{{ __('admin.applications.files.letter') }}</a>
                             @foreach ($selectedApplication->diplome_fichiers ?? [] as $index => $path)
                                 <a href="{{ route('panel.company.applications.download', ['candidature' => $selectedApplication->id, 'type' => 'diplome', 'index' => $index]) }}">{{ __('admin.applications.files.diploma') }} {{ $index + 1 }}</a>

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\BlogArticle;
 use App\Models\Category;
+use App\Support\Seo;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
@@ -31,6 +32,20 @@ class ArticlesIndex extends Component
     {
         $this->reset(['search', 'category']);
         $this->resetPage();
+    }
+
+    public function pageUrl(int $page): string
+    {
+        $query = [
+            'q' => $this->search !== '' ? $this->search : null,
+            'category' => $this->category !== '' ? $this->category : null,
+        ];
+
+        if ($page > 1) {
+            $query['page'] = $page;
+        }
+
+        return Seo::localizedUrl(route('articles.index'), app()->getLocale(), array_filter($query, fn ($value) => $value !== null));
     }
 
     public function getAvailableCategoriesProperty()

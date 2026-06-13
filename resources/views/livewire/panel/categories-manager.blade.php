@@ -1,4 +1,4 @@
-<div class="panel-stack">
+<div class="panel-stack" wire:poll.30s>
     @if (session('panel_success'))
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
@@ -15,59 +15,78 @@
                     <span>{{ __('admin.categories.type') }}</span>
                     <select wire:model="type">
                         @foreach ($categoryTypes as $categoryType)
-                            <option value="{{ $categoryType }}">{{ __('admin.categories.types.' . $categoryType) }}</option>
+                            <option value="{{ $categoryType }}">{{ __('admin.categories.types.' . $categoryType) }}
+                            </option>
                         @endforeach
                     </select>
-                    @error('type') <small>{{ $message }}</small> @enderror
+                    @error('type')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.categories.slug') }}</span>
                     <input type="text" value="{{ $slug }}" readonly disabled />
                     <small>{{ __('admin.categories.slug_hint') }}</small>
-                    @error('slug') <small>{{ $message }}</small> @enderror
+                    @error('slug')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>FR nom</span>
+                    <span>Nom FR</span>
                     <input type="text" wire:model.live.debounce.250ms="nomFr" />
-                    @error('nomFr') <small>{{ $message }}</small> @enderror
+                    @error('nomFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN name</span>
+                    <span>Name EN</span>
                     <input type="text" wire:model="nomEn" />
-                    @error('nomEn') <small>{{ $message }}</small> @enderror
+                    @error('nomEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.categories.icon') }}</span>
                     <input type="text" wire:model="icone" placeholder="briefcase" />
-                    @error('icone') <small>{{ $message }}</small> @enderror
+                    @error('icone')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.categories.color') }}</span>
                     <input type="text" wire:model="couleur" placeholder="#1A7A6E" />
-                    @error('couleur') <small>{{ $message }}</small> @enderror
+                    @error('couleur')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR description</span>
+                    <span>Description FR</span>
                     <textarea wire:model="descriptionFr" rows="4"></textarea>
-                    @error('descriptionFr') <small>{{ $message }}</small> @enderror
+                    @error('descriptionFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN description</span>
+                    <span>Description EN</span>
                     <textarea wire:model="descriptionEn" rows="4"></textarea>
-                    @error('descriptionEn') <small>{{ $message }}</small> @enderror
+                    @error('descriptionEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.categories.order') }}</span>
                     <input type="number" min="0" wire:model="ordre" />
-                    @error('ordre') <small>{{ $message }}</small> @enderror
+                    @error('ordre')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <div class="panel-check-grid">
@@ -77,9 +96,12 @@
                     </label>
                 </div>
 
+                @include('livewire.panel.partials.schedule-fields')
+
                 <div class="panel-action-row panel-field-span">
                     <button type="submit" class="panel-primary-btn">{{ __('admin.categories.save') }}</button>
-                    <button type="button" wire:click="resetForm" class="panel-secondary-btn">{{ __('admin.categories.reset') }}</button>
+                    <button type="button" wire:click="resetForm"
+                        class="panel-secondary-btn">{{ __('admin.categories.reset') }}</button>
                 </div>
             </form>
         </article>
@@ -90,12 +112,14 @@
             </div>
 
             <div class="panel-toolbar">
-                <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.categories.search') }}" />
+                <input type="search" wire:model.live.debounce.300ms="search"
+                    placeholder="{{ __('admin.categories.search') }}" />
 
                 <select wire:model.live="typeFilter">
                     <option value="">{{ __('admin.categories.all_types') }}</option>
                     @foreach ($categoryTypes as $categoryType)
-                        <option value="{{ $categoryType }}">{{ __('admin.categories.types.' . $categoryType) }}</option>
+                        <option value="{{ $categoryType }}">{{ __('admin.categories.types.' . $categoryType) }}
+                        </option>
                     @endforeach
                 </select>
 
@@ -130,12 +154,21 @@
                                     <span class="panel-badge{{ $category->actif ? ' is-success' : ' is-muted' }}">
                                         {{ $category->actif ? __('admin.users.active') : __('admin.users.inactive') }}
                                     </span>
+                                    @if ($category->auto_publish && $category->scheduled_for)
+                                        <div style="margin-top: 6px;">
+                                            <span class="panel-badge">
+                                                {{ app()->getLocale() === 'fr' ? 'Programmé le ' : 'Scheduled on ' }}{{ $category->scheduled_for->format('d/m/Y H:i') }}
+                                            </span>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="panel-inline-actions">
-                                    <button type="button" wire:click="editCategory({{ $category->id }})" class="panel-secondary-btn panel-small-btn">
+                                    <button type="button" wire:click="editCategory({{ $category->id }})"
+                                        class="panel-secondary-btn panel-small-btn">
                                         {{ __('admin.categories.edit') }}
                                     </button>
-                                    <button type="button" wire:click="deleteCategory({{ $category->id }})" class="panel-secondary-btn panel-small-btn">
+                                    <button type="button" wire:click="deleteCategory({{ $category->id }})"
+                                        class="panel-secondary-btn panel-small-btn">
                                         {{ __('admin.categories.delete') }}
                                     </button>
                                 </td>

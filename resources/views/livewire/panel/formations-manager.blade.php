@@ -1,4 +1,4 @@
-<div class="panel-stack">
+<div class="panel-stack" wire:poll.30s>
     @if (session('panel_success'))
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
@@ -12,15 +12,19 @@
 
             <form wire:submit="saveFormation" class="panel-form-grid" enctype="multipart/form-data">
                 <label class="panel-field">
-                    <span>FR - {{ __('admin.trainings.training') }}</span>
+                    <span>{{ __('admin.trainings.training') }} FR</span>
                     <input type="text" wire:model.live.debounce.300ms="titreFr" />
-                    @error('titreFr') <small>{{ $message }}</small> @enderror
+                    @error('titreFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN - {{ __('admin.trainings.training') }}</span>
+                    <span>{{ __('admin.trainings.training') }} EN</span>
                     <input type="text" wire:model="titreEn" />
-                    @error('titreEn') <small>{{ $message }}</small> @enderror
+                    @error('titreEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
@@ -37,7 +41,9 @@
                             <option value="{{ $category->id }}">{{ $category->nom }}</option>
                         @endforeach
                     </select>
-                    @error('categorieId') <small>{{ $message }}</small> @enderror
+                    @error('categorieId')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
@@ -48,215 +54,285 @@
                             <option value="{{ $trainer->id }}">{{ $trainer->fullName() }}</option>
                         @endforeach
                     </select>
-                    @error('formateurId') <small>{{ $message }}</small> @enderror
+                    @error('formateurId')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR - Description courte</span>
+                    <span>Description courte FR</span>
                     <textarea wire:model="descriptionCourteFr" rows="3"></textarea>
-                    @error('descriptionCourteFr') <small>{{ $message }}</small> @enderror
+                    @error('descriptionCourteFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN - Short description</span>
+                    <span>Short description EN</span>
                     <textarea wire:model="descriptionCourteEn" rows="3"></textarea>
-                    @error('descriptionCourteEn') <small>{{ $message }}</small> @enderror
+                    @error('descriptionCourteEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR - {{ __('admin.trainings.program') }}</span>
+                    <span>{{ __('admin.trainings.program') }} FR</span>
                     <textarea wire:model="descriptionLongueFr" rows="5"></textarea>
-                    @error('descriptionLongueFr') <small>{{ $message }}</small> @enderror
+                    @error('descriptionLongueFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN - {{ __('admin.trainings.program') }}</span>
+                    <span>{{ __('admin.trainings.program') }} EN</span>
                     <textarea wire:model="descriptionLongueEn" rows="5"></textarea>
-                    @error('descriptionLongueEn') <small>{{ $message }}</small> @enderror
+                    @error('descriptionLongueEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.mode') }}</span>
                     <select wire:model="mode">
                         @foreach ($trainingModes as $trainingMode)
-                            <option value="{{ $trainingMode }}">{{ __('admin.trainings.modes.' . $trainingMode) }}</option>
+                            <option value="{{ $trainingMode }}">{{ __('admin.trainings.modes.' . $trainingMode) }}
+                            </option>
                         @endforeach
                     </select>
-                    @error('mode') <small>{{ $message }}</small> @enderror
+                    @error('mode')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.status') }}</span>
                     <select wire:model="statut">
                         @foreach ($trainingStatuses as $trainingStatus)
-                            <option value="{{ $trainingStatus }}">{{ __('admin.trainings.statuses.' . $trainingStatus) }}</option>
+                            <option value="{{ $trainingStatus }}">
+                                {{ __('admin.trainings.statuses.' . $trainingStatus) }}</option>
                         @endforeach
                     </select>
-                    @error('statut') <small>{{ $message }}</small> @enderror
+                    @error('statut')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>FR - {{ __('admin.trainings.location') }}</span>
+                    <span>{{ __('admin.trainings.location') }} FR</span>
                     <input type="text" wire:model="lieuFr" />
-                    @error('lieuFr') <small>{{ $message }}</small> @enderror
+                    @error('lieuFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN - {{ __('admin.trainings.location') }}</span>
+                    <span>{{ __('admin.trainings.location') }} EN</span>
                     <input type="text" wire:model="lieuEn" />
-                    @error('lieuEn') <small>{{ $message }}</small> @enderror
+                    @error('lieuEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
                     <span>{{ __('admin.trainings.online_link') }}</span>
                     <input type="url" wire:model="lienEnLigne" />
-                    @error('lienEnLigne') <small>{{ $message }}</small> @enderror
+                    @error('lienEnLigne')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.price') }}</span>
                     <input type="number" min="0" step="0.01" wire:model="prix" />
-                    @error('prix') <small>{{ $message }}</small> @enderror
+                    @error('prix')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.currency') }}</span>
                     <input type="text" wire:model="devise" />
-                    @error('devise') <small>{{ $message }}</small> @enderror
+                    @error('devise')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.duration_hours') }}</span>
                     <input type="number" min="1" wire:model="dureeHeures" />
-                    @error('dureeHeures') <small>{{ $message }}</small> @enderror
+                    @error('dureeHeures')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.sessions') }}</span>
                     <input type="number" min="1" wire:model="nbSeances" />
-                    @error('nbSeances') <small>{{ $message }}</small> @enderror
+                    @error('nbSeances')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.start_date') }}</span>
                     <input type="date" wire:model="dateDebut" />
-                    @error('dateDebut') <small>{{ $message }}</small> @enderror
+                    @error('dateDebut')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.end_date') }}</span>
                     <input type="date" wire:model="dateFin" />
-                    @error('dateFin') <small>{{ $message }}</small> @enderror
+                    @error('dateFin')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.start_time') }}</span>
                     <input type="time" wire:model="heureDebut" />
-                    @error('heureDebut') <small>{{ $message }}</small> @enderror
+                    @error('heureDebut')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.timezone') }}</span>
                     <input type="text" wire:model="fuseauHoraire" />
-                    @error('fuseauHoraire') <small>{{ $message }}</small> @enderror
+                    @error('fuseauHoraire')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.max_places') }}</span>
                     <input type="number" min="1" wire:model="placesMax" />
-                    @error('placesMax') <small>{{ $message }}</small> @enderror
+                    @error('placesMax')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.trainings.remaining_places') }}</span>
                     <input type="number" min="0" wire:model="placesRestantes" />
-                    @error('placesRestantes') <small>{{ $message }}</small> @enderror
+                    @error('placesRestantes')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>FR - {{ __('admin.trainings.level') }}</span>
+                    <span>{{ __('admin.trainings.level') }} FR</span>
                     <input type="text" wire:model="niveauFr" />
-                    @error('niveauFr') <small>{{ $message }}</small> @enderror
+                    @error('niveauFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN - {{ __('admin.trainings.level') }}</span>
+                    <span>{{ __('admin.trainings.level') }} EN</span>
                     <input type="text" wire:model="niveauEn" />
-                    @error('niveauEn') <small>{{ $message }}</small> @enderror
+                    @error('niveauEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR - {{ __('admin.trainings.prerequisites') }}</span>
+                    <span>{{ __('admin.trainings.prerequisites') }} FR</span>
                     <textarea wire:model="prerequisFr" rows="4"></textarea>
-                    @error('prerequisFr') <small>{{ $message }}</small> @enderror
+                    @error('prerequisFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN - {{ __('admin.trainings.prerequisites') }}</span>
+                    <span>{{ __('admin.trainings.prerequisites') }} EN</span>
                     <textarea wire:model="prerequisEn" rows="4"></textarea>
-                    @error('prerequisEn') <small>{{ $message }}</small> @enderror
+                    @error('prerequisEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR - {{ __('admin.trainings.objectives') }}</span>
+                    <span>{{ __('admin.trainings.objectives') }} FR</span>
                     <textarea wire:model="objectifsFr" rows="4"></textarea>
-                    @error('objectifsFr') <small>{{ $message }}</small> @enderror
+                    @error('objectifsFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN - {{ __('admin.trainings.objectives') }}</span>
+                    <span>{{ __('admin.trainings.objectives') }} EN</span>
                     <textarea wire:model="objectifsEn" rows="4"></textarea>
-                    @error('objectifsEn') <small>{{ $message }}</small> @enderror
+                    @error('objectifsEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR - {{ __('admin.trainings.program') }}</span>
+                    <span>{{ __('admin.trainings.program') }} FR</span>
                     <textarea wire:model="programmeFr" rows="5"></textarea>
-                    @error('programmeFr') <small>{{ $message }}</small> @enderror
+                    @error('programmeFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN - {{ __('admin.trainings.program') }}</span>
+                    <span>{{ __('admin.trainings.program') }} EN</span>
                     <textarea wire:model="programmeEn" rows="5"></textarea>
-                    @error('programmeEn') <small>{{ $message }}</small> @enderror
+                    @error('programmeEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>FR - {{ __('admin.trainings.certificate') }}</span>
+                    <span>{{ __('admin.trainings.certificate') }} FR</span>
                     <input type="text" wire:model="certificatFr" />
-                    @error('certificatFr') <small>{{ $message }}</small> @enderror
+                    @error('certificatFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN - {{ __('admin.trainings.certificate') }}</span>
+                    <span>{{ __('admin.trainings.certificate') }} EN</span>
                     <input type="text" wire:model="certificatEn" />
-                    @error('certificatEn') <small>{{ $message }}</small> @enderror
+                    @error('certificatEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR - {{ __('admin.trainings.whatsapp_message') }}</span>
+                    <span>{{ __('admin.trainings.whatsapp_message') }} FR</span>
                     <textarea wire:model="whatsappMessageFr" rows="3"></textarea>
-                    @error('whatsappMessageFr') <small>{{ $message }}</small> @enderror
+                    @error('whatsappMessageFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN - {{ __('admin.trainings.whatsapp_message') }}</span>
+                    <span>{{ __('admin.trainings.whatsapp_message') }} EN</span>
                     <textarea wire:model="whatsappMessageEn" rows="3"></textarea>
-                    @error('whatsappMessageEn') <small>{{ $message }}</small> @enderror
+                    @error('whatsappMessageEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
                     <span>{{ __('admin.trainings.image') }}</span>
                     <input type="file" wire:model="imageCouverture" accept="image/*" />
                     <small>{{ __('admin.trainings.image_hint') }}</small>
-                    @error('imageCouverture') <small>{{ $message }}</small> @enderror
+                    @error('imageCouverture')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 @if ($currentImageUrl !== '')
                     <div class="panel-field panel-field-span">
                         <span>{{ __('admin.trainings.current_image') }}</span>
-                        <img src="{{ $currentImageUrl }}" alt="{{ __('admin.trainings.current_image') }}" style="max-width: 220px; border-radius: 18px;" />
-                        <button type="button" class="panel-secondary-link" wire:click="removeImage">{{ __('admin.trainings.remove_image') }}</button>
+                        <img src="{{ $currentImageUrl }}" alt="{{ __('admin.trainings.current_image') }}"
+                            style="max-width: 220px; border-radius: 18px;" />
+                        <button type="button" class="panel-secondary-link"
+                            wire:click="removeImage">{{ __('admin.trainings.remove_image') }}</button>
                     </div>
                 @endif
 
@@ -275,9 +351,12 @@
                     <span>{{ __('admin.trainings.featured') }}</span>
                 </label>
 
+                @include('livewire.panel.partials.schedule-fields')
+
                 <div class="panel-action-row panel-field-span">
                     <button type="submit" class="panel-primary-btn">{{ __('admin.trainings.save') }}</button>
-                    <button type="button" class="panel-secondary-btn" wire:click="resetForm">{{ __('admin.trainings.reset') }}</button>
+                    <button type="button" class="panel-secondary-btn"
+                        wire:click="resetForm">{{ __('admin.trainings.reset') }}</button>
                 </div>
             </form>
         </article>
@@ -288,17 +367,20 @@
             </div>
 
             <div class="panel-toolbar">
-                <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.trainings.search') }}" />
+                <input type="search" wire:model.live.debounce.300ms="search"
+                    placeholder="{{ __('admin.trainings.search') }}" />
                 <select wire:model.live="statusFilter">
                     <option value="">{{ __('admin.trainings.all_statuses') }}</option>
                     @foreach ($trainingStatuses as $trainingStatus)
-                        <option value="{{ $trainingStatus }}">{{ __('admin.trainings.statuses.' . $trainingStatus) }}</option>
+                        <option value="{{ $trainingStatus }}">{{ __('admin.trainings.statuses.' . $trainingStatus) }}
+                        </option>
                     @endforeach
                 </select>
                 <select wire:model.live="modeFilter">
                     <option value="">{{ __('admin.trainings.all_modes') }}</option>
                     @foreach ($trainingModes as $trainingMode)
-                        <option value="{{ $trainingMode }}">{{ __('admin.trainings.modes.' . $trainingMode) }}</option>
+                        <option value="{{ $trainingMode }}">{{ __('admin.trainings.modes.' . $trainingMode) }}
+                        </option>
                     @endforeach
                 </select>
                 <select wire:model.live="categoryFilter">
@@ -325,8 +407,10 @@
                             </span>
                         </div>
                         <div class="panel-inline-actions">
-                            <button type="button" class="panel-secondary-btn" wire:click="editFormation({{ $formation->id }})">{{ __('admin.trainings.edit') }}</button>
-                            <button type="button" class="panel-danger-btn" wire:click="deleteFormation({{ $formation->id }})">{{ __('admin.trainings.delete') }}</button>
+                            <button type="button" class="panel-secondary-btn"
+                                wire:click="editFormation({{ $formation->id }})">{{ __('admin.trainings.edit') }}</button>
+                            <button type="button" class="panel-danger-btn"
+                                wire:click="deleteFormation({{ $formation->id }})">{{ __('admin.trainings.delete') }}</button>
                         </div>
                     </div>
                 @empty

@@ -6,6 +6,7 @@ use App\Models\BlogArticle;
 use App\Models\BlogArticleImage;
 use App\Models\Category;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -48,6 +49,8 @@ class ArticlesManager extends Component
     public string $statut = 'brouillon';
     public bool $enVedette = false;
     public bool $commentairesActifs = true;
+    public bool $scheduleEnabled = false;
+    public string $scheduleAt = '';
 
     /** @var array<int, TemporaryUploadedFile> */
     public array $newImages = [];
@@ -84,6 +87,11 @@ class ArticlesManager extends Component
         $this->resetPage();
     }
 
+    public function poll(): void
+    {
+        $this->refreshScheduledPublications();
+    }
+
     public function updatedNewImages(): void
     {
         $this->syncNewImageAltArrays();
@@ -91,6 +99,28 @@ class ArticlesManager extends Component
         if ($this->featuredImageSelection === '' && $this->newImages !== []) {
             $this->featuredImageSelection = 'new:0';
         }
+    }
+
+    public function refreshScheduledPublications(): void
+    {
+        $now = now();
+
+        BlogArticle::query()
+            ->where('auto_publish', true)
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<=', $now)
+            ->each(function (BlogArticle $article) use ($now): void {
+                $publishAt = $article->scheduled_for instanceof Carbon ? $article->scheduled_for : $now;
+
+                $article->forceFill([
+                    'statut' => $article->scheduled_status ?: 'publie',
+                    'publie_le' => $publishAt,
+                    'auto_publish' => false,
+                    'scheduled_for' => null,
+                    'scheduled_status' => null,
+                    'published_at' => $article->published_at ?: $publishAt,
+                ])->save();
+            });
     }
 
     public function editArticle(int $articleId): void
@@ -117,11 +147,14 @@ class ArticlesManager extends Component
         $this->statut = (string) $article->statut;
         $this->enVedette = (bool) $article->en_vedette;
         $this->commentairesActifs = (bool) $article->commentaires_actifs;
+        $this->scheduleEnabled = (bool) $article->auto_publish && $article->scheduled_for?->isFuture();
+        $this->scheduleAt = $this->scheduleEnabled ? $article->scheduled_for?->format('Y-m-d\TH:i') ?? '' : '';
+        $this->statut = $this->scheduleEnabled ? (string) ($article->scheduled_status ?: 'publie') : (string) $article->statut;
         $this->newImages = [];
         $this->newImageAltsFr = [];
         $this->newImageAltsEn = [];
 
-        $this->existingImages = $article->images->map(fn (BlogArticleImage $image) => [
+        $this->existingImages = $article->images->map(fn(BlogArticleImage $image) => [
             'id' => $image->id,
             'path' => $image->image_path,
             'url' => $image->publicUrl(),
@@ -130,11 +163,11 @@ class ArticlesManager extends Component
         ])->values()->all();
 
         $this->existingImageAltsFr = $article->images
-            ->mapWithKeys(fn (BlogArticleImage $image) => [$image->id => (string) ($image->getRawOriginal('alt_fr') ?? $image->alt ?? '')])
+            ->mapWithKeys(fn(BlogArticleImage $image) => [$image->id => (string) ($image->getRawOriginal('alt_fr') ?? $image->alt ?? '')])
             ->all();
 
         $this->existingImageAltsEn = $article->images
-            ->mapWithKeys(fn (BlogArticleImage $image) => [$image->id => (string) ($image->getRawOriginal('alt_en') ?? $image->alt ?? '')])
+            ->mapWithKeys(fn(BlogArticleImage $image) => [$image->id => (string) ($image->getRawOriginal('alt_en') ?? $image->alt ?? '')])
             ->all();
 
         $featuredExisting = $article->images->firstWhere('is_featured', true);
@@ -166,11 +199,13 @@ class ArticlesManager extends Component
             'existingImageAltsFr',
             'existingImageAltsEn',
             'featuredImageSelection',
+            'scheduleAt',
         ]);
 
         $this->statut = 'brouillon';
         $this->enVedette = false;
         $this->commentairesActifs = true;
+        $this->scheduleEnabled = false;
         $this->resetValidation();
     }
 
@@ -189,7 +224,7 @@ class ArticlesManager extends Component
         unset($this->existingImageAltsFr[$imageId], $this->existingImageAltsEn[$imageId]);
         $this->existingImages = array_values(array_filter(
             $this->existingImages,
-            fn (array $existingImage) => (int) $existingImage['id'] !== $imageId
+            fn(array $existingImage) => (int) $existingImage['id'] !== $imageId
         ));
 
         if ($wasFeatured) {
@@ -228,7 +263,14 @@ class ArticlesManager extends Component
 
     public function saveArticle(): void
     {
+        $existingArticle = $this->editingArticleId
+            ? BlogArticle::query()->find($this->editingArticleId)
+            : null;
         $validated = $this->validate($this->rules());
+        $scheduledFor = $validated['scheduleEnabled']
+            ? Carbon::parse($validated['scheduleAt'])
+            : null;
+        $targetStatus = $scheduledFor ? 'publie' : $validated['statut'];
 
         $currentExistingCount = count($this->existingImages);
         $newImagesCount = count($this->newImages);
@@ -251,7 +293,7 @@ class ArticlesManager extends Component
 
         if (str_starts_with($this->featuredImageSelection, 'existing:')) {
             $imageId = (int) Str::after($this->featuredImageSelection, 'existing:');
-            if (! collect($this->existingImages)->contains(fn (array $image) => (int) $image['id'] === $imageId)) {
+            if (! collect($this->existingImages)->contains(fn(array $image) => (int) $image['id'] === $imageId)) {
                 $this->addError('featuredImageSelection', __('admin.articles.validation.featured_required'));
                 return;
             }
@@ -291,11 +333,19 @@ class ArticlesManager extends Component
                 'meta_description_fr' => $validated['metaDescriptionFr'] ?: null,
                 'meta_description_en' => $validated['metaDescriptionEn'] !== '' ? $validated['metaDescriptionEn'] : ($validated['metaDescriptionFr'] ?: null),
                 'tags' => $this->parseTags($validated['tags']),
-                'statut' => $validated['statut'],
-                'publie_le' => $validated['datePublication'] ?: ($validated['statut'] === 'publie' ? now() : null),
+                'statut' => $scheduledFor ? 'brouillon' : $targetStatus,
+                'publie_le' => $scheduledFor
+                    ? null
+                    : ($validated['datePublication'] ?: ($targetStatus === 'publie' ? now() : null)),
                 'en_vedette' => $validated['enVedette'],
                 'commentaires_actifs' => $validated['commentairesActifs'],
                 'temps_lecture' => $validated['tempsLecture'] ?: null,
+                'auto_publish' => $scheduledFor !== null,
+                'scheduled_for' => $scheduledFor,
+                'scheduled_status' => $scheduledFor ? $targetStatus : null,
+                'published_at' => $scheduledFor === null && $targetStatus === 'publie'
+                    ? ($existingArticle?->published_at ?? now())
+                    : ($existingArticle?->published_at),
             ]
         );
 
@@ -349,10 +399,10 @@ class ArticlesManager extends Component
                         ->orWhere('extrait_en', 'like', $term);
                 });
             })
-            ->when($this->statusFilter !== '', fn ($query) => $query->where('statut', $this->statusFilter))
-            ->when($this->categoryFilter !== '', fn ($query) => $query->whereHas(
+            ->when($this->statusFilter !== '', fn($query) => $query->where('statut', $this->statusFilter))
+            ->when($this->categoryFilter !== '', fn($query) => $query->whereHas(
                 'category',
-                fn ($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
+                fn($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
             ))
             ->latest()
             ->paginate(10);
@@ -386,6 +436,8 @@ class ArticlesManager extends Component
             'statut' => ['required', Rule::in(['brouillon', 'publie', 'archive'])],
             'enVedette' => ['boolean'],
             'commentairesActifs' => ['boolean'],
+            'scheduleEnabled' => ['boolean'],
+            'scheduleAt' => ['nullable', 'date_format:Y-m-d\\TH:i', 'required_if:scheduleEnabled,true', 'after:now'],
             'newImages' => ['array', 'max:5'],
             'newImages.*' => ['image', 'max:4096'],
             'newImageAltsFr' => ['array'],
@@ -416,7 +468,7 @@ class ArticlesManager extends Component
     protected function parseTags(string $tags): array
     {
         return collect(explode(',', $tags))
-            ->map(fn (string $tag) => trim($tag))
+            ->map(fn(string $tag) => trim($tag))
             ->filter()
             ->values()
             ->all();

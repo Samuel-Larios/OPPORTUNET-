@@ -8,6 +8,7 @@ use App\Notifications\PlatformDatabaseNotification;
 use App\Support\NotificationRecipients;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Url;
@@ -49,6 +50,8 @@ class EditorOffersManager extends Component
     public string $statut = 'brouillon';
     public bool $enVedette = false;
     public bool $urgent = false;
+    public bool $scheduleEnabled = false;
+    public string $scheduleAt = '';
 
     public function updatingSearch(): void
     {
@@ -58,6 +61,34 @@ class EditorOffersManager extends Component
     public function updatingStatusFilter(): void
     {
         $this->resetPage();
+    }
+
+    public function poll(): void
+    {
+        $this->refreshScheduledPublications();
+    }
+
+    public function refreshScheduledPublications(): void
+    {
+        $now = now();
+
+        Opportunite::query()
+            ->where('auto_publish', true)
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<=', $now)
+            ->each(function (Opportunite $offer) use ($now): void {
+                $publishAt = $offer->scheduled_for instanceof Carbon ? $offer->scheduled_for : $now;
+
+                $offer->forceFill([
+                    'statut' => $offer->scheduled_status ?: 'publie',
+                    'date_publication' => $publishAt->toDateString(),
+                    'valide_le' => $offer->valide_le ?: $publishAt,
+                    'auto_publish' => false,
+                    'scheduled_for' => null,
+                    'scheduled_status' => null,
+                    'published_at' => $offer->published_at ?: $publishAt,
+                ])->save();
+            });
     }
 
     public function editOffer(int $offerId): void
@@ -84,9 +115,13 @@ class EditorOffersManager extends Component
         $this->emailCandidature = (string) ($offer->email_candidature ?? '');
         $this->datePublication = $offer->date_publication?->format('Y-m-d') ?? '';
         $this->dateExpiration = $offer->date_expiration?->format('Y-m-d') ?? '';
-        $this->statut = $this->isCompanyUser() && $offer->statut === 'publie'
-            ? 'en_attente_validation'
-            : (string) $offer->statut;
+        $this->scheduleEnabled = ! $this->isCompanyUser() && (bool) $offer->auto_publish && $offer->scheduled_for?->isFuture();
+        $this->scheduleAt = $this->scheduleEnabled ? $offer->scheduled_for?->format('Y-m-d\TH:i') ?? '' : '';
+        $this->statut = $this->scheduleEnabled
+            ? (string) ($offer->scheduled_status ?: 'publie')
+            : ($this->isCompanyUser() && $offer->statut === 'publie'
+                ? 'en_attente_validation'
+                : (string) $offer->statut);
         $this->enVedette = (bool) $offer->en_vedette;
         $this->urgent = (bool) $offer->urgent;
     }
@@ -111,6 +146,7 @@ class EditorOffersManager extends Component
             'emailCandidature',
             'datePublication',
             'dateExpiration',
+            'scheduleAt',
         ]);
 
         $this->type = 'emploi';
@@ -119,6 +155,7 @@ class EditorOffersManager extends Component
         $this->statut = 'brouillon';
         $this->enVedette = false;
         $this->urgent = false;
+        $this->scheduleEnabled = false;
         $this->resetValidation();
     }
 
@@ -152,13 +189,22 @@ class EditorOffersManager extends Component
             'statut' => ['required', Rule::in($this->allowedStatuses())],
             'enVedette' => ['boolean'],
             'urgent' => ['boolean'],
+            'scheduleEnabled' => ['boolean'],
+            'scheduleAt' => ['nullable', 'date_format:Y-m-d\\TH:i', 'required_if:scheduleEnabled,true', 'after:now'],
         ]);
+        $scheduledFor = ! $isCompany && $validated['scheduleEnabled']
+            ? Carbon::parse($validated['scheduleAt'])
+            : null;
 
         $slug = Str::slug($validated['titreFr']);
         $targetStatus = $validated['statut'];
 
         if ($isCompany && ($existingOffer?->statut === 'publie' || $targetStatus === 'publie')) {
             $targetStatus = 'en_attente_validation';
+        }
+
+        if ($scheduledFor) {
+            $targetStatus = 'publie';
         }
 
         $offer = Opportunite::query()->updateOrCreate(
@@ -187,17 +233,25 @@ class EditorOffersManager extends Component
                 'avantages_en' => $validated['avantagesEn'] !== '' ? $validated['avantagesEn'] : ($validated['avantagesFr'] ?: null),
                 'lien_candidature' => $validated['lienCandidature'] ?: null,
                 'email_candidature' => $validated['emailCandidature'] ?: null,
-                'date_publication' => $validated['datePublication']
-                    ?: ($targetStatus === 'publie'
-                        ? ($existingOffer?->date_publication?->toDateString() ?? now()->toDateString())
-                        : ($existingOffer?->date_publication?->toDateString())),
+                'date_publication' => $scheduledFor
+                    ? null
+                    : ($validated['datePublication']
+                        ?: ($targetStatus === 'publie'
+                            ? ($existingOffer?->date_publication?->toDateString() ?? now()->toDateString())
+                            : ($existingOffer?->date_publication?->toDateString()))),
                 'date_expiration' => $validated['dateExpiration'] ?: null,
-                'statut' => $targetStatus,
-                'valide_par' => $targetStatus === 'publie' && ! $isCompany ? auth()->id() : null,
-                'valide_le' => $targetStatus === 'publie' && ! $isCompany ? now() : null,
+                'statut' => $scheduledFor ? 'brouillon' : $targetStatus,
+                'valide_par' => $scheduledFor ? null : ($targetStatus === 'publie' && ! $isCompany ? auth()->id() : null),
+                'valide_le' => $scheduledFor ? null : ($targetStatus === 'publie' && ! $isCompany ? now() : null),
                 'notes_validation_admin' => $existingOffer?->notes_validation_admin,
                 'en_vedette' => ! $isCompany && $targetStatus === 'publie' ? $validated['enVedette'] : false,
                 'urgent' => ! $isCompany && $targetStatus === 'publie' ? $validated['urgent'] : false,
+                'auto_publish' => $scheduledFor !== null,
+                'scheduled_for' => $scheduledFor,
+                'scheduled_status' => $scheduledFor ? $targetStatus : null,
+                'published_at' => $scheduledFor === null && $targetStatus === 'publie'
+                    ? ($existingOffer?->published_at ?? now())
+                    : ($existingOffer?->published_at),
             ]
         );
 
@@ -268,7 +322,7 @@ class EditorOffersManager extends Component
         $search = trim($this->search);
 
         $offers = Opportunite::query()
-            ->when($this->isCompanyUser(), fn ($query) => $query->where('user_id', auth()->id()))
+            ->when($this->isCompanyUser(), fn($query) => $query->where('user_id', auth()->id()))
             ->when($search !== '', function ($query) use ($search) {
                 $term = '%' . $search . '%';
 
@@ -279,7 +333,7 @@ class EditorOffersManager extends Component
                         ->orWhere('organisation', 'like', $term);
                 });
             })
-            ->when($this->statusFilter !== '', fn ($query) => $query->where('statut', $this->statusFilter))
+            ->when($this->statusFilter !== '', fn($query) => $query->where('statut', $this->statusFilter))
             ->latest()
             ->paginate(10);
 
@@ -295,7 +349,7 @@ class EditorOffersManager extends Component
     protected function offersQuery()
     {
         return Opportunite::query()
-            ->when($this->isCompanyUser(), fn ($query) => $query->where('user_id', auth()->id()));
+            ->when($this->isCompanyUser(), fn($query) => $query->where('user_id', auth()->id()));
     }
 
     protected function isCompanyUser(): bool

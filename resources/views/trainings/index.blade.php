@@ -4,17 +4,20 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
-    $defaultWhatsappHref = $whatsappBase . '?text=' . urlencode($siteWhatsappMessage ?? __('home.forms.whatsapp_default'));
+    $defaultWhatsappHref =
+        $whatsappBase . '?text=' . urlencode($siteWhatsappMessage ?? __('home.forms.whatsapp_default'));
     $localizedTrainingsUrl = \App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale());
     $seoTitle = $selectedTraining?->titre ?: __('trainings.meta.title');
-    $seoDescription = \App\Support\Seo::description($selectedTraining?->description_courte ?: __('trainings.page.subtitle'));
+    $seoDescription = \App\Support\Seo::description(
+        $selectedTraining?->description_courte ?: __('trainings.page.subtitle'),
+    );
     $seoCanonical = \App\Support\Seo::localizedUrl(
         route('trainings.index'),
         app()->getLocale(),
-        $selectedTraining ? ['formation' => $selectedTraining->id] : []
+        $selectedTraining ? ['formation' => $selectedTraining->id] : [],
     );
     $seoSchema = [
         \App\Support\Seo::breadcrumb([
@@ -26,31 +29,21 @@
             'url' => $seoCanonical,
             'description' => $seoDescription,
             'inLanguage' => app()->getLocale(),
-            'provider' => $selectedTraining ? [
-                '@type' => 'Organization',
-                'name' => $siteName,
-            ] : null,
+            'provider' => $selectedTraining
+                ? [
+                    '@type' => 'Organization',
+                    'name' => $siteName,
+                ]
+                : null,
             'startDate' => $selectedTraining?->date_debut?->toDateString(),
             'endDate' => $selectedTraining?->date_fin?->toDateString(),
         ]),
     ];
 @endphp
 
-<x-layouts.app
-    :title="$seoTitle"
-    :description="$seoDescription"
-    :canonical="$seoCanonical"
-    :image="$selectedTraining?->publicCoverUrl()"
-    :schema-data="$seoSchema"
-    :site-name="$siteName"
-    :site-slogan="$siteSlogan"
-    :site-email="$siteEmail"
-    :site-hours="$siteHours"
-    :site-address="$siteAddress"
-    :site-whatsapp="$siteWhatsapp"
-    :site-whatsapp-message="$siteWhatsappMessage"
-    :show-hero="false"
->
+<x-layouts.app :title="$seoTitle" :description="$seoDescription" :canonical="$seoCanonical" :image="$selectedTraining?->publicCoverUrl()" :schema-data="$seoSchema"
+    :site-name="$siteName" :site-slogan="$siteSlogan" :site-email="$siteEmail" :site-hours="$siteHours" :site-address="$siteAddress" :site-whatsapp="$siteWhatsapp"
+    :site-whatsapp-message="$siteWhatsappMessage" :show-hero="false">
     <main class="trainings-page">
         <section class="trainings-hero">
             <div class="container">
@@ -62,7 +55,7 @@
                     </div>
                     <div class="trainings-hero-stat">
                         <span>{{ __('trainings.page.available') }}</span>
-                        <strong>{{ $trainings->count() }}</strong>
+                        <strong>{{ $trainings->total() }}</strong>
                     </div>
                 </div>
             </div>
@@ -79,7 +72,13 @@
                 <div class="trainings-grid">
                     @forelse ($trainings as $index => $training)
                         @php
-                            $trainingWhatsappHref = $whatsappBase . '?text=' . urlencode($training->whatsapp_message ?: __('trainings.whatsapp.default_message', ['formation' => $training->titre]));
+                            $trainingWhatsappHref =
+                                $whatsappBase .
+                                '?text=' .
+                                urlencode(
+                                    $training->whatsapp_message ?:
+                                    __('trainings.whatsapp.default_message', ['formation' => $training->titre]),
+                                );
                             $availabilityState = $training->availabilityState();
                         @endphp
                         <article class="training-card reveal reveal-delay-{{ min(($index % 4) + 1, 4) }}">
@@ -91,12 +90,14 @@
                                     @endif
                                 </div>
                                 @if ($training->date_debut)
-                                    <span class="offer-date">{{ __('trainings.card.starts') }} {{ $training->date_debut->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
+                                    <span class="offer-date">{{ __('trainings.card.starts') }}
+                                        {{ $training->date_debut->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
                                 @endif
                             </div>
 
                             @if ($training->publicCoverUrl())
-                                <img src="{{ $training->publicCoverUrl() }}" alt="{{ $training->titre }}" class="training-cover" />
+                                <img src="{{ $training->publicCoverUrl() }}" alt="{{ $training->titre }}"
+                                    class="training-cover" />
                             @endif
 
                             <h3>{{ $training->titre }}</h3>
@@ -114,14 +115,14 @@
                             </div>
 
                             <div class="training-card-actions">
-                                <a href="{{ \App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), ['formation' => $training->id]) }}#training-details" class="solid-submit">{{ __('trainings.list.details') }}</a>
-                                <a href="{{ $trainingWhatsappHref }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('trainings.card.whatsapp') }}</a>
+                                <a href="{{ \App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), ['formation' => $training->id]) }}#training-details"
+                                    class="solid-submit">{{ __('trainings.list.details') }}</a>
+                                <a href="{{ $trainingWhatsappHref }}" class="ghost-submit" target="_blank"
+                                    rel="noopener">{{ __('trainings.card.whatsapp') }}</a>
                             </div>
-                            <x-share-buttons
-                                :url="\App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), ['formation' => $training->id]) . '#training-details'"
-                                :title="$training->titre"
-                                variant="compact"
-                            />
+                            <x-share-buttons :url="\App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), [
+                                'formation' => $training->id,
+                            ]) . '#training-details'" :title="$training->titre" variant="compact" />
                         </article>
                     @empty
                         <article class="empty-card reveal">
@@ -130,6 +131,26 @@
                         </article>
                     @endforelse
                 </div>
+
+                @if ($trainings->hasPages())
+                    <nav class="training-card-actions" aria-label="{{ __('trainings.pagination.label') }}" style="justify-content: center; margin-top: 2rem;">
+                        @if ($trainings->onFirstPage())
+                            <span class="ghost-submit" style="pointer-events: none; opacity: 0.7;">{{ __('trainings.pagination.previous') }}</span>
+                        @else
+                            <a href="{{ $trainings->previousPageUrl() }}" class="ghost-submit">{{ __('trainings.pagination.previous') }}</a>
+                        @endif
+
+                        <span class="section-sub" style="margin: 0;">
+                            {{ __('trainings.pagination.summary', ['page' => $trainings->currentPage(), 'last' => $trainings->lastPage()]) }}
+                        </span>
+
+                        @if ($trainings->hasMorePages())
+                            <a href="{{ $trainings->nextPageUrl() }}" class="ghost-submit">{{ __('trainings.pagination.next') }}</a>
+                        @else
+                            <span class="ghost-submit" style="pointer-events: none; opacity: 0.7;">{{ __('trainings.pagination.next') }}</span>
+                        @endif
+                    </nav>
+                @endif
             </div>
         </section>
 
@@ -137,7 +158,13 @@
             <div class="container">
                 @if ($selectedTraining)
                     @php
-                        $selectedTrainingWhatsappHref = $whatsappBase . '?text=' . urlencode($selectedTraining->whatsapp_message ?: __('trainings.whatsapp.default_message', ['formation' => $selectedTraining->titre]));
+                        $selectedTrainingWhatsappHref =
+                            $whatsappBase .
+                            '?text=' .
+                            urlencode(
+                                $selectedTraining->whatsapp_message ?:
+                                __('trainings.whatsapp.default_message', ['formation' => $selectedTraining->titre]),
+                            );
                         $selectedAvailabilityState = $selectedTraining->availabilityState();
                     @endphp
 
@@ -152,36 +179,48 @@
                             </div>
 
                             <div class="training-detail-grid">
-                                <span><strong>{{ __('trainings.details.trainer') }}:</strong> {{ $selectedTraining->formateur?->fullName() ?: __('trainings.details.not_specified') }}</span>
-                                <span><strong>{{ __('trainings.details.level') }}:</strong> {{ $selectedTraining->niveau ?: __('trainings.details.not_specified') }}</span>
-                                <span><strong>{{ __('trainings.details.location') }}:</strong> {{ $selectedTraining->lieu ?: __('trainings.details.not_specified') }}</span>
-                                <span><strong>{{ __('trainings.details.max_places') }}:</strong> {{ $selectedTraining->places_max ?? __('trainings.details.not_specified') }}</span>
-                                <span><strong>{{ __('trainings.details.remaining_places') }}:</strong> {{ $selectedTraining->places_restantes ?? __('trainings.details.not_specified') }}</span>
-                                <span><strong>{{ __('trainings.details.certificate') }}:</strong> {{ $selectedTraining->certificat ?: __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.trainer') }}:</strong>
+                                    {{ $selectedTraining->formateur?->fullName() ?: __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.level') }}:</strong>
+                                    {{ $selectedTraining->niveau ?: __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.location') }}:</strong>
+                                    {{ $selectedTraining->lieu ?: __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.max_places') }}:</strong>
+                                    {{ $selectedTraining->places_max ?? __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.remaining_places') }}:</strong>
+                                    {{ $selectedTraining->places_restantes ?? __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.certificate') }}:</strong>
+                                    {{ $selectedTraining->certificat ?: __('trainings.details.not_specified') }}</span>
                             </div>
 
                             <div class="training-detail-grid">
-                                <span><strong>{{ __('trainings.details.date_start') }}:</strong> {{ $selectedTraining->date_debut?->locale(app()->getLocale())->translatedFormat('d M Y') ?: __('trainings.details.not_specified') }}</span>
-                                <span><strong>{{ __('trainings.details.date_end') }}:</strong> {{ $selectedTraining->date_fin?->locale(app()->getLocale())->translatedFormat('d M Y') ?: __('trainings.details.not_specified') }}</span>
-                                <span><strong>{{ __('trainings.details.time') }}:</strong> {{ $selectedTraining->heure_debut ?: __('trainings.details.not_specified') }}</span>
-                                <span><strong>{{ __('trainings.details.timezone') }}:</strong> {{ $selectedTraining->fuseau_horaire ?: __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.date_start') }}:</strong>
+                                    {{ $selectedTraining->date_debut?->locale(app()->getLocale())->translatedFormat('d M Y') ?: __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.date_end') }}:</strong>
+                                    {{ $selectedTraining->date_fin?->locale(app()->getLocale())->translatedFormat('d M Y') ?: __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.time') }}:</strong>
+                                    {{ $selectedTraining->heure_debut ?: __('trainings.details.not_specified') }}</span>
+                                <span><strong>{{ __('trainings.details.timezone') }}:</strong>
+                                    {{ $selectedTraining->fuseau_horaire ?: __('trainings.details.not_specified') }}</span>
                             </div>
 
                             <div class="training-detail-actions">
                                 @if ($selectedTraining->lien_en_ligne)
-                                    <a href="{{ $selectedTraining->lien_en_ligne }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('trainings.details.open_link') }}</a>
+                                    <a href="{{ $selectedTraining->lien_en_ligne }}" class="ghost-submit"
+                                        target="_blank" rel="noopener">{{ __('trainings.details.open_link') }}</a>
                                 @endif
-                                <a href="{{ $selectedTrainingWhatsappHref }}" class="solid-submit" target="_blank" rel="noopener">{{ __('trainings.card.whatsapp') }}</a>
+                                <a href="{{ $selectedTrainingWhatsappHref }}" class="solid-submit" target="_blank"
+                                    rel="noopener">{{ __('trainings.card.whatsapp') }}</a>
                             </div>
-                            <x-share-buttons
-                                :url="\App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), ['formation' => $selectedTraining->id]) . '#training-details'"
-                                :title="$selectedTraining->titre"
-                            />
+                            <x-share-buttons :url="\App\Support\Seo::localizedUrl(route('trainings.index'), app()->getLocale(), [
+                                'formation' => $selectedTraining->id,
+                            ]) . '#training-details'" :title="$selectedTraining->titre" />
                         </div>
 
                         <div class="training-details-panels">
                             @if ($selectedTraining->publicCoverUrl())
-                                <img src="{{ $selectedTraining->publicCoverUrl() }}" alt="{{ $selectedTraining->titre }}" class="training-details-cover" />
+                                <img src="{{ $selectedTraining->publicCoverUrl() }}"
+                                    alt="{{ $selectedTraining->titre }}" class="training-details-cover" />
                             @endif
 
                             @if ($selectedTraining->description_longue)
@@ -253,7 +292,8 @@
                                 <span>{{ __('admin.user_trainings.detail_title') }}</span>
                                 <strong>{{ $currentTrainingRegistration->statusLabel() }}</strong>
                                 <p>{{ $currentTrainingRegistration->paymentStatusLabel() }}</p>
-                                <a href="{{ route('panel.user.trainings') }}" class="ghost-submit">{{ __('trainings.form.space_cta') }}</a>
+                                <a href="{{ route('panel.user.trainings') }}"
+                                    class="ghost-submit">{{ __('trainings.form.space_cta') }}</a>
                             </div>
                         @endif
                     </div>
@@ -263,8 +303,10 @@
                             <strong>{{ __('trainings.form.auth_title') }}</strong>
                             <p>{{ __('trainings.form.auth_text') }}</p>
                             <div class="contact-form-actions">
-                                <a href="{{ route('login') }}" class="solid-submit">{{ __('admin.auth.login_submit') }}</a>
-                                <a href="{{ route('register.user') }}" class="ghost-submit">{{ __('admin.auth.create_simple_user_account') }}</a>
+                                <a href="{{ route('login') }}"
+                                    class="solid-submit">{{ __('admin.auth.login_submit') }}</a>
+                                <a href="{{ route('register.user') }}"
+                                    class="ghost-submit">{{ __('admin.auth.create_simple_user_account') }}</a>
                             </div>
                         </div>
                     @else
@@ -274,36 +316,51 @@
 
                             <select name="formation_id">
                                 <option value="">{{ __('trainings.form.fields.formation_placeholder') }}</option>
-                                @foreach ($trainings as $training)
-                                    <option value="{{ $training->id }}" @selected(old('formation_id', $selectedTraining?->id) == $training->id)>{{ $training->titre }}</option>
+                                @foreach ($trainingOptions as $training)
+                                    <option value="{{ $training->id }}" @selected(old('formation_id', $selectedTraining?->id) == $training->id)>
+                                        {{ $training->titre }}</option>
                                 @endforeach
                             </select>
 
                             <div class="field-row">
-                                <input type="text" name="prenom" value="{{ old('prenom', auth()->user()->prenom) }}" placeholder="{{ __('trainings.form.fields.prenom') }}" />
-                                <input type="text" name="nom" value="{{ old('nom', auth()->user()->nom) }}" placeholder="{{ __('trainings.form.fields.nom') }}" />
+                                <input type="text" name="prenom" value="{{ old('prenom', auth()->user()->prenom) }}"
+                                    placeholder="{{ __('trainings.form.fields.prenom') }}" />
+                                <input type="text" name="nom" value="{{ old('nom', auth()->user()->nom) }}"
+                                    placeholder="{{ __('trainings.form.fields.nom') }}" />
                             </div>
 
                             <div class="field-row">
-                                <input type="email" name="email" value="{{ auth()->user()->email }}" placeholder="{{ __('trainings.form.fields.email') }}" readonly />
-                                <input type="text" name="telephone" value="{{ old('telephone', auth()->user()->telephone) }}" placeholder="{{ __('trainings.form.fields.telephone') }}" />
+                                <input type="email" name="email" value="{{ auth()->user()->email }}"
+                                    placeholder="{{ __('trainings.form.fields.email') }}" readonly />
+                                <input type="text" name="telephone"
+                                    value="{{ old('telephone', auth()->user()->telephone) }}"
+                                    placeholder="{{ __('trainings.form.fields.telephone') }}" />
                             </div>
 
                             <div class="field-row">
-                                <input type="text" name="whatsapp" value="{{ old('whatsapp', auth()->user()->whatsapp) }}" placeholder="{{ __('trainings.form.fields.whatsapp') }}" />
-                                <input type="text" name="pays" value="{{ old('pays', auth()->user()->pays) }}" placeholder="{{ __('trainings.form.fields.pays') }}" />
+                                <input type="text" name="whatsapp"
+                                    value="{{ old('whatsapp', auth()->user()->whatsapp) }}"
+                                    placeholder="{{ __('trainings.form.fields.whatsapp') }}" />
+                                <input type="text" name="pays" value="{{ old('pays', auth()->user()->pays) }}"
+                                    placeholder="{{ __('trainings.form.fields.pays') }}" />
                             </div>
 
                             <div class="field-row">
-                                <input type="text" name="profession" value="{{ old('profession', auth()->user()->profession) }}" placeholder="{{ __('trainings.form.fields.profession') }}" />
-                                <input type="text" name="niveau_etude" value="{{ old('niveau_etude', auth()->user()->niveau_etude) }}" placeholder="{{ __('trainings.form.fields.niveau_etude') }}" />
+                                <input type="text" name="profession"
+                                    value="{{ old('profession', auth()->user()->profession) }}"
+                                    placeholder="{{ __('trainings.form.fields.profession') }}" />
+                                <input type="text" name="niveau_etude"
+                                    value="{{ old('niveau_etude', auth()->user()->niveau_etude) }}"
+                                    placeholder="{{ __('trainings.form.fields.niveau_etude') }}" />
                             </div>
 
                             <textarea name="motivation" rows="5" placeholder="{{ __('trainings.form.fields.motivation') }}">{{ old('motivation') }}</textarea>
 
                             <div class="contact-form-actions">
-                                <button type="submit" class="solid-submit" @disabled(! $selectedTraining || ! $selectedTraining->isRegistrationOpen() || $currentTrainingRegistration)>{{ __('trainings.form.submit') }}</button>
-                                <a href="{{ route('panel.user.trainings') }}" class="ghost-submit">{{ __('trainings.form.space_cta') }}</a>
+                                <button type="submit" class="solid-submit"
+                                    @disabled(!$selectedTraining || !$selectedTraining->isRegistrationOpen() || $currentTrainingRegistration)>{{ __('trainings.form.submit') }}</button>
+                                <a href="{{ route('panel.user.trainings') }}"
+                                    class="ghost-submit">{{ __('trainings.form.space_cta') }}</a>
                             </div>
                         </form>
                     @endguest

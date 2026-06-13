@@ -20,6 +20,7 @@ class CandidatureOffre extends Model
         'telephone',
         'whatsapp',
         'pays',
+        'cv_fichier',
         'lettre_motivation',
         'diplome_fichiers',
         'attestation_fichiers',

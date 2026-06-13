@@ -8,7 +8,9 @@ use App\Models\Formation;
 use App\Models\Newsletter;
 use App\Models\NewsletterSubscriber;
 use App\Models\Opportunite;
+use App\Models\SpiritualPublication;
 use App\Models\User;
+use App\Models\Verset;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
@@ -83,11 +85,31 @@ class PublicationNewsletterService
         return $this->sendFor($article);
     }
 
+    public function sendForPublishedVerse(Verset $verse): ?Newsletter
+    {
+        if (! $verse->actif) {
+            return null;
+        }
+
+        return $this->sendFor($verse);
+    }
+
+    public function sendForPublishedSpiritualPublication(SpiritualPublication $publication): ?Newsletter
+    {
+        if (! $publication->actif) {
+            return null;
+        }
+
+        return $this->sendFor($publication);
+    }
+
     protected function supports(Model $content): bool
     {
         return $content instanceof Opportunite
             || $content instanceof Formation
-            || $content instanceof BlogArticle;
+            || $content instanceof BlogArticle
+            || $content instanceof Verset
+            || $content instanceof SpiritualPublication;
     }
 
     protected function wasAlreadySent(Model $content): bool
@@ -133,7 +155,57 @@ class PublicationNewsletterService
             ];
         }
 
+        if ($content instanceof Verset) {
+            return [
+                'subject' => 'Nouveau verset publie : ' . $content->reference,
+                'label' => 'Verset biblique',
+                'title' => (string) $content->reference,
+                'summary' => Str::limit(trim(strip_tags((string) $content->texte)), 220),
+                'url' => route('spiritual.verses.show', $content),
+            ];
+        }
+
+        if ($content instanceof SpiritualPublication) {
+            return [
+                'subject' => $this->spiritualSubject($content),
+                'label' => $this->spiritualLabel($content),
+                'title' => (string) $content->titre,
+                'summary' => Str::limit(trim(strip_tags((string) ($content->extrait ?: $content->contenu))), 220),
+                'url' => $this->spiritualUrl($content),
+            ];
+        }
+
         throw new InvalidArgumentException('Unsupported newsletter content type.');
+    }
+
+    protected function spiritualSubject(SpiritualPublication $publication): string
+    {
+        return match ($publication->type) {
+            'pensee' => 'Nouvelle pensee publiee : ' . $publication->titre,
+            'exhortation' => 'Nouvelle exhortation publiee : ' . $publication->titre,
+            'priere_jour' => 'Nouvelle priere du jour publiee : ' . $publication->titre,
+            default => 'Nouveau contenu spirituel publie : ' . $publication->titre,
+        };
+    }
+
+    protected function spiritualLabel(SpiritualPublication $publication): string
+    {
+        return match ($publication->type) {
+            'pensee' => 'Pensee du jour',
+            'exhortation' => 'Exhortation',
+            'priere_jour' => 'Priere du jour',
+            default => 'Contenu spirituel',
+        };
+    }
+
+    protected function spiritualUrl(SpiritualPublication $publication): string
+    {
+        return match ($publication->type) {
+            'pensee' => route('spiritual.thoughts.show', $publication->slug),
+            'exhortation' => route('spiritual.exhortations.show', $publication->slug),
+            'priere_jour' => route('spiritual.daily-prayers.index', ['item' => $publication->slug]),
+            default => route('home'),
+        };
     }
 
     /**

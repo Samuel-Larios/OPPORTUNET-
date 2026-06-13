@@ -12,3 +12,7 @@ Schedule::command('report:weekly-site')
     ->sundays()
     ->at('20:00')
     ->timezone('Africa/Lagos');
+
+Schedule::command('content:publish-scheduled')
+    ->everyMinute()
+    ->timezone('Africa/Lagos');

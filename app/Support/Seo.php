@@ -32,10 +32,15 @@ class Seo
      */
     public static function alternateLocaleUrls(string $url, array $query = []): array
     {
+        $frUrl = self::localizedUrl($url, 'fr', $query);
+        $enUrl = self::localizedUrl($url, 'en', $query);
+
         return [
-            'fr' => self::localizedUrl($url, 'fr', $query),
-            'en' => self::localizedUrl($url, 'en', $query),
-            'x-default' => self::localizedUrl($url, 'fr', $query),
+            'fr' => $frUrl,
+            'fr-BJ' => $frUrl,
+            'en' => $enUrl,
+            'en-BJ' => $enUrl,
+            'x-default' => $frUrl,
         ];
     }
 

@@ -13,7 +13,7 @@
     'siteEmail' => 'contact@opportunetmondiale.com',
     'siteHours' => 'Lundi - Samedi 08:00 - 22:00',
     'siteAddress' => "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
-    'siteWhatsapp' => '+2290167229575',
+'siteWhatsapp' => '+2290166441840',
     'siteWhatsappMessage' => null,
     'socialLinks' => [],
     'banner' => null,
@@ -48,6 +48,10 @@
     $pageHeading = trim(strip_tags((string) ($pageBannerTitle ?? $title ?? '')));
     $siteLogo = \App\Support\Seo::absoluteImageUrl('images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png');
     $socialLinks = array_filter(is_array($socialLinks) ? $socialLinks : []);
+    $organizationSameAs = collect($socialLinks)
+        ->filter(fn ($value) => is_string($value) && trim($value) !== '')
+        ->values()
+        ->all();
     $aboutUrl = \App\Support\Seo::localizedUrl(route('site.about'), $locale);
     $helpUrl = \App\Support\Seo::localizedUrl(route('site.help'), $locale);
     $docsUrl = \App\Support\Seo::localizedUrl(route('site.documentation'), $locale);
@@ -64,6 +68,12 @@
             'description' => $siteSlogan,
             'email' => $siteEmail,
             'logo' => $siteLogo,
+            'sameAs' => $organizationSameAs !== [] ? $organizationSameAs : null,
+            'areaServed' => [
+                ['@type' => 'Country', 'name' => 'Benin'],
+                ['@type' => 'Place', 'name' => 'Africa'],
+                ['@type' => 'Place', 'name' => 'Worldwide'],
+            ],
             'address' => $siteAddress ? [
                 '@type' => 'PostalAddress',
                 'streetAddress' => $siteAddress,
@@ -82,6 +92,11 @@
             'url' => $homeUrl,
             'description' => $siteSlogan ?: $metaDescription,
             'inLanguage' => $locale,
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => $siteName,
+                'url' => $homeUrl,
+            ],
             'potentialAction' => [
                 '@type' => 'SearchAction',
                 'target' => $offersBaseUrl . '?lang=' . $locale . '&q={search_term_string}',

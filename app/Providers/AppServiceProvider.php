@@ -5,9 +5,13 @@ namespace App\Providers;
 use App\Models\BlogArticle;
 use App\Models\Formation;
 use App\Models\Opportunite;
+use App\Models\SpiritualPublication;
+use App\Models\Verset;
 use App\Observers\BlogArticleObserver;
 use App\Observers\FormationObserver;
 use App\Observers\OpportuniteObserver;
+use App\Observers\SpiritualPublicationObserver;
+use App\Observers\VersetObserver;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -65,5 +69,7 @@ class AppServiceProvider extends ServiceProvider
         Opportunite::observe(OpportuniteObserver::class);
         Formation::observe(FormationObserver::class);
         BlogArticle::observe(BlogArticleObserver::class);
+        Verset::observe(VersetObserver::class);
+        SpiritualPublication::observe(SpiritualPublicationObserver::class);
     }
 }

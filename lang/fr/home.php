@@ -4,7 +4,7 @@ return [
     'meta' => [
         'title' => 'Emploi au Benin, opportunites internationales et spiritualite chretienne',
         'description' => 'Opportunet Mondiale relie offres d emploi au Benin, opportunites internationales, formations, CV, priere, temoignages et articles pour avancer professionnellement et spirituellement.',
-        'keywords' => 'emploi Benin, opportunites internationales, offres d emploi Afrique, CV, formation professionnelle, spiritualite chretienne, priere, temoignages de foi',
+        'keywords' => 'emploi au Benin, offres d emploi au Benin, emploi Benin, opportunites internationales, offres d emploi Afrique, CV, formation professionnelle, spiritualite chretienne, priere, temoignages de foi',
     ],
     'topbar' => [
         'location' => 'Basée au Bénin, ouverte sur le monde',

@@ -4,7 +4,7 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
     $whatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
@@ -12,13 +12,53 @@
     $location = trim(($opportunity->lieu ? $opportunity->lieu . ', ' : '') . ($opportunity->pays ?: ''));
     $localizedOffersUrl = \App\Support\Seo::localizedUrl(route('offers.index'), app()->getLocale());
     $localizedOfferUrl = \App\Support\Seo::localizedUrl(route('offers.show', $opportunity->slug), app()->getLocale());
-    $uploadTooLargeMessage = app()->getLocale() === 'fr'
-        ? 'Les fichiers envoyes sont trop volumineux. Gardez chaque fichier sous 5 Mo et le total de la candidature sous 64 Mo.'
-        : 'The uploaded files are too large. Keep each file under 5 MB and the full application under 64 MB.';
-    $uploadLimitsHint = app()->getLocale() === 'fr'
-        ? 'Chaque fichier doit rester sous 5 Mo. Pour cette candidature, gardez le total des fichiers sous 64 Mo.'
-        : 'Each file must stay under 5 MB. For this application, keep the total upload under 64 MB.';
-    $seoDescription = \App\Support\Seo::description($opportunity->description);
+    $localizedCvServicesUrl = \App\Support\Seo::localizedUrl(route('cv.services.index'), app()->getLocale());
+    $localizedArticlesUrl = \App\Support\Seo::localizedUrl(route('articles.index'), app()->getLocale());
+    $uploadTooLargeMessage =
+        app()->getLocale() === 'fr'
+            ? 'Les fichiers envoyes sont trop volumineux. Gardez chaque fichier sous 5 Mo et le total de la candidature sous 64 Mo.'
+            : 'The uploaded files are too large. Keep each file under 5 MB and the full application under 64 MB.';
+    $uploadLimitsHint =
+        app()->getLocale() === 'fr'
+            ? 'Chaque fichier doit rester sous 5 Mo. Pour cette candidature, gardez le total des fichiers sous 64 Mo.'
+            : 'Each file must stay under 5 MB. For this application, keep the total upload under 64 MB.';
+    $salarySummary = null;
+
+    if ($opportunity->salaire_min !== null || $opportunity->salaire_max !== null) {
+        $salaryParts = [];
+
+        if ($opportunity->salaire_min !== null) {
+            $salaryParts[] = number_format((float) $opportunity->salaire_min, 0, ',', ' ');
+        }
+
+        if ($opportunity->salaire_max !== null) {
+            $salaryParts[] = number_format((float) $opportunity->salaire_max, 0, ',', ' ');
+        }
+
+        $salarySummary = implode(' - ', $salaryParts) . ' ' . ($opportunity->devise_salaire ?: 'XOF');
+    }
+
+    $seoTitle = collect([
+        $opportunity->titre,
+        $location !== '' ? $location : null,
+        $opportunity->contrat ? __('offers.contracts.' . $opportunity->contrat) : null,
+        app()->getLocale() === 'fr' ? 'Offre d emploi' : 'Job opening',
+    ])->filter()->implode(' | ');
+    $seoDescription = \App\Support\Seo::description(
+        trim(
+            $opportunity->description
+            . ($location !== '' ? ' ' . $location . '.' : '')
+            . ($opportunity->organisation ? ' ' . $opportunity->organisation . '.' : '')
+        ),
+        190,
+    );
+    $jobPostingDescription = collect([
+        $opportunity->description,
+        $opportunity->profil_recherche ? __('offers.detail.sections.profile') . ': ' . $opportunity->profil_recherche : null,
+        $opportunity->avantages ? __('offers.detail.sections.benefits') . ': ' . $opportunity->avantages : null,
+    ])->filter()->map(function (string $section): string {
+        return '<p>' . nl2br(e($section)) . '</p>';
+    })->implode('');
     $employmentTypeMap = [
         'cdi' => 'FULL_TIME',
         'cdd' => 'TEMPORARY',
@@ -34,52 +74,71 @@
             ['name' => __('offers.page.label'), 'url' => $localizedOffersUrl],
             ['name' => $opportunity->titre, 'url' => $localizedOfferUrl],
         ]),
-        \App\Support\Seo::schema(in_array($opportunity->type, ['emploi', 'stage', 'volontariat'], true) ? 'JobPosting' : 'WebPage', [
-            'title' => $opportunity->titre,
-            'name' => $opportunity->titre,
-            'url' => $localizedOfferUrl,
-            'description' => $seoDescription,
-            'datePosted' => $opportunity->date_publication?->toDateString(),
-            'validThrough' => $opportunity->date_expiration?->toDateString(),
-            'employmentType' => $employmentTypeMap[$opportunity->contrat] ?? null,
-            'industry' => __('home.opportunity_types.' . $opportunity->type),
-            'directApply' => $opportunity->lien_candidature ? true : null,
-            'jobLocationType' => $opportunity->teletravail ? 'TELECOMMUTE' : null,
-            'hiringOrganization' => [
-                '@type' => 'Organization',
-                'name' => $opportunity->organisation ?: $siteName,
-            ],
-            'jobLocation' => ! $opportunity->teletravail ? [
-                '@type' => 'Place',
-                'address' => [
-                    '@type' => 'PostalAddress',
-                    'addressLocality' => $opportunity->lieu,
-                    'addressCountry' => $opportunity->pays,
+        \App\Support\Seo::schema(
+            in_array($opportunity->type, ['emploi', 'stage', 'volontariat'], true) ? 'JobPosting' : 'WebPage',
+            [
+                'title' => $opportunity->titre,
+                'name' => $opportunity->titre,
+                'url' => $localizedOfferUrl,
+                'description' => $jobPostingDescription !== '' ? $jobPostingDescription : $seoDescription,
+                'datePosted' => $opportunity->date_publication?->toDateString(),
+                'validThrough' => $opportunity->date_expiration?->toDateString(),
+                'employmentType' => $employmentTypeMap[$opportunity->contrat] ?? null,
+                'industry' => __('home.opportunity_types.' . $opportunity->type),
+                'occupationalCategory' => $opportunity->category?->nom ?: __('home.opportunity_types.' . $opportunity->type),
+                'directApply' => $opportunity->lien_candidature ? true : null,
+                'jobLocationType' => $opportunity->teletravail ? 'TELECOMMUTE' : null,
+                'identifier' => [
+                    '@type' => 'PropertyValue',
+                    'name' => $siteName,
+                    'value' => 'opportunity-' . $opportunity->id,
                 ],
-            ] : null,
-            'applicantLocationRequirements' => $opportunity->pays ? [[
-                '@type' => 'Country',
-                'name' => $opportunity->pays,
-            ]] : null,
-        ]),
+                'hiringOrganization' => [
+                    '@type' => 'Organization',
+                    'name' => $opportunity->organisation ?: $siteName,
+                    'logo' => \App\Support\Seo::absoluteImageUrl($opportunity->logo_organisation) ?: \App\Support\Seo::absoluteImageUrl('images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png'),
+                    'sameAs' => filter_var((string) $opportunity->source, FILTER_VALIDATE_URL) ? $opportunity->source : null,
+                ],
+                'jobLocation' => !$opportunity->teletravail
+                    ? [
+                        '@type' => 'Place',
+                        'address' => [
+                            '@type' => 'PostalAddress',
+                            'addressLocality' => $opportunity->lieu,
+                            'addressCountry' => $opportunity->pays,
+                        ],
+                    ]
+                    : null,
+                'applicantLocationRequirements' => $opportunity->pays
+                    ? [
+                        [
+                            '@type' => 'Country',
+                            'name' => $opportunity->pays,
+                        ],
+                    ]
+                    : null,
+                'qualifications' => $opportunity->profil_recherche ?: null,
+                'incentiveCompensation' => $opportunity->avantages ?: null,
+                'baseSalary' => $salarySummary !== null
+                    ? [
+                        '@type' => 'MonetaryAmount',
+                        'currency' => $opportunity->devise_salaire ?: 'XOF',
+                        'value' => \App\Support\Seo::stripEmpty([
+                            '@type' => 'QuantitativeValue',
+                            'minValue' => $opportunity->salaire_min !== null ? (float) $opportunity->salaire_min : null,
+                            'maxValue' => $opportunity->salaire_max !== null ? (float) $opportunity->salaire_max : null,
+                            'unitText' => 'MONTH',
+                        ]),
+                    ]
+                    : null,
+            ],
+        ),
     ];
 @endphp
 
-<x-layouts.app
-    :title="$opportunity->titre"
-    :description="$seoDescription"
-    :canonical="$localizedOfferUrl"
-    :type="in_array($opportunity->type, ['emploi', 'stage', 'volontariat'], true) ? 'article' : 'website'"
-    :schema-data="$seoSchema"
-    :site-name="$siteName"
-    :site-slogan="$siteSlogan"
-    :site-email="$siteEmail"
-    :site-hours="$siteHours"
-    :site-address="$siteAddress"
-    :site-whatsapp="$siteWhatsapp"
-    :site-whatsapp-message="$siteWhatsappMessage"
-    :show-hero="false"
->
+<x-layouts.app :title="$seoTitle" :description="$seoDescription" :canonical="$localizedOfferUrl" :type="in_array($opportunity->type, ['emploi', 'stage', 'volontariat'], true) ? 'article' : 'website'" :schema-data="$seoSchema"
+    :site-name="$siteName" :site-slogan="$siteSlogan" :site-email="$siteEmail" :site-hours="$siteHours" :site-address="$siteAddress" :site-whatsapp="$siteWhatsapp"
+    :site-whatsapp-message="$siteWhatsappMessage" :show-hero="false">
     <main class="offers-detail-page">
         <section class="offers-detail-hero">
             <div class="container">
@@ -87,7 +146,8 @@
                     <div class="offers-detail-copy">
                         <a href="{{ $localizedOffersUrl }}" class="offers-detail-back">{{ __('offers.detail.back') }}</a>
                         <div class="offers-detail-badges">
-                            <span class="opportunity-type">{{ __('home.opportunity_types.' . $opportunity->type) }}</span>
+                            <span
+                                class="opportunity-type">{{ __('home.opportunity_types.' . $opportunity->type) }}</span>
                             @if ($opportunity->urgent)
                                 <span class="opportunity-urgent">{{ __('offers.badges.urgent') }}</span>
                             @endif
@@ -105,10 +165,12 @@
                                 <span>{{ __('offers.contracts.' . $opportunity->contrat) }}</span>
                             @endif
                             @if ($opportunity->date_publication)
-                                <span>{{ __('offers.card.published') }} {{ $opportunity->date_publication->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
+                                <span>{{ __('offers.card.published') }}
+                                    {{ $opportunity->date_publication->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
                             @endif
                             @if ($opportunity->date_expiration)
-                                <span>{{ __('offers.card.deadline') }} {{ $opportunity->date_expiration->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
+                                <span>{{ __('offers.card.deadline') }}
+                                    {{ $opportunity->date_expiration->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
                             @endif
                         </div>
                     </div>
@@ -120,17 +182,21 @@
                             <p>{{ __('offers.detail.action_text') }}</p>
 
                             <div class="offers-detail-actions">
-                                <a href="{{ route('offers.apply.entry', $opportunity->slug) }}" class="solid-submit">{{ __('offers.application.apply_now') }}</a>
+                                <a href="{{ route('offers.apply.entry', $opportunity->slug) }}"
+                                    class="solid-submit">{{ __('offers.application.apply_now') }}</a>
 
                                 @if ($opportunity->lien_candidature)
-                                    <a href="{{ $opportunity->lien_candidature }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('offers.detail.external_link') }}</a>
+                                    <a href="{{ $opportunity->lien_candidature }}" class="ghost-submit" target="_blank"
+                                        rel="noopener">{{ __('offers.detail.external_link') }}</a>
                                 @else
-                                    <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('offers.card.ask_more') }}</a>
+                                    <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank"
+                                        rel="noopener">{{ __('offers.card.ask_more') }}</a>
                                 @endif
                             </div>
                             <x-share-buttons
                                 :url="$localizedOfferUrl"
                                 :title="$opportunity->titre"
+                                :text="$opportunity->description"
                             />
                         </article>
 
@@ -166,6 +232,22 @@
                             </div>
                         @endif
 
+                        @if ($salarySummary)
+                            <div class="offers-detail-section">
+                                <h2>{{ __('offers.detail.sections.salary') }}</h2>
+                                <p>{{ $salarySummary }}</p>
+                            </div>
+                        @endif
+
+                        <div class="offers-detail-section">
+                            <h2>{{ __('offers.detail.sections.application_help') }}</h2>
+                            <p>{{ __('offers.detail.application_help_text') }}</p>
+                            <div class="offers-detail-actions">
+                                <a href="{{ $localizedCvServicesUrl }}" class="solid-submit">{{ __('offers.detail.cv_cta') }}</a>
+                                <a href="{{ $localizedArticlesUrl }}" class="ghost-submit">{{ __('offers.detail.articles_cta') }}</a>
+                            </div>
+                        </div>
+
                         <div class="offers-detail-section" id="application-form">
                             <h2>{{ __('offers.application.title') }}</h2>
                             <p>{{ __('offers.application.subtitle') }}</p>
@@ -188,33 +270,50 @@
                                     <div class="offers-application-status-card">
                                         <strong>{{ __('offers.application.already_applied_title') }}</strong>
                                         <p>{{ __('offers.application.already_applied_text') }}</p>
-                                        <span class="offers-application-status-pill">{{ __('admin.applications.statuses.' . $currentApplication->statut) }}</span>
+                                        <span
+                                            class="offers-application-status-pill">{{ __('admin.applications.statuses.' . $currentApplication->statut) }}</span>
                                     </div>
                                 @else
-                                    <form method="POST" action="{{ route('offers.apply.store', $opportunity->slug) }}" enctype="multipart/form-data" class="contact-form-card offers-application-form">
+                                    <form method="POST" action="{{ route('offers.apply.store', $opportunity->slug) }}"
+                                        enctype="multipart/form-data" class="contact-form-card offers-application-form">
                                         @csrf
                                         <x-honeypot />
                                         <div class="field-row">
-                                            <input type="text" name="telephone" value="{{ old('telephone', auth()->user()->telephone) }}" placeholder="{{ __('offers.application.fields.phone') }}" />
-                                            <input type="text" name="whatsapp" value="{{ old('whatsapp', auth()->user()->whatsapp) }}" placeholder="{{ __('offers.application.fields.whatsapp') }}" />
+                                            <input type="text" name="telephone"
+                                                value="{{ old('telephone', auth()->user()->telephone) }}"
+                                                placeholder="{{ __('offers.application.fields.phone') }}" />
+                                            <input type="text" name="whatsapp"
+                                                value="{{ old('whatsapp', auth()->user()->whatsapp) }}"
+                                                placeholder="{{ __('offers.application.fields.whatsapp') }}" />
                                         </div>
 
-                                        <input type="text" name="pays" value="{{ old('pays', auth()->user()->pays) }}" placeholder="{{ __('offers.application.fields.country') }}" />
+                                        <input type="text" name="pays"
+                                            value="{{ old('pays', auth()->user()->pays) }}"
+                                            placeholder="{{ __('offers.application.fields.country') }}" />
 
                                         <div class="offers-application-upload-grid">
                                             <label class="offers-upload-field">
+                                                <span>{{ __('offers.application.fields.cv') }}</span>
+                                                <input type="file" name="cv_fichier" accept=".pdf,.doc,.docx"
+                                                    required />
+                                            </label>
+
+                                            <label class="offers-upload-field">
                                                 <span>{{ __('offers.application.fields.letter') }}</span>
-                                                <input type="file" name="lettre_motivation" accept=".pdf,.doc,.docx" required />
+                                                <input type="file" name="lettre_motivation" accept=".pdf,.doc,.docx"
+                                                    required />
                                             </label>
 
                                             <label class="offers-upload-field">
                                                 <span>{{ __('offers.application.fields.diplomas') }}</span>
-                                                <input type="file" name="diplomes[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple required />
+                                                <input type="file" name="diplomes[]"
+                                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple required />
                                             </label>
 
                                             <label class="offers-upload-field">
                                                 <span>{{ __('offers.application.fields.certificates') }}</span>
-                                                <input type="file" name="attestations[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple required />
+                                                <input type="file" name="attestations[]"
+                                                    accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" multiple required />
                                             </label>
                                         </div>
 
@@ -234,8 +333,10 @@
                                         @endif
 
                                         <div class="offers-application-actions">
-                                            <button type="submit" class="solid-submit">{{ __('offers.application.submit') }}</button>
-                                            <a href="{{ $localizedOffersUrl }}" class="ghost-submit">{{ __('offers.detail.all_offers') }}</a>
+                                            <button type="submit"
+                                                class="solid-submit">{{ __('offers.application.submit') }}</button>
+                                            <a href="{{ $localizedOffersUrl }}"
+                                                class="ghost-submit">{{ __('offers.detail.all_offers') }}</a>
                                         </div>
                                     </form>
                                 @endif
@@ -243,8 +344,10 @@
                                 <div class="offers-application-login-card">
                                     <p>{{ __('offers.application.login_prompt') }}</p>
                                     <div class="offers-application-actions">
-                                        <a href="{{ route('offers.apply.entry', $opportunity->slug) }}" class="solid-submit">{{ __('offers.application.login_to_apply') }}</a>
-                                        <a href="{{ route('register.user') }}" class="ghost-submit">{{ __('offers.application.create_account') }}</a>
+                                        <a href="{{ route('offers.apply.entry', $opportunity->slug) }}"
+                                            class="solid-submit">{{ __('offers.application.login_to_apply') }}</a>
+                                        <a href="{{ route('register.user') }}"
+                                            class="ghost-submit">{{ __('offers.application.create_account') }}</a>
                                     </div>
                                 </div>
                             @endauth
@@ -298,7 +401,8 @@
                         @foreach ($relatedOpportunities as $index => $relatedOpportunity)
                             <article class="opportunity-card reveal reveal-delay-{{ min($index + 1, 4) }}">
                                 <div class="opportunity-card-top">
-                                    <span class="opportunity-type">{{ __('home.opportunity_types.' . $relatedOpportunity->type) }}</span>
+                                    <span
+                                        class="opportunity-type">{{ __('home.opportunity_types.' . $relatedOpportunity->type) }}</span>
                                     @if ($relatedOpportunity->urgent)
                                         <span class="opportunity-urgent">{{ __('offers.badges.urgent') }}</span>
                                     @endif
@@ -309,14 +413,16 @@
                                     <span>{{ $relatedOpportunity->organisation ?: __('offers.card.organization_fallback') }}</span>
                                     <span>{{ trim(($relatedOpportunity->lieu ? $relatedOpportunity->lieu . ', ' : '') . ($relatedOpportunity->pays ?: '')) ?: __('offers.card.location_fallback') }}</span>
                                 </div>
-                                <a href="{{ \App\Support\Seo::localizedUrl(route('offers.show', $relatedOpportunity->slug), app()->getLocale()) }}" class="opportunity-link">
+                                <a href="{{ \App\Support\Seo::localizedUrl(route('offers.show', $relatedOpportunity->slug), app()->getLocale()) }}"
+                                    class="opportunity-link">
                                     {{ __('offers.card.view_details') }}
                                 </a>
-                                <x-share-buttons
-                                    :url="\App\Support\Seo::localizedUrl(route('offers.show', $relatedOpportunity->slug), app()->getLocale())"
-                                    :title="$relatedOpportunity->titre"
-                                    variant="compact"
-                                />
+                                <x-share-buttons :url="\App\Support\Seo::localizedUrl(
+                                    route('offers.show', $relatedOpportunity->slug),
+                                    app()->getLocale(),
+                                )" :title="$relatedOpportunity->titre"
+                                    :text="$relatedOpportunity->description"
+                                    variant="compact" />
                             </article>
                         @endforeach
                     </div>

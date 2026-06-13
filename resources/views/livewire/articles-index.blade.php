@@ -134,6 +134,7 @@
                             <x-share-buttons
                                 :url="route('articles.show', $article->slug)"
                                 :title="$article->titre"
+                                :text="$article->extrait ?: \Illuminate\Support\Str::limit(strip_tags($article->contenu), 170)"
                                 variant="compact"
                             />
                         </div>
@@ -151,9 +152,9 @@
                     @if ($articles->onFirstPage())
                         <span class="pagination-btn disabled">{{ __('articles.pagination.previous') }}</span>
                     @else
-                        <button type="button" wire:click="previousPage" wire:loading.attr="disabled" class="pagination-btn">
+                        <a href="{{ $this->pageUrl($articles->currentPage() - 1) }}" class="pagination-btn">
                             {{ __('articles.pagination.previous') }}
-                        </button>
+                        </a>
                     @endif
 
                     <span class="pagination-state">
@@ -161,9 +162,9 @@
                     </span>
 
                     @if ($articles->hasMorePages())
-                        <button type="button" wire:click="nextPage" wire:loading.attr="disabled" class="pagination-btn">
+                        <a href="{{ $this->pageUrl($articles->currentPage() + 1) }}" class="pagination-btn">
                             {{ __('articles.pagination.next') }}
-                        </button>
+                        </a>
                     @else
                         <span class="pagination-btn disabled">{{ __('articles.pagination.next') }}</span>
                     @endif

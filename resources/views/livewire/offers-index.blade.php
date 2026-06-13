@@ -124,6 +124,7 @@
                         <x-share-buttons
                             :url="route('offers.show', $opportunity->slug)"
                             :title="$opportunity->titre"
+                            :text="$opportunity->description"
                             variant="compact"
                         />
                     </article>
@@ -140,9 +141,9 @@
                     @if ($opportunities->onFirstPage())
                         <span class="pagination-btn disabled">{{ __('offers.pagination.previous') }}</span>
                     @else
-                        <button type="button" wire:click="previousPage" wire:loading.attr="disabled" class="pagination-btn">
+                        <a href="{{ $this->pageUrl($opportunities->currentPage() - 1) }}" class="pagination-btn">
                             {{ __('offers.pagination.previous') }}
-                        </button>
+                        </a>
                     @endif
 
                     <span class="pagination-state">
@@ -150,9 +151,9 @@
                     </span>
 
                     @if ($opportunities->hasMorePages())
-                        <button type="button" wire:click="nextPage" wire:loading.attr="disabled" class="pagination-btn">
+                        <a href="{{ $this->pageUrl($opportunities->currentPage() + 1) }}" class="pagination-btn">
                             {{ __('offers.pagination.next') }}
-                        </button>
+                        </a>
                     @else
                         <span class="pagination-btn disabled">{{ __('offers.pagination.next') }}</span>
                     @endif

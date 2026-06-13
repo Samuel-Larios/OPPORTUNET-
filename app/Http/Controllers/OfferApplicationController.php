@@ -48,6 +48,7 @@ class OfferApplicationController extends Controller
             'whatsapp' => ['nullable', 'string', 'max:20'],
             'pays' => ['nullable', 'string', 'max:80'],
             'message' => ['nullable', 'string', 'max:2000'],
+            'cv_fichier' => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
             'lettre_motivation' => ['required', 'file', 'mimes:pdf,doc,docx', 'max:5120'],
             'diplomes' => ['required', 'array', 'min:1', 'max:5'],
             'diplomes.*' => ['file', 'mimes:pdf,jpg,jpeg,png,doc,docx', 'max:5120'],
@@ -65,6 +66,7 @@ class OfferApplicationController extends Controller
                 ->withErrors(['application' => __('offers.application.validation.already_applied')]);
         }
 
+        $cvPath = $request->file('cv_fichier')?->store('offer-applications/cvs', 'local');
         $letterPath = $validated['lettre_motivation']->store('offer-applications/letters', 'local');
         $diplomaPaths = collect($request->file('diplomes', []))
             ->map(fn ($file) => $file->store('offer-applications/diplomas', 'local'))
@@ -82,6 +84,7 @@ class OfferApplicationController extends Controller
             'telephone' => $validated['telephone'] ?: ($user->telephone ?: null),
             'whatsapp' => $validated['whatsapp'] ?: ($user->whatsapp ?: null),
             'pays' => $validated['pays'] ?: ($user->pays ?: null),
+            'cv_fichier' => $cvPath,
             'lettre_motivation' => $letterPath,
             'diplome_fichiers' => $diplomaPaths,
             'attestation_fichiers' => $certificatePaths,

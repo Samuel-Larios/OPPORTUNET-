@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Formation;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -73,6 +74,8 @@ class FormationsManager extends Component
     public bool $enVedette = false;
     public string $whatsappMessageFr = '';
     public string $whatsappMessageEn = '';
+    public bool $scheduleEnabled = false;
+    public string $scheduleAt = '';
 
     public ?TemporaryUploadedFile $imageCouverture = null;
     public string $existingImagePath = '';
@@ -107,6 +110,32 @@ class FormationsManager extends Component
     public function updatedImageCouverture(): void
     {
         $this->removeCurrentImage = false;
+    }
+
+    public function poll(): void
+    {
+        $this->refreshScheduledPublications();
+    }
+
+    public function refreshScheduledPublications(): void
+    {
+        $now = now();
+
+        Formation::query()
+            ->where('auto_publish', true)
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<=', $now)
+            ->each(function (Formation $formation) use ($now): void {
+                $publishAt = $formation->scheduled_for instanceof Carbon ? $formation->scheduled_for : $now;
+
+                $formation->forceFill([
+                    'statut' => $formation->scheduled_status ?: 'ouverte',
+                    'auto_publish' => false,
+                    'scheduled_for' => null,
+                    'scheduled_status' => null,
+                    'published_at' => $formation->published_at ?: $publishAt,
+                ])->save();
+            });
     }
 
     public function editFormation(int $formationId): void
@@ -148,7 +177,9 @@ class FormationsManager extends Component
         $this->programmeEn = (string) ($formation->getRawOriginal('programme_en') ?? $formation->programme ?? '');
         $this->certificatFr = (string) ($formation->getRawOriginal('certificat_fr') ?? $formation->certificat ?? '');
         $this->certificatEn = (string) ($formation->getRawOriginal('certificat_en') ?? $formation->certificat ?? '');
-        $this->statut = (string) $formation->statut;
+        $this->scheduleEnabled = (bool) $formation->auto_publish && $formation->scheduled_for?->isFuture();
+        $this->scheduleAt = $this->scheduleEnabled ? $formation->scheduled_for?->format('Y-m-d\TH:i') ?? '' : '';
+        $this->statut = $this->scheduleEnabled ? (string) ($formation->scheduled_status ?: 'ouverte') : (string) $formation->statut;
         $this->inscriptionsOuvertes = (bool) $formation->inscriptions_ouvertes;
         $this->enVedette = (bool) $formation->en_vedette;
         $this->whatsappMessageFr = (string) ($formation->getRawOriginal('whatsapp_message_fr') ?? $formation->whatsapp_message ?? '');
@@ -198,6 +229,7 @@ class FormationsManager extends Component
             'imageCouverture',
             'existingImagePath',
             'currentImageUrl',
+            'scheduleAt',
         ]);
 
         $this->mode = 'en_ligne';
@@ -208,6 +240,7 @@ class FormationsManager extends Component
         $this->inscriptionsOuvertes = true;
         $this->enVedette = false;
         $this->removeCurrentImage = false;
+        $this->scheduleEnabled = false;
         $this->resetValidation();
     }
 
@@ -224,6 +257,10 @@ class FormationsManager extends Component
     public function saveFormation(): void
     {
         $validated = $this->validate($this->rules());
+        $scheduledFor = $validated['scheduleEnabled']
+            ? Carbon::parse($validated['scheduleAt'])
+            : null;
+        $targetStatus = $scheduledFor ? 'ouverte' : $validated['statut'];
 
         $formation = $this->editingFormationId
             ? Formation::query()->findOrFail($this->editingFormationId)
@@ -299,12 +336,18 @@ class FormationsManager extends Component
             'certificat' => $validated['certificatFr'] ?: null,
             'certificat_fr' => $validated['certificatFr'] ?: null,
             'certificat_en' => $validated['certificatEn'] !== '' ? $validated['certificatEn'] : ($validated['certificatFr'] ?: null),
-            'statut' => $validated['statut'],
+            'statut' => $scheduledFor ? 'brouillon' : $targetStatus,
             'inscriptions_ouvertes' => $validated['inscriptionsOuvertes'],
             'en_vedette' => $validated['enVedette'],
             'whatsapp_message' => $validated['whatsappMessageFr'] ?: null,
             'whatsapp_message_fr' => $validated['whatsappMessageFr'] ?: null,
             'whatsapp_message_en' => $validated['whatsappMessageEn'] !== '' ? $validated['whatsappMessageEn'] : ($validated['whatsappMessageFr'] ?: null),
+            'auto_publish' => $scheduledFor !== null,
+            'scheduled_for' => $scheduledFor,
+            'scheduled_status' => $scheduledFor ? $targetStatus : null,
+            'published_at' => $scheduledFor === null && $targetStatus === 'ouverte'
+                ? ($formation->published_at ?? now())
+                : null,
         ]);
 
         $formation->save();
@@ -349,9 +392,9 @@ class FormationsManager extends Component
                         ->orWhere('description_courte_en', 'like', $term);
                 });
             })
-            ->when($this->statusFilter !== '', fn ($query) => $query->where('statut', $this->statusFilter))
-            ->when($this->modeFilter !== '', fn ($query) => $query->where('mode', $this->modeFilter))
-            ->when($this->categoryFilter !== '', fn ($query) => $query->where('categorie_id', (int) $this->categoryFilter))
+            ->when($this->statusFilter !== '', fn($query) => $query->where('statut', $this->statusFilter))
+            ->when($this->modeFilter !== '', fn($query) => $query->where('mode', $this->modeFilter))
+            ->when($this->categoryFilter !== '', fn($query) => $query->where('categorie_id', (int) $this->categoryFilter))
             ->orderByDesc('en_vedette')
             ->orderBy('date_debut')
             ->latest('updated_at')
@@ -371,7 +414,7 @@ class FormationsManager extends Component
         return [
             'categorieId' => [
                 'nullable',
-                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('type', 'formation')),
+                Rule::exists('categories', 'id')->where(fn($query) => $query->where('type', 'formation')),
             ],
             'formateurId' => ['nullable', 'exists:users,id'],
             'titreFr' => ['required', 'string', 'max:200'],
@@ -411,6 +454,8 @@ class FormationsManager extends Component
             'enVedette' => ['boolean'],
             'whatsappMessageFr' => ['nullable', 'string', 'max:255'],
             'whatsappMessageEn' => ['nullable', 'string', 'max:255'],
+            'scheduleEnabled' => ['boolean'],
+            'scheduleAt' => ['nullable', 'date_format:Y-m-d\\TH:i', 'required_if:scheduleEnabled,true', 'after:now'],
         ];
     }
 
@@ -426,9 +471,10 @@ class FormationsManager extends Component
         $counter = 1;
 
         while (Formation::query()
-            ->when($this->editingFormationId, fn ($query) => $query->whereKeyNot($this->editingFormationId))
+            ->when($this->editingFormationId, fn($query) => $query->whereKeyNot($this->editingFormationId))
             ->where('slug', $slug)
-            ->exists()) {
+            ->exists()
+        ) {
             $slug = $original . '-' . $counter;
             $counter++;
         }

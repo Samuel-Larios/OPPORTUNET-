@@ -3,8 +3,8 @@
 return [
     'meta' => [
         'title' => 'Jobs in Benin, global opportunities and Christian spirituality',
-        'description' => 'Opportunet Mondiale connects job seekers with opportunities in Benin and worldwide, while also offering training, CV support, prayer, testimonies and inspiring articles.',
-        'keywords' => 'jobs in Benin, international opportunities, Africa jobs, CV services, professional training, Christian spirituality, prayer, faith testimonies',
+        'description' => 'Opportunet Mondiale connects job seekers with jobs in Benin and opportunities worldwide, while also offering training, CV support, prayer, testimonies, and inspiring articles.',
+        'keywords' => 'jobs in Benin, Benin job offers, international opportunities, Africa jobs, CV services, professional training, Christian spirituality, prayer, faith testimonies',
     ],
     'topbar' => [
         'location' => 'Based in Benin, open to the world',

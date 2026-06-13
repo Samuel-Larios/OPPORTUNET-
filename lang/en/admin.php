@@ -110,6 +110,10 @@ return [
                 'title' => 'Application status updated',
                 'message' => 'Your application for ":offer" is now ":status".',
             ],
+            'application_proposed_to_company' => [
+                'title' => 'Application proposed to a company',
+                'message' => 'Your application for ":offer" has been proposed to a partner company.',
+            ],
             'application_reply' => [
                 'title' => 'Candidate reply received',
                 'message' => ':name replied to the application follow-up for ":offer".',
@@ -877,6 +881,7 @@ return [
             'admin_notes' => 'Admin note sent to candidate',
         ],
         'files' => [
+            'cv' => 'CV',
             'letter' => 'Cover letter',
             'diploma' => 'Diploma',
             'certificate' => 'Certificate',

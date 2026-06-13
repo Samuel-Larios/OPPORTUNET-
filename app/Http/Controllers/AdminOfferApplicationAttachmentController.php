@@ -15,6 +15,7 @@ class AdminOfferApplicationAttachmentController extends Controller
         $this->ensureAccess($request, $candidature);
 
         $path = match ($type) {
+            'cv' => $candidature->cv_fichier,
             'lettre' => $candidature->lettre_motivation,
             'diplome' => $candidature->diplome_fichiers[$index ?? 0] ?? null,
             'attestation' => $candidature->attestation_fichiers[$index ?? 0] ?? null,

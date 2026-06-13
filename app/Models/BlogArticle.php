@@ -46,6 +46,10 @@ class BlogArticle extends Model
         'vues',
         'partages',
         'temps_lecture',
+        'auto_publish',
+        'scheduled_for',
+        'published_at',
+        'scheduled_status',
     ];
 
     protected array $bilingual = [
@@ -64,6 +68,9 @@ class BlogArticle extends Model
             'en_vedette' => 'boolean',
             'commentaires_actifs' => 'boolean',
             'tags' => 'array',
+            'auto_publish' => 'boolean',
+            'scheduled_for' => 'datetime',
+            'published_at' => 'datetime',
         ];
     }
 

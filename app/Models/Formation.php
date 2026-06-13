@@ -68,6 +68,10 @@ class Formation extends Model
         'whatsapp_message',
         'whatsapp_message_fr',
         'whatsapp_message_en',
+        'auto_publish',
+        'scheduled_for',
+        'published_at',
+        'scheduled_status',
     ];
 
     protected array $bilingual = [
@@ -91,6 +95,9 @@ class Formation extends Model
             'en_vedette' => 'boolean',
             'date_debut' => 'date',
             'date_fin' => 'date',
+            'auto_publish' => 'boolean',
+            'scheduled_for' => 'datetime',
+            'published_at' => 'datetime',
         ];
     }
 

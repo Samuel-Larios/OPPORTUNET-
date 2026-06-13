@@ -85,6 +85,9 @@
                     ['label' => __('admin.nav.trainings'), 'route' => 'panel.editor.trainings', 'visible' => true],
                     ['label' => __('admin.nav.categories'), 'route' => 'panel.editor.categories', 'visible' => true],
                     ['label' => __('admin.nav.verses'), 'route' => 'panel.editor.verses', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Pensées du jour' : 'Thoughts of the day', 'route' => 'panel.editor.thoughts', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Exhortations' : 'Exhortations', 'route' => 'panel.editor.exhortations', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Prières du jour' : 'Daily prayers', 'route' => 'panel.editor.daily-prayers', 'visible' => true],
                 ],
             ],
             [
@@ -130,6 +133,9 @@
                     ['label' => __('admin.nav.trainings'), 'route' => 'panel.editor.trainings', 'visible' => true],
                     ['label' => __('admin.nav.categories'), 'route' => 'panel.editor.categories', 'visible' => true],
                     ['label' => __('admin.nav.verses'), 'route' => 'panel.editor.verses', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Pensées du jour' : 'Thoughts of the day', 'route' => 'panel.editor.thoughts', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Exhortations' : 'Exhortations', 'route' => 'panel.editor.exhortations', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Prières du jour' : 'Daily prayers', 'route' => 'panel.editor.daily-prayers', 'visible' => true],
                 ],
             ],
         ]);

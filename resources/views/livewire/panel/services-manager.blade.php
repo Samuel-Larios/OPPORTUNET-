@@ -1,4 +1,4 @@
-<div class="panel-stack">
+<div class="panel-stack" wire:poll.30s>
     @if (session('panel_success'))
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
@@ -12,15 +12,19 @@
 
             <form wire:submit="saveService" class="panel-form-grid" enctype="multipart/form-data">
                 <label class="panel-field">
-                    <span>FR titre</span>
+                    <span>Titre FR</span>
                     <input type="text" wire:model="titreFr" />
-                    @error('titreFr') <small>{{ $message }}</small> @enderror
+                    @error('titreFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN title</span>
+                    <span>Title EN</span>
                     <input type="text" wire:model="titreEn" />
-                    @error('titreEn') <small>{{ $message }}</small> @enderror
+                    @error('titreEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
@@ -31,96 +35,127 @@
                             <option value="{{ $category->id }}">{{ $category->nom }}</option>
                         @endforeach
                     </select>
-                    @error('categorieId') <small>{{ $message }}</small> @enderror
+                    @error('categorieId')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.services.type') }}</span>
                     <select wire:model="type">
                         @foreach ($serviceTypes as $serviceType)
-                            <option value="{{ $serviceType }}">{{ __('admin.services.types.' . $serviceType) }}</option>
+                            <option value="{{ $serviceType }}">{{ __('admin.services.types.' . $serviceType) }}
+                            </option>
                         @endforeach
                     </select>
-                    @error('type') <small>{{ $message }}</small> @enderror
+                    @error('type')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR description courte</span>
+                    <span>Description courte FR</span>
                     <textarea wire:model="descriptionCourteFr" rows="3"></textarea>
-                    @error('descriptionCourteFr') <small>{{ $message }}</small> @enderror
+                    @error('descriptionCourteFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN short description</span>
+                    <span>Short description EN</span>
                     <textarea wire:model="descriptionCourteEn" rows="3"></textarea>
-                    @error('descriptionCourteEn') <small>{{ $message }}</small> @enderror
+                    @error('descriptionCourteEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR description longue</span>
+                    <span>Description longue FR</span>
                     <textarea wire:model="descriptionLongueFr" rows="6"></textarea>
-                    @error('descriptionLongueFr') <small>{{ $message }}</small> @enderror
+                    @error('descriptionLongueFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN long description</span>
+                    <span>Long description EN</span>
                     <textarea wire:model="descriptionLongueEn" rows="6"></textarea>
-                    @error('descriptionLongueEn') <small>{{ $message }}</small> @enderror
+                    @error('descriptionLongueEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.services.icon') }}</span>
                     <input type="text" wire:model="icone" placeholder="briefcase" />
-                    @error('icone') <small>{{ $message }}</small> @enderror
+                    @error('icone')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.services.order') }}</span>
                     <input type="number" min="0" wire:model="ordre" />
-                    @error('ordre') <small>{{ $message }}</small> @enderror
+                    @error('ordre')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.services.price') }}</span>
                     <input type="number" min="0" step="0.01" wire:model="prix" />
-                    @error('prix') <small>{{ $message }}</small> @enderror
+                    @error('prix')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.services.currency') }}</span>
                     <input type="text" wire:model="devise" />
-                    @error('devise') <small>{{ $message }}</small> @enderror
+                    @error('devise')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>FR duree</span>
-                    <input type="text" wire:model="dureeFr" placeholder="48h a 72h" />
-                    @error('dureeFr') <small>{{ $message }}</small> @enderror
+                    <span>Durée FR</span>
+                    <input type="text" wire:model="dureeFr" placeholder="48 h à 72 h" />
+                    @error('dureeFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN duration</span>
+                    <span>Duration EN</span>
                     <input type="text" wire:model="dureeEn" placeholder="48 to 72 hours" />
-                    @error('dureeEn') <small>{{ $message }}</small> @enderror
+                    @error('dureeEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR message WhatsApp</span>
+                    <span>Message WhatsApp FR</span>
                     <textarea wire:model="whatsappMessageFr" rows="3"></textarea>
-                    @error('whatsappMessageFr') <small>{{ $message }}</small> @enderror
+                    @error('whatsappMessageFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN WhatsApp message</span>
+                    <span>WhatsApp message EN</span>
                     <textarea wire:model="whatsappMessageEn" rows="3"></textarea>
-                    @error('whatsappMessageEn') <small>{{ $message }}</small> @enderror
+                    @error('whatsappMessageEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <div class="panel-field panel-field-span">
                     <span>{{ __('admin.services.image') }}</span>
                     <input type="file" wire:model="image" accept="image/*" />
                     <small>{{ __('admin.services.image_hint') }}</small>
-                    @error('image') <small>{{ $message }}</small> @enderror
+                    @error('image')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </div>
 
                 @if ($image || $currentImageUrl)
@@ -151,9 +186,12 @@
                     </label>
                 </div>
 
+                @include('livewire.panel.partials.schedule-fields')
+
                 <div class="panel-action-row panel-field-span">
                     <button type="submit" class="panel-primary-btn">{{ __('admin.services.save') }}</button>
-                    <button type="button" wire:click="resetForm" class="panel-secondary-btn">{{ __('admin.services.reset') }}</button>
+                    <button type="button" wire:click="resetForm"
+                        class="panel-secondary-btn">{{ __('admin.services.reset') }}</button>
                 </div>
             </form>
         </article>
@@ -164,7 +202,8 @@
             </div>
 
             <div class="panel-toolbar">
-                <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.services.search') }}" />
+                <input type="search" wire:model.live.debounce.300ms="search"
+                    placeholder="{{ __('admin.services.search') }}" />
 
                 <select wire:model.live="typeFilter">
                     <option value="">{{ __('admin.services.all_types') }}</option>
@@ -210,7 +249,8 @@
                                 <td>{{ __('admin.services.types.' . $service->type) }}</td>
                                 <td>
                                     @if ($service->prix)
-                                        {{ number_format((float) $service->prix, 0, ',', ' ') }} {{ $service->devise }}
+                                        {{ number_format((float) $service->prix, 0, ',', ' ') }}
+                                        {{ $service->devise }}
                                     @else
                                         {{ __('admin.services.on_request') }}
                                     @endif
@@ -219,12 +259,21 @@
                                     <span class="panel-badge{{ $service->actif ? ' is-success' : ' is-muted' }}">
                                         {{ $service->actif ? __('admin.users.active') : __('admin.users.inactive') }}
                                     </span>
+                                    @if ($service->auto_publish && $service->scheduled_for)
+                                        <div style="margin-top: 6px;">
+                                            <span class="panel-badge">
+                                                {{ app()->getLocale() === 'fr' ? 'Programmé le ' : 'Scheduled on ' }}{{ $service->scheduled_for->format('d/m/Y H:i') }}
+                                            </span>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="panel-inline-actions">
-                                    <button type="button" wire:click="editService({{ $service->id }})" class="panel-secondary-btn panel-small-btn">
+                                    <button type="button" wire:click="editService({{ $service->id }})"
+                                        class="panel-secondary-btn panel-small-btn">
                                         {{ __('admin.services.edit') }}
                                     </button>
-                                    <button type="button" wire:click="deleteService({{ $service->id }})" class="panel-secondary-btn panel-small-btn">
+                                    <button type="button" wire:click="deleteService({{ $service->id }})"
+                                        class="panel-secondary-btn panel-small-btn">
                                         {{ __('admin.services.delete') }}
                                     </button>
                                 </td>

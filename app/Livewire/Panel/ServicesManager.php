@@ -5,6 +5,7 @@ namespace App\Livewire\Panel;
 use App\Models\Category;
 use App\Models\Service;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -57,6 +58,8 @@ class ServicesManager extends Component
     public string $existingImagePath = '';
     public string $currentImageUrl = '';
     public bool $removeCurrentImage = false;
+    public bool $scheduleEnabled = false;
+    public string $scheduleAt = '';
 
     public function updatingSearch(): void
     {
@@ -81,6 +84,29 @@ class ServicesManager extends Component
     public function updatedImage(): void
     {
         $this->removeCurrentImage = false;
+    }
+
+    public function poll(): void
+    {
+        $this->refreshScheduledPublications();
+    }
+
+    public function refreshScheduledPublications(): void
+    {
+        $now = now();
+
+        Service::query()
+            ->where('auto_publish', true)
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<=', $now)
+            ->each(function (Service $service) use ($now): void {
+                $service->forceFill([
+                    'actif' => true,
+                    'auto_publish' => false,
+                    'scheduled_for' => null,
+                    'published_at' => $service->published_at ?: $now,
+                ])->save();
+            });
     }
 
     public function editService(int $serviceId): void
@@ -110,6 +136,9 @@ class ServicesManager extends Component
         $this->existingImagePath = (string) ($service->image ?? '');
         $this->currentImageUrl = $service->publicImageUrl() ?? '';
         $this->removeCurrentImage = false;
+        $this->scheduleEnabled = (bool) $service->auto_publish && $service->scheduled_for?->isFuture();
+        $this->scheduleAt = $this->scheduleEnabled ? $service->scheduled_for?->format('Y-m-d\TH:i') ?? '' : '';
+        $this->actif = $this->scheduleEnabled ? true : (bool) $service->actif;
     }
 
     public function resetForm(): void
@@ -132,6 +161,7 @@ class ServicesManager extends Component
             'image',
             'existingImagePath',
             'currentImageUrl',
+            'scheduleAt',
         ]);
 
         $this->type = 'autre';
@@ -140,6 +170,7 @@ class ServicesManager extends Component
         $this->actif = true;
         $this->enVedette = false;
         $this->removeCurrentImage = false;
+        $this->scheduleEnabled = false;
         $this->resetValidation();
     }
 
@@ -156,6 +187,9 @@ class ServicesManager extends Component
     public function saveService(): void
     {
         $validated = $this->validate($this->rules());
+        $scheduledFor = $validated['scheduleEnabled']
+            ? Carbon::parse($validated['scheduleAt'])
+            : null;
         $service = $this->editingServiceId
             ? Service::query()->findOrFail($this->editingServiceId)
             : new Service();
@@ -200,8 +234,11 @@ class ServicesManager extends Component
             'whatsapp_message' => $validated['whatsappMessageFr'] ?: null,
             'whatsapp_message_fr' => $validated['whatsappMessageFr'] ?: null,
             'whatsapp_message_en' => $validated['whatsappMessageEn'] !== '' ? $validated['whatsappMessageEn'] : ($validated['whatsappMessageFr'] ?: null),
-            'actif' => $validated['actif'],
+            'actif' => $scheduledFor ? false : $validated['actif'],
             'en_vedette' => $validated['enVedette'],
+            'auto_publish' => $scheduledFor !== null,
+            'scheduled_for' => $scheduledFor,
+            'published_at' => $scheduledFor === null && $validated['actif'] ? now() : null,
             'ordre' => $validated['ordre'] !== '' ? (int) $validated['ordre'] : 0,
         ]);
 
@@ -247,11 +284,11 @@ class ServicesManager extends Component
                         ->orWhere('description_courte_en', 'like', $term);
                 });
             })
-            ->when($this->typeFilter !== '', fn ($query) => $query->where('type', $this->typeFilter))
-            ->when($this->activeFilter !== '', fn ($query) => $query->where('actif', $this->activeFilter === '1'))
-            ->when($this->categoryFilter !== '', fn ($query) => $query->whereHas(
+            ->when($this->typeFilter !== '', fn($query) => $query->where('type', $this->typeFilter))
+            ->when($this->activeFilter !== '', fn($query) => $query->where('actif', $this->activeFilter === '1'))
+            ->when($this->categoryFilter !== '', fn($query) => $query->whereHas(
                 'category',
-                fn ($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
+                fn($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
             ))
             ->orderByDesc('en_vedette')
             ->orderBy('ordre')
@@ -273,7 +310,7 @@ class ServicesManager extends Component
         return [
             'categorieId' => [
                 'nullable',
-                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('type', 'service')),
+                Rule::exists('categories', 'id')->where(fn($query) => $query->where('type', 'service')),
             ],
             'titreFr' => ['required', 'string', 'max:150'],
             'titreEn' => ['nullable', 'string', 'max:150'],
@@ -293,6 +330,8 @@ class ServicesManager extends Component
             'actif' => ['boolean'],
             'enVedette' => ['boolean'],
             'ordre' => ['nullable', 'integer', 'min:0'],
+            'scheduleEnabled' => ['boolean'],
+            'scheduleAt' => ['nullable', 'date_format:Y-m-d\\TH:i', 'required_if:scheduleEnabled,true', 'after:now'],
         ];
     }
 

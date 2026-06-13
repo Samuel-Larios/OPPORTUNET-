@@ -110,6 +110,10 @@ return [
                 'title' => 'Mise à jour de candidature',
                 'message' => 'Votre candidature pour ":offer" est maintenant ":status".',
             ],
+            'application_proposed_to_company' => [
+                'title' => 'Candidature proposée à une entreprise',
+                'message' => 'Votre candidature pour ":offer" a été proposée à une entreprise partenaire.',
+            ],
             'application_reply' => [
                 'title' => 'Reponse du candidat',
                 'message' => ':name a repondu au suivi de la candidature pour ":offer".',
@@ -875,6 +879,7 @@ return [
             'admin_notes' => 'Note admin envoyée au candidat',
         ],
         'files' => [
+            'cv' => 'CV',
             'letter' => 'Lettre de motivation',
             'diploma' => 'Diplôme',
             'certificate' => 'Attestation',

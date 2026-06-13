@@ -26,6 +26,7 @@ use App\Models\Opportunite;
 use App\Models\ParametreSite;
 use App\Models\PriereSoutien;
 use App\Models\Service;
+use App\Models\SpiritualPublication;
 use App\Models\Temoignage;
 use App\Models\User;
 use App\Models\Verset;
@@ -153,6 +154,11 @@ Route::get('/sitemap.xml', function () {
         route('contact.prayer.index'),
         route('community.prayers.index'),
         route('community.testimonials.index'),
+        route('spiritual.verses.index'),
+        route('spiritual.thoughts.index'),
+        route('spiritual.exhortations.index'),
+        route('spiritual.daily-prayers.index'),
+        route('spiritual.conversion.index'),
     ];
 
     foreach ($locales as $locale) {
@@ -160,6 +166,7 @@ Route::get('/sitemap.xml', function () {
             $entries->push([
                 'loc' => Seo::localizedUrl($url, $locale),
                 'lastmod' => null,
+                'alternates' => Seo::alternateLocaleUrls($url),
             ]);
         }
     }
@@ -169,6 +176,7 @@ Route::get('/sitemap.xml', function () {
             $entries->push([
                 'loc' => Seo::localizedUrl(route('offers.show', $opportunity->slug), $locale),
                 'lastmod' => optional($opportunity->updated_at)->toAtomString(),
+                'alternates' => Seo::alternateLocaleUrls(route('offers.show', $opportunity->slug)),
             ]);
         }
     }
@@ -178,6 +186,7 @@ Route::get('/sitemap.xml', function () {
             $entries->push([
                 'loc' => Seo::localizedUrl(route('articles.show', $article->slug), $locale),
                 'lastmod' => optional($article->updated_at)->toAtomString(),
+                'alternates' => Seo::alternateLocaleUrls(route('articles.show', $article->slug)),
             ]);
         }
     }
@@ -187,6 +196,7 @@ Route::get('/sitemap.xml', function () {
             $entries->push([
                 'loc' => Seo::localizedUrl(route('trainings.index'), $locale, ['formation' => $training->id]),
                 'lastmod' => optional($training->updated_at)->toAtomString(),
+                'alternates' => Seo::alternateLocaleUrls(route('trainings.index'), ['formation' => $training->id]),
             ]);
         }
     }
@@ -299,6 +309,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('/admin/versets', 'panel.editor.verses')
         ->middleware('role:super_admin,admin,editeur')
         ->name('panel.editor.verses');
+    Route::view('/admin/pensees-du-jour', 'panel.editor.thoughts')
+        ->middleware('role:super_admin,admin,editeur')
+        ->name('panel.editor.thoughts');
+    Route::view('/admin/exhortations', 'panel.editor.exhortations')
+        ->middleware('role:super_admin,admin,editeur')
+        ->name('panel.editor.exhortations');
+    Route::view('/admin/prieres-du-jour', 'panel.editor.daily-prayers')
+        ->middleware('role:super_admin,admin,editeur')
+        ->name('panel.editor.daily-prayers');
 
     Route::view('/admin/utilisateurs', 'panel.admin.users')
         ->middleware('role:super_admin,admin')
@@ -800,6 +819,14 @@ Route::get('/offres-opportunites', function () use ($siteSettings) {
         ->orderBy('ordre')
         ->get();
 
+    $publishedOpportunities = Opportunite::query()->where('statut', 'publie');
+    $recentBeninOpportunities = (clone $publishedOpportunities)
+        ->where('pays', 'Benin')
+        ->orderByDesc('en_vedette')
+        ->orderByDesc('date_publication')
+        ->take(4)
+        ->get(['id', 'slug', 'titre', 'organisation', 'lieu', 'pays', 'contrat']);
+
     return view('offers.index', [
         'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
         'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
@@ -809,6 +836,9 @@ Route::get('/offres-opportunites', function () use ($siteSettings) {
         'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'services' => $services,
+        'beninOpportunityCount' => (clone $publishedOpportunities)->where('pays', 'Benin')->count(),
+        'remoteOpportunityCount' => (clone $publishedOpportunities)->where('teletravail', true)->count(),
+        'recentBeninOpportunities' => $recentBeninOpportunities,
     ]);
 })->name('offers.index');
 
@@ -878,15 +908,21 @@ Route::get('/depot-cv-services', function () use ($siteSettings) {
 Route::get('/formations', function (Request $request) use ($siteSettings) {
     $settings = $siteSettings();
 
-    $trainings = Formation::query()
+    $trainingsQuery = Formation::query()
         ->whereIn('statut', ['ouverte', 'complete', 'terminee'])
         ->orderByDesc('en_vedette')
         ->orderBy('date_debut')
-        ->get();
+        ->orderBy('id');
+
+    $trainings = (clone $trainingsQuery)
+        ->paginate(9)
+        ->withQueryString();
+
+    $trainingOptions = (clone $trainingsQuery)->get();
 
     $selectedTraining = $request->filled('formation')
-        ? $trainings->firstWhere('id', (int) $request->query('formation'))
-        : $trainings->first();
+        ? (clone $trainingsQuery)->whereKey((int) $request->query('formation'))->first()
+        : $trainings->getCollection()->first();
 
     if ($selectedTraining) {
         $selectedTraining->increment('vues');
@@ -909,6 +945,7 @@ Route::get('/formations', function (Request $request) use ($siteSettings) {
         'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'trainings' => $trainings,
+        'trainingOptions' => $trainingOptions,
         'selectedTraining' => $selectedTraining,
         'currentTrainingRegistration' => $currentTrainingRegistration,
     ]);
@@ -1047,6 +1084,13 @@ Route::get('/contact-priere', function () use ($siteSettings) {
         ->get();
 
     $featuredVerse = $displayVerses->first();
+    $featuredDailyPrayer = SpiritualPublication::query()
+        ->ofType('priere_jour')
+        ->visible()
+        ->where('afficher_accueil', true)
+        ->orderBy('ordre')
+        ->latest('published_at')
+        ->first();
 
     $prayerEncouragement = MurDePriere::query()
         ->where('statut', 'approuve')
@@ -1091,6 +1135,7 @@ Route::get('/contact-priere', function () use ($siteSettings) {
         'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'featuredVerse' => $featuredVerse,
+        'featuredDailyPrayer' => $featuredDailyPrayer,
         'prayerEncouragement' => $prayerEncouragement,
         'prayerRequests' => $prayerRequests,
         'approvedPrayerTotal' => $approvedPrayerTotal,
@@ -1181,6 +1226,202 @@ Route::get('/temoignages/communaute', function () use ($siteSettings) {
     ]);
 })->name('community.testimonials.index');
 
+Route::get('/versets-bibliques', function () use ($siteSettings) {
+    $settings = $siteSettings();
+
+    return view('spiritual.verses', [
+        'title' => app()->getLocale() === 'fr' ? 'Versets bibliques' : 'Bible verses',
+        'description' => app()->getLocale() === 'fr'
+            ? 'Une sélection de versets bibliques à lire, méditer et partager.'
+            : 'A selection of active Bible verses to read, reflect on, and share.',
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'verses' => Verset::query()
+            ->where('actif', true)
+            ->orderByDesc('afficher_accueil')
+            ->orderBy('ordre')
+            ->latest('updated_at')
+            ->get(),
+    ]);
+})->name('spiritual.verses.index');
+
+Route::get('/versets-bibliques/{verse}', function (Verset $verse) use ($siteSettings) {
+    abort_unless($verse->actif, 404);
+
+    $settings = $siteSettings();
+    $detailUrl = Seo::localizedUrl(route('spiritual.verses.show', $verse), app()->getLocale());
+
+    return view('spiritual.show', [
+        'kicker' => app()->getLocale() === 'fr' ? 'Verset biblique' : 'Bible verse',
+        'title' => $verse->reference,
+        'description' => Seo::description($verse->texte, 170),
+        'canonical' => $detailUrl,
+        'backUrl' => Seo::localizedUrl(route('spiritual.verses.index'), app()->getLocale()),
+        'backLabel' => app()->getLocale() === 'fr' ? 'Retour aux versets' : 'Back to verses',
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'reference' => $verse->reference,
+        'excerpt' => null,
+        'content' => $verse->texte,
+        'metaLabel' => app()->getLocale() === 'fr' ? 'Version' : 'Version',
+        'metaValue' => $verse->version,
+        'author' => null,
+        'shareUrl' => $detailUrl,
+        'shareTitle' => $verse->reference,
+        'shareText' => $verse->texte . ' - ' . $verse->version,
+    ]);
+})->whereNumber('verse')->name('spiritual.verses.show');
+
+Route::get('/pensees-du-jour', function () use ($siteSettings) {
+    $settings = $siteSettings();
+
+    return view('spiritual.index', [
+        'kicker' => app()->getLocale() === 'fr' ? 'Pensée du jour' : 'Thought of the day',
+        'title' => app()->getLocale() === 'fr' ? 'Pensées du jour' : 'Thoughts of the day',
+        'description' => app()->getLocale() === 'fr'
+            ? 'Des méditations courtes et claires pour nourrir votre foi au quotidien.'
+            : 'Short and clear meditations to nourish your faith each day.',
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'detailRouteName' => 'spiritual.thoughts.show',
+        'items' => SpiritualPublication::query()->ofType('pensee')->visible()->orderByDesc('afficher_accueil')->orderBy('ordre')->latest('published_at')->get(),
+    ]);
+})->name('spiritual.thoughts.index');
+
+Route::get('/pensees-du-jour/{publication:slug}', function (SpiritualPublication $publication) use ($siteSettings) {
+    abort_unless($publication->actif && $publication->type === 'pensee', 404);
+
+    $settings = $siteSettings();
+    $detailUrl = Seo::localizedUrl(route('spiritual.thoughts.show', $publication->slug), app()->getLocale());
+
+    return view('spiritual.show', [
+        'kicker' => app()->getLocale() === 'fr' ? 'Pensée du jour' : 'Thought of the day',
+        'title' => $publication->titre,
+        'description' => Seo::description($publication->extrait ?: $publication->contenu, 170),
+        'canonical' => $detailUrl,
+        'backUrl' => Seo::localizedUrl(route('spiritual.thoughts.index'), app()->getLocale()),
+        'backLabel' => app()->getLocale() === 'fr' ? 'Retour aux pensées du jour' : 'Back to thoughts of the day',
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'reference' => $publication->reference,
+        'excerpt' => $publication->extrait,
+        'content' => $publication->contenu,
+        'metaLabel' => app()->getLocale() === 'fr' ? 'Auteur' : 'Author',
+        'metaValue' => $publication->auteur,
+        'author' => $publication->auteur,
+        'shareUrl' => $detailUrl,
+        'shareTitle' => $publication->titre,
+        'shareText' => $publication->extrait ?: Seo::description($publication->contenu, 180),
+    ]);
+})->name('spiritual.thoughts.show');
+
+Route::get('/exhortations', function () use ($siteSettings) {
+    $settings = $siteSettings();
+
+    return view('spiritual.index', [
+        'kicker' => app()->getLocale() === 'fr' ? 'Exhortation' : 'Exhortation',
+        'title' => app()->getLocale() === 'fr' ? 'Exhortations' : 'Exhortations',
+        'description' => app()->getLocale() === 'fr'
+            ? "Des exhortations pour persévérer dans la foi et l'espérance."
+            : 'Encouragements to persevere in faith and endurance.',
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'detailRouteName' => 'spiritual.exhortations.show',
+        'items' => SpiritualPublication::query()->ofType('exhortation')->visible()->orderByDesc('afficher_accueil')->orderBy('ordre')->latest('published_at')->get(),
+    ]);
+})->name('spiritual.exhortations.index');
+
+Route::get('/exhortations/{publication:slug}', function (SpiritualPublication $publication) use ($siteSettings) {
+    abort_unless($publication->actif && $publication->type === 'exhortation', 404);
+
+    $settings = $siteSettings();
+    $detailUrl = Seo::localizedUrl(route('spiritual.exhortations.show', $publication->slug), app()->getLocale());
+
+    return view('spiritual.show', [
+        'kicker' => app()->getLocale() === 'fr' ? 'Exhortation' : 'Exhortation',
+        'title' => $publication->titre,
+        'description' => Seo::description($publication->extrait ?: $publication->contenu, 170),
+        'canonical' => $detailUrl,
+        'backUrl' => Seo::localizedUrl(route('spiritual.exhortations.index'), app()->getLocale()),
+        'backLabel' => app()->getLocale() === 'fr' ? 'Retour aux exhortations' : 'Back to exhortations',
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'reference' => $publication->reference,
+        'excerpt' => $publication->extrait,
+        'content' => $publication->contenu,
+        'metaLabel' => app()->getLocale() === 'fr' ? 'Auteur' : 'Author',
+        'metaValue' => $publication->auteur,
+        'author' => $publication->auteur,
+        'shareUrl' => $detailUrl,
+        'shareTitle' => $publication->titre,
+        'shareText' => $publication->extrait ?: Seo::description($publication->contenu, 180),
+    ]);
+})->name('spiritual.exhortations.show');
+
+Route::get('/prieres-du-jour', function () use ($siteSettings) {
+    $settings = $siteSettings();
+
+    return view('spiritual.index', [
+        'kicker' => app()->getLocale() === 'fr' ? 'Prière du jour' : 'Prayer of the day',
+        'title' => app()->getLocale() === 'fr' ? 'Prières du jour' : 'Daily prayers',
+        'description' => app()->getLocale() === 'fr'
+            ? 'Des prières écrites pour vous aider à prier avec foi et simplicité.'
+            : 'Written prayers to help you pray with faith and simplicity.',
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'items' => SpiritualPublication::query()->ofType('priere_jour')->visible()->orderByDesc('afficher_accueil')->orderBy('ordre')->latest('published_at')->get(),
+    ]);
+})->name('spiritual.daily-prayers.index');
+
+Route::get('/se-convertir', function () use ($siteSettings) {
+    $settings = $siteSettings();
+
+    return view('spiritual.conversion', [
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+    ]);
+})->name('spiritual.conversion.index');
+
 Route::get('/', function () use ($siteSettings) {
     $settings = $siteSettings();
 
@@ -1252,13 +1493,40 @@ Route::get('/', function () use ($siteSettings) {
 
     $displayVerses = Verset::query()
         ->where('actif', true)
-        ->where('afficher_accueil', true)
+        ->orderByDesc('afficher_accueil')
+        ->orderBy('ordre')
+        ->latest('updated_at')
+        ->take(3)
+        ->get();
+    $homeThoughts = SpiritualPublication::query()
+        ->ofType('pensee')
+        ->visible()
+        ->orderByDesc('afficher_accueil')
+        ->orderBy('ordre')
+        ->latest('updated_at')
+        ->take(3)
+        ->get();
+    $homeExhortations = SpiritualPublication::query()
+        ->ofType('exhortation')
+        ->visible()
+        ->orderByDesc('afficher_accueil')
+        ->orderBy('ordre')
+        ->latest('updated_at')
+        ->take(3)
+        ->get();
+    $homeDailyPrayers = SpiritualPublication::query()
+        ->ofType('priere_jour')
+        ->visible()
+        ->orderByDesc('afficher_accueil')
         ->orderBy('ordre')
         ->latest('updated_at')
         ->take(3)
         ->get();
 
     $featuredVerse = $displayVerses->first();
+    $featuredThought = $homeThoughts->first();
+    $featuredExhortation = $homeExhortations->first();
+    $featuredDailyPrayer = $homeDailyPrayers->first();
 
     return view('welcome', [
         'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
@@ -1292,7 +1560,13 @@ Route::get('/', function () use ($siteSettings) {
         'prayerTestimonies' => $prayerTestimonies,
         'prayerRequestCount' => $prayerRequestCount,
         'featuredVerse' => $featuredVerse,
+        'featuredThought' => $featuredThought,
+        'featuredExhortation' => $featuredExhortation,
+        'featuredDailyPrayer' => $featuredDailyPrayer,
         'headerVerses' => $displayVerses,
         'welcomeVerses' => $displayVerses,
+        'welcomeThoughts' => $homeThoughts,
+        'welcomeExhortations' => $homeExhortations,
+        'welcomeDailyPrayers' => $homeDailyPrayers,
     ]);
 })->name('home');

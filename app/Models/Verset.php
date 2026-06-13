@@ -22,6 +22,9 @@ class Verset extends Model
         'version_en',
         'actif',
         'afficher_accueil',
+        'auto_publish',
+        'scheduled_for',
+        'published_at',
         'ordre',
     ];
 
@@ -36,6 +39,9 @@ class Verset extends Model
         return [
             'actif' => 'boolean',
             'afficher_accueil' => 'boolean',
+            'auto_publish' => 'boolean',
+            'scheduled_for' => 'datetime',
+            'published_at' => 'datetime',
         ];
     }
 }

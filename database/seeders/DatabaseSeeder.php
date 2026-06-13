@@ -19,5 +19,6 @@ class DatabaseSeeder extends Seeder
     {
         // Seed initial Opportunet Mondiale
         $this->call(InitialSiteSeeder::class);
+        $this->call(BulkCrudSeeder::class);
     }
 }

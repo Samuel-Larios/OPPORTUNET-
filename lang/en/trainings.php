@@ -101,4 +101,10 @@ return [
     'whatsapp' => [
         'default_message' => 'Hello Opportunet Mondiale, I would like more information about the training :formation.',
     ],
+    'pagination' => [
+        'label' => 'Trainings pagination',
+        'previous' => 'Previous',
+        'next' => 'Next',
+        'summary' => 'Page :page of :last',
+    ],
 ];

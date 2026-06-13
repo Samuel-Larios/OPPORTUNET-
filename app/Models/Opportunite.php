@@ -53,6 +53,10 @@ class Opportunite extends Model
         'vues',
         'candidatures',
         'source',
+        'auto_publish',
+        'scheduled_for',
+        'published_at',
+        'scheduled_status',
     ];
 
     protected array $bilingual = [
@@ -71,6 +75,9 @@ class Opportunite extends Model
             'date_expiration' => 'date',
             'date_publication' => 'date',
             'valide_le' => 'datetime',
+            'auto_publish' => 'boolean',
+            'scheduled_for' => 'datetime',
+            'published_at' => 'datetime',
         ];
     }
 

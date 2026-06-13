@@ -4,6 +4,7 @@ namespace App\Livewire\Panel;
 
 use App\Models\Verset;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -33,6 +34,8 @@ class VersesManager extends Component
     public string $ordre = '0';
     public bool $actif = true;
     public bool $afficherAccueil = false;
+    public bool $scheduleEnabled = false;
+    public string $scheduleAt = '';
 
     protected ?bool $referenceLocalizationAvailable = null;
 
@@ -51,6 +54,29 @@ class VersesManager extends Component
         $this->resetPage();
     }
 
+    public function poll(): void
+    {
+        $this->refreshScheduledPublications();
+    }
+
+    public function refreshScheduledPublications(): void
+    {
+        $now = now();
+
+        Verset::query()
+            ->where('auto_publish', true)
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<=', $now)
+            ->each(function (Verset $verse) use ($now): void {
+                $verse->forceFill([
+                    'actif' => true,
+                    'auto_publish' => false,
+                    'scheduled_for' => null,
+                    'published_at' => $verse->published_at ?: $now,
+                ])->save();
+            });
+    }
+
     public function editVerse(int $verseId): void
     {
         $verse = Verset::query()->findOrFail($verseId);
@@ -64,7 +90,9 @@ class VersesManager extends Component
         $this->versionFr = (string) (($verse->getRawOriginal('version_fr') ?? $verse->getRawOriginal('version')) ?: 'LSG');
         $this->versionEn = (string) (($verse->getRawOriginal('version_en') ?? $verse->getRawOriginal('version')) ?: 'LSG');
         $this->ordre = (string) ($verse->ordre ?? 0);
-        $this->actif = (bool) $verse->actif;
+        $this->scheduleEnabled = (bool) $verse->auto_publish && $verse->scheduled_for?->isFuture();
+        $this->scheduleAt = $this->scheduleEnabled ? $verse->scheduled_for?->format('Y-m-d\TH:i') ?? '' : '';
+        $this->actif = $this->scheduleEnabled ? true : (bool) $verse->actif;
         $this->afficherAccueil = (bool) $verse->afficher_accueil;
     }
 
@@ -77,12 +105,14 @@ class VersesManager extends Component
             'texteFr',
             'texteEn',
             'ordre',
+            'scheduleAt',
         ]);
 
         $this->versionFr = 'LSG';
         $this->versionEn = 'LSG';
         $this->actif = true;
         $this->afficherAccueil = false;
+        $this->scheduleEnabled = false;
         $this->resetValidation();
     }
 
@@ -98,7 +128,12 @@ class VersesManager extends Component
             'ordre' => ['nullable', 'integer', 'min:0'],
             'actif' => ['boolean'],
             'afficherAccueil' => ['boolean'],
+            'scheduleEnabled' => ['boolean'],
+            'scheduleAt' => ['nullable', 'date_format:Y-m-d\\TH:i', 'required_if:scheduleEnabled,true', 'after:now'],
         ]);
+        $scheduledFor = $validated['scheduleEnabled']
+            ? Carbon::parse($validated['scheduleAt'])
+            : null;
 
         $payload = [
             'reference' => $validated['referenceFr'],
@@ -109,8 +144,11 @@ class VersesManager extends Component
             'version_fr' => $validated['versionFr'],
             'version_en' => $validated['versionEn'] !== '' ? $validated['versionEn'] : $validated['versionFr'],
             'ordre' => $validated['ordre'] !== '' ? (int) $validated['ordre'] : 0,
-            'actif' => $validated['actif'],
+            'actif' => $scheduledFor ? false : $validated['actif'],
             'afficher_accueil' => $validated['afficherAccueil'],
+            'auto_publish' => $scheduledFor !== null,
+            'scheduled_for' => $scheduledFor,
+            'published_at' => $scheduledFor === null && $validated['actif'] ? now() : null,
         ];
 
         if ($this->hasReferenceLocalization()) {
@@ -164,8 +202,8 @@ class VersesManager extends Component
                     }
                 });
             })
-            ->when($this->activeFilter !== '', fn ($query) => $query->where('actif', $this->activeFilter === '1'))
-            ->when($this->homeFilter !== '', fn ($query) => $query->where('afficher_accueil', $this->homeFilter === '1'))
+            ->when($this->activeFilter !== '', fn($query) => $query->where('actif', $this->activeFilter === '1'))
+            ->when($this->homeFilter !== '', fn($query) => $query->where('afficher_accueil', $this->homeFilter === '1'))
             ->orderByDesc('afficher_accueil')
             ->orderByDesc('actif')
             ->orderBy('ordre')

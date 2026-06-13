@@ -17,6 +17,9 @@ class Newsletter extends Model
         'recipients_count',
         'sent_at',
         'meta',
+        'auto_publish',
+        'scheduled_for',
+        'published_at',
     ];
 
     protected function casts(): array

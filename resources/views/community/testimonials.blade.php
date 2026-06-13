@@ -209,7 +209,7 @@
                         @if ($testimonials->onFirstPage())
                             <span class="ghost-submit" style="pointer-events: none; opacity: 0.7;">{{ __('community.testimonials.pagination.previous') }}</span>
                         @else
-                            <a href="{{ $testimonials->previousPageUrl() }}" class="ghost-submit">{{ __('community.testimonials.pagination.previous') }}</a>
+                            <a href="{{ \App\Support\Seo::localizedUrl(route('community.testimonials.index'), app()->getLocale(), array_merge(request()->query(), ['page' => $testimonials->currentPage() - 1])) }}" class="ghost-submit">{{ __('community.testimonials.pagination.previous') }}</a>
                         @endif
 
                         <span class="community-testimonials-pagination-label">
@@ -217,7 +217,7 @@
                         </span>
 
                         @if ($testimonials->hasMorePages())
-                            <a href="{{ $testimonials->nextPageUrl() }}" class="ghost-submit">{{ __('community.testimonials.pagination.next') }}</a>
+                            <a href="{{ \App\Support\Seo::localizedUrl(route('community.testimonials.index'), app()->getLocale(), array_merge(request()->query(), ['page' => $testimonials->currentPage() + 1])) }}" class="ghost-submit">{{ __('community.testimonials.pagination.next') }}</a>
                         @else
                             <span class="ghost-submit" style="pointer-events: none; opacity: 0.7;">{{ __('community.testimonials.pagination.next') }}</span>
                         @endif

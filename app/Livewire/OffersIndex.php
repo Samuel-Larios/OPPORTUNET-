@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\Opportunite;
+use App\Support\Seo;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Url;
@@ -44,6 +45,24 @@ class OffersIndex extends Component
     {
         $this->reset(['search', 'type', 'contrat', 'pays', 'teletravail', 'urgent']);
         $this->resetPage();
+    }
+
+    public function pageUrl(int $page): string
+    {
+        $query = [
+            'q' => $this->search !== '' ? $this->search : null,
+            'type' => $this->type !== '' ? $this->type : null,
+            'contrat' => $this->contrat !== '' ? $this->contrat : null,
+            'pays' => $this->pays !== '' ? $this->pays : null,
+            'teletravail' => $this->teletravail ? 1 : null,
+            'urgent' => $this->urgent ? 1 : null,
+        ];
+
+        if ($page > 1) {
+            $query['page'] = $page;
+        }
+
+        return Seo::localizedUrl(route('offers.index'), app()->getLocale(), array_filter($query, fn ($value) => $value !== null));
     }
 
     public function getAvailableCountriesProperty()

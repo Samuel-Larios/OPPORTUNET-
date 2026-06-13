@@ -3,8 +3,11 @@
 namespace Tests\Feature;
 
 use App\Livewire\Panel\ApplicationsManager;
+use App\Livewire\Panel\CompanyApplicationsManager;
 use App\Livewire\Panel\UserApplicationsManager;
 use App\Mail\OfferApplicationProcessedMail;
+use App\Mail\OfferApplicationProposedToCompanyMail;
+use App\Mail\OfferCandidateValidatedByCompanyMail;
 use App\Models\CandidatureOffre;
 use App\Models\Opportunite;
 use App\Models\Role;
@@ -173,6 +176,150 @@ class OfferApplicationFlowTest extends TestCase
         Mail::assertSent(OfferApplicationProcessedMail::class, function (OfferApplicationProcessedMail $mail) use ($candidate) {
             return $mail->hasTo($candidate->email);
         });
+
+        $candidateNotification = $candidate->fresh()->unreadNotifications()->latest()->first();
+
+        $this->assertNotNull($candidateNotification);
+        $this->assertSame('offer_application', $candidateNotification->data['resource_type']);
+        $this->assertSame($application->id, $candidateNotification->data['resource_id']);
+        $this->assertSame(
+            route('panel.user.applications', ['application' => $application->id]),
+            $candidateNotification->data['action_url']
+        );
+    }
+
+    public function test_candidate_receives_mail_and_in_app_alert_when_application_is_proposed_to_company(): void
+    {
+        Mail::fake();
+
+        $adminRole = $this->firstOrCreateRole('super_admin', 'Super Administrateur');
+        $companyRole = $this->firstOrCreateRole('entreprise', 'Entreprise');
+        $userRole = $this->firstOrCreateRole('user', 'Utilisateur');
+
+        $admin = User::factory()->create([
+            'role_id' => $adminRole->id,
+            'prenom' => 'Admin',
+            'nom' => 'Principal',
+            'actif' => true,
+        ]);
+
+        $company = User::factory()->create([
+            'role_id' => $companyRole->id,
+            'prenom' => 'Entreprise',
+            'nom' => 'Partenaire',
+            'actif' => true,
+        ]);
+
+        $candidate = User::factory()->create([
+            'role_id' => $userRole->id,
+            'prenom' => 'Grace',
+            'nom' => 'A.',
+            'actif' => true,
+        ]);
+
+        $opportunity = $this->createOpportunity([
+            'user_id' => $company->id,
+            'organisation' => 'Entreprise Partenaire',
+        ]);
+
+        $application = CandidatureOffre::query()->create([
+            'user_id' => $candidate->id,
+            'opportunite_id' => $opportunity->id,
+            'prenom' => 'Grace',
+            'nom' => 'A.',
+            'email' => $candidate->email,
+            'lettre_motivation' => 'offer-applications/letters/test.pdf',
+            'diplome_fichiers' => ['offer-applications/diplomas/test.pdf'],
+            'attestation_fichiers' => ['offer-applications/certificates/test.pdf'],
+            'statut' => 'en_revue',
+        ]);
+
+        $this->actingAs($admin);
+
+        Livewire::test(ApplicationsManager::class)
+            ->call('selectApplication', $application->id)
+            ->set('processingStatus', 'proposee_entreprise')
+            ->set('adminNotes', 'Votre candidature a ete proposee a une entreprise partenaire.')
+            ->call('processApplication');
+
+        $this->assertDatabaseHas('candidatures_offres', [
+            'id' => $application->id,
+            'statut' => 'proposee_entreprise',
+            'traite_par' => $admin->id,
+        ]);
+
+        Mail::assertSent(OfferApplicationProposedToCompanyMail::class, function (OfferApplicationProposedToCompanyMail $mail) use ($candidate) {
+            return $mail->hasTo($candidate->email);
+        });
+
+        $candidateNotification = $candidate->fresh()->unreadNotifications()->latest()->first();
+
+        $this->assertNotNull($candidateNotification);
+        $this->assertSame('offer_application', $candidateNotification->data['resource_type']);
+        $this->assertSame($application->id, $candidateNotification->data['resource_id']);
+        $this->assertStringContainsString('propos', (string) $candidateNotification->data['title']);
+    }
+
+    public function test_candidate_receives_mail_and_in_app_alert_when_company_validates_profile(): void
+    {
+        Mail::fake();
+
+        $companyRole = $this->firstOrCreateRole('entreprise', 'Entreprise');
+        $userRole = $this->firstOrCreateRole('user', 'Utilisateur');
+
+        $company = User::factory()->create([
+            'role_id' => $companyRole->id,
+            'prenom' => 'Entreprise',
+            'nom' => 'Partenaire',
+            'actif' => true,
+        ]);
+
+        $candidate = User::factory()->create([
+            'role_id' => $userRole->id,
+            'prenom' => 'Grace',
+            'nom' => 'A.',
+            'actif' => true,
+        ]);
+
+        $opportunity = $this->createOpportunity([
+            'user_id' => $company->id,
+            'organisation' => 'Entreprise Partenaire',
+        ]);
+
+        $application = CandidatureOffre::query()->create([
+            'user_id' => $candidate->id,
+            'opportunite_id' => $opportunity->id,
+            'prenom' => 'Grace',
+            'nom' => 'A.',
+            'email' => $candidate->email,
+            'lettre_motivation' => 'offer-applications/letters/test.pdf',
+            'diplome_fichiers' => ['offer-applications/diplomas/test.pdf'],
+            'attestation_fichiers' => ['offer-applications/certificates/test.pdf'],
+            'statut' => 'proposee_entreprise',
+        ]);
+
+        $this->actingAs($company);
+
+        Livewire::test(CompanyApplicationsManager::class)
+            ->call('selectApplication', $application->id)
+            ->set('companyNote', 'Nous souhaitons poursuivre avec ce profil.')
+            ->call('validateApplication');
+
+        $this->assertDatabaseHas('candidatures_offres', [
+            'id' => $application->id,
+            'statut' => 'validee_entreprise',
+            'validee_par_entreprise' => $company->id,
+        ]);
+
+        Mail::assertSent(OfferCandidateValidatedByCompanyMail::class, function (OfferCandidateValidatedByCompanyMail $mail) use ($candidate) {
+            return $mail->hasTo($candidate->email);
+        });
+
+        $candidateNotification = $candidate->fresh()->unreadNotifications()->latest()->first();
+
+        $this->assertNotNull($candidateNotification);
+        $this->assertSame('offer_application', $candidateNotification->data['resource_type']);
+        $this->assertSame($application->id, $candidateNotification->data['resource_id']);
     }
 
     public function test_candidate_can_reply_to_admin_application_request_from_panel(): void

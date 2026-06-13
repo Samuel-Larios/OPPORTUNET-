@@ -38,6 +38,9 @@ class Service extends Model
         'whatsapp_message_en',
         'actif',
         'en_vedette',
+        'auto_publish',
+        'scheduled_for',
+        'published_at',
         'ordre',
     ];
 
@@ -54,6 +57,9 @@ class Service extends Model
         return [
             'actif' => 'boolean',
             'en_vedette' => 'boolean',
+            'auto_publish' => 'boolean',
+            'scheduled_for' => 'datetime',
+            'published_at' => 'datetime',
         ];
     }
 

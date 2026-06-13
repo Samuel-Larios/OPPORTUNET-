@@ -4,16 +4,19 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $accent = $article->category?->couleur ?: '#1A7A6E';
     $galleryImages = $article->images->take(5);
     $primaryImageUrl = $article->primaryImageUrl();
     $primaryImageAlt = $article->primaryImageAlt();
-    $commentsByParent = $approvedComments->groupBy(fn ($comment) => $comment->parent_id ?? 0);
+    $commentsByParent = $approvedComments->groupBy(fn($comment) => $comment->parent_id ?? 0);
     $topLevelComments = $commentsByParent->get(0, collect());
-    $activeReplyComment = $replyComment ?? (old('parent_id') ? $approvedComments->firstWhere('id', (int) old('parent_id')) : null);
-    $seoDescription = \App\Support\Seo::description($article->meta_description ?: $article->extrait ?: $article->contenu);
+    $activeReplyComment =
+        $replyComment ?? (old('parent_id') ? $approvedComments->firstWhere('id', (int) old('parent_id')) : null);
+    $seoDescription = \App\Support\Seo::description(
+        $article->meta_description ?: $article->extrait ?: $article->contenu,
+    );
     $localizedArticlesUrl = \App\Support\Seo::localizedUrl(route('articles.index'), app()->getLocale());
     $localizedArticleUrl = \App\Support\Seo::localizedUrl(route('articles.show', $article->slug), app()->getLocale());
     $seoSchema = [
@@ -39,7 +42,9 @@
                 'name' => $siteName,
                 'logo' => [
                     '@type' => 'ImageObject',
-                    'url' => \App\Support\Seo::absoluteImageUrl('images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png'),
+                    'url' => \App\Support\Seo::absoluteImageUrl(
+                        'images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png',
+                    ),
                 ],
             ],
             'articleSection' => $article->category?->nom,
@@ -48,28 +53,16 @@
     ];
 @endphp
 
-<x-layouts.app
-    :title="$article->meta_titre ?: $article->titre"
-    :description="$seoDescription"
-    :canonical="$localizedArticleUrl"
-    :image="$primaryImageUrl"
-    type="article"
-    :schema-data="$seoSchema"
-    :site-name="$siteName"
-    :site-slogan="$siteSlogan"
-    :site-email="$siteEmail"
-    :site-hours="$siteHours"
-    :site-address="$siteAddress"
-    :site-whatsapp="$siteWhatsapp"
-    :site-whatsapp-message="$siteWhatsappMessage"
-    :show-hero="false"
->
+<x-layouts.app :title="$article->meta_titre ?: $article->titre" :description="$seoDescription" :canonical="$localizedArticleUrl" :image="$primaryImageUrl" type="article" :schema-data="$seoSchema"
+    :site-name="$siteName" :site-slogan="$siteSlogan" :site-email="$siteEmail" :site-hours="$siteHours" :site-address="$siteAddress" :site-whatsapp="$siteWhatsapp"
+    :site-whatsapp-message="$siteWhatsappMessage" :show-hero="false">
     <main class="article-detail-page">
         <section class="article-detail-hero">
             <div class="container">
                 <div class="article-detail-shell reveal">
                     <div class="article-detail-copy">
-                        <a href="{{ $localizedArticlesUrl }}" class="offers-detail-back">{{ __('articles.detail.back') }}</a>
+                        <a href="{{ $localizedArticlesUrl }}"
+                            class="offers-detail-back">{{ __('articles.detail.back') }}</a>
                         <div class="article-badges">
                             <span class="article-category-badge" style="--article-accent: {{ $accent }};">
                                 {{ $article->category?->nom ?: __('articles.card.default_badge') }}
@@ -79,14 +72,19 @@
                             @endif
                         </div>
                         <h1 class="section-title">{{ $article->titre }}</h1>
-                        <p class="section-sub">{{ $article->extrait ?: \Illuminate\Support\Str::limit(strip_tags($article->contenu), 220) }}</p>
+                        <p class="section-sub">
+                            {{ $article->extrait ?: \Illuminate\Support\Str::limit(strip_tags($article->contenu), 220) }}
+                        </p>
 
                         <div class="article-detail-meta">
                             @if ($article->publie_le)
-                                <span>{{ __('articles.card.published') }} {{ $article->publie_le->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
+                                <span>{{ __('articles.card.published') }}
+                                    {{ $article->publie_le->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
                             @endif
-                            <span>{{ __('articles.card.reading_time') }} {{ $article->temps_lecture ?: __('articles.card.reading_time_fallback') }}</span>
-                            <span>{{ __('articles.card.views') }} {{ number_format((int) $article->vues, 0, ',', ' ') }}</span>
+                            <span>{{ __('articles.card.reading_time') }}
+                                {{ $article->temps_lecture ?: __('articles.card.reading_time_fallback') }}</span>
+                            <span>{{ __('articles.card.views') }}
+                                {{ number_format((int) $article->vues, 0, ',', ' ') }}</span>
                         </div>
                     </div>
 
@@ -96,11 +94,13 @@
                             <strong>{{ __('articles.detail.side_title') }}</strong>
                             <p>{{ __('articles.detail.side_text') }}</p>
                             <div class="offers-detail-actions">
-                                <a href="{{ $localizedArticlesUrl }}" class="solid-submit">{{ __('articles.detail.all_articles') }}</a>
+                                <a href="{{ $localizedArticlesUrl }}"
+                                    class="solid-submit">{{ __('articles.detail.all_articles') }}</a>
                             </div>
                             <x-share-buttons
                                 :url="$localizedArticleUrl"
                                 :title="$article->titre"
+                                :text="$article->extrait ?: \Illuminate\Support\Str::limit(strip_tags($article->contenu), 220)"
                             />
                         </article>
                     </aside>
@@ -128,7 +128,8 @@
                                 <div class="article-detail-gallery-grid">
                                     @foreach ($galleryImages as $image)
                                         <figure class="article-detail-gallery-item">
-                                            <img src="{{ $image->publicUrl() }}" alt="{{ $image->altText($article->titre) }}">
+                                            <img src="{{ $image->publicUrl() }}"
+                                                alt="{{ $image->altText($article->titre) }}">
                                         </figure>
                                     @endforeach
                                 </div>
@@ -222,25 +223,32 @@
                                         @if ($activeReplyComment)
                                             <div class="contact-form-card" style="margin-bottom: 16px;">
                                                 <strong>{{ __('articles.comments.reply_to', ['author' => $activeReplyComment->authorLabel()]) }}</strong>
-                                                <p>{{ \Illuminate\Support\Str::limit($activeReplyComment->contenu, 140) }}</p>
-                                                <a href="{{ $localizedArticleUrl }}#article-comments" class="ghost-submit">{{ __('articles.comments.cancel_reply') }}</a>
+                                                <p>{{ \Illuminate\Support\Str::limit($activeReplyComment->contenu, 140) }}
+                                                </p>
+                                                <a href="{{ $localizedArticleUrl }}#article-comments"
+                                                    class="ghost-submit">{{ __('articles.comments.cancel_reply') }}</a>
                                             </div>
                                             <input type="hidden" name="parent_id" value="{{ $activeReplyComment->id }}" />
                                         @endif
 
-                                        <p style="margin-bottom: 12px;">{{ __('articles.comments.logged_in_as', ['author' => auth()->user()->fullName()]) }}</p>
+                                        <p style="margin-bottom: 12px;">
+                                            {{ __('articles.comments.logged_in_as', ['author' => auth()->user()->fullName()]) }}
+                                        </p>
                                         <textarea name="contenu" rows="6" placeholder="{{ __('articles.comments.fields.content') }}">{{ old('contenu') }}</textarea>
 
                                         <div class="contact-form-actions">
-                                            <button type="submit" class="solid-submit">{{ __('articles.comments.submit') }}</button>
+                                            <button type="submit"
+                                                class="solid-submit">{{ __('articles.comments.submit') }}</button>
                                         </div>
                                     </form>
                                 @else
                                     <strong>{{ __('articles.comments.label') }}</strong>
                                     <p style="margin-top: 12px;">{{ __('articles.comments.login_required') }}</p>
                                     <div class="contact-form-actions" style="margin-top: 16px;">
-                                        <a href="{{ route('login', ['redirect_to' => $localizedArticleUrl . '#article-comments']) }}" class="solid-submit">{{ __('articles.comments.login_action') }}</a>
-                                        <a href="{{ route('register.user', ['redirect_to' => $localizedArticleUrl . '#article-comments']) }}" class="ghost-submit">{{ __('articles.comments.register_action') }}</a>
+                                        <a href="{{ route('login', ['redirect_to' => $localizedArticleUrl . '#article-comments']) }}"
+                                            class="solid-submit">{{ __('articles.comments.login_action') }}</a>
+                                        <a href="{{ route('register.user', ['redirect_to' => $localizedArticleUrl . '#article-comments']) }}"
+                                            class="ghost-submit">{{ __('articles.comments.register_action') }}</a>
                                     </div>
                                 @endauth
                             @else
@@ -281,22 +289,26 @@
                                 </div>
                                 <div class="article-card-body">
                                     <div class="article-card-top">
-                                        <span class="article-category-badge" style="--article-accent: {{ $relatedAccent }};">
+                                        <span class="article-category-badge"
+                                            style="--article-accent: {{ $relatedAccent }};">
                                             {{ $relatedArticle->category?->nom ?: __('articles.card.default_badge') }}
                                         </span>
                                     </div>
                                     <h3>{{ $relatedArticle->titre }}</h3>
-                                    <p>{{ $relatedArticle->extrait ?: \Illuminate\Support\Str::limit(strip_tags($relatedArticle->contenu), 145) }}</p>
+                                    <p>{{ $relatedArticle->extrait ?: \Illuminate\Support\Str::limit(strip_tags($relatedArticle->contenu), 145) }}
+                                    </p>
                                     <div class="article-card-actions">
-                                        <a href="{{ \App\Support\Seo::localizedUrl(route('articles.show', $relatedArticle->slug), app()->getLocale()) }}" class="solid-submit">
+                                        <a href="{{ \App\Support\Seo::localizedUrl(route('articles.show', $relatedArticle->slug), app()->getLocale()) }}"
+                                            class="solid-submit">
                                             {{ __('articles.card.view_details') }}
                                         </a>
                                     </div>
-                                    <x-share-buttons
-                                        :url="\App\Support\Seo::localizedUrl(route('articles.show', $relatedArticle->slug), app()->getLocale())"
-                                        :title="$relatedArticle->titre"
-                                        variant="compact"
-                                    />
+                                    <x-share-buttons :url="\App\Support\Seo::localizedUrl(
+                                        route('articles.show', $relatedArticle->slug),
+                                        app()->getLocale(),
+                                    )" :title="$relatedArticle->titre"
+                                        :text="$relatedArticle->extrait ?: \Illuminate\Support\Str::limit(strip_tags($relatedArticle->contenu), 170)"
+                                        variant="compact" />
                                 </div>
                             </article>
                         @endforeach

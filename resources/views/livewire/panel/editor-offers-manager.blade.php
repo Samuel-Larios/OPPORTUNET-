@@ -1,4 +1,4 @@
-<div class="panel-stack">
+<div class="panel-stack" wire:poll.30s>
     @if (session('panel_success'))
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
@@ -15,32 +15,40 @@
 
             <form wire:submit="saveOffer" class="panel-form-grid">
                 <label class="panel-field">
-                    <span>FR titre</span>
+                    <span>Titre FR</span>
                     <input type="text" wire:model="titreFr" />
-                    @error('titreFr') <small>{{ $message }}</small> @enderror
+                    @error('titreFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN title</span>
+                    <span>Title EN</span>
                     <input type="text" wire:model="titreEn" />
-                    @error('titreEn') <small>{{ $message }}</small> @enderror
+                    @error('titreEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.offers.organization') }}</span>
                     <input type="text" wire:model="organisation" />
-                    @error('organisation') <small>{{ $message }}</small> @enderror
+                    @error('organisation')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>Categorie</span>
+                    <span>Catégorie</span>
                     <select wire:model="categorieId">
-                        <option value="">Choisir</option>
+                        <option value="">Choisir une catégorie</option>
                         @foreach ($categories as $category)
                             <option value="{{ $category->id }}">{{ $category->nom }}</option>
                         @endforeach
                     </select>
-                    @error('categorieId') <small>{{ $message }}</small> @enderror
+                    @error('categorieId')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
@@ -50,7 +58,9 @@
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
-                    @error('type') <small>{{ $message }}</small> @enderror
+                    @error('type')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
@@ -60,7 +70,9 @@
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
-                    @error('contrat') <small>{{ $message }}</small> @enderror
+                    @error('contrat')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
@@ -76,13 +88,17 @@
                 <label class="panel-field panel-field-span">
                     <span>Description FR</span>
                     <textarea wire:model="descriptionFr" rows="4"></textarea>
-                    @error('descriptionFr') <small>{{ $message }}</small> @enderror
+                    @error('descriptionFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
                     <span>Description EN</span>
                     <textarea wire:model="descriptionEn" rows="4"></textarea>
-                    @error('descriptionEn') <small>{{ $message }}</small> @enderror
+                    @error('descriptionEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
@@ -106,15 +122,19 @@
                 </label>
 
                 <label class="panel-field">
-                    <span>Lien candidature</span>
+                    <span>Lien de candidature</span>
                     <input type="url" wire:model="lienCandidature" />
-                    @error('lienCandidature') <small>{{ $message }}</small> @enderror
+                    @error('lienCandidature')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>Email candidature</span>
+                    <span>E-mail de candidature</span>
                     <input type="email" wire:model="emailCandidature" />
-                    @error('emailCandidature') <small>{{ $message }}</small> @enderror
+                    @error('emailCandidature')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
@@ -131,7 +151,8 @@
                     <span>{{ __('admin.offers.status') }}</span>
                     <select wire:model="statut">
                         @foreach ($statusOptions as $statusOption)
-                            <option value="{{ $statusOption }}">{{ __('admin.offers.statuses.' . $statusOption) }}</option>
+                            <option value="{{ $statusOption }}">{{ __('admin.offers.statuses.' . $statusOption) }}
+                            </option>
                         @endforeach
                     </select>
                 </label>
@@ -139,7 +160,7 @@
                 <div class="panel-check-grid">
                     <label class="panel-checkline">
                         <input type="checkbox" wire:model="teletravail" />
-                        <span>Teletravail</span>
+                        <span>Télétravail</span>
                     </label>
                     @unless ($isCompanyUser)
                         <label class="panel-checkline">
@@ -153,9 +174,14 @@
                     @endunless
                 </div>
 
+                @unless ($isCompanyUser)
+                    @include('livewire.panel.partials.schedule-fields')
+                @endunless
+
                 <div class="panel-action-row panel-field-span">
                     <button type="submit" class="panel-primary-btn">{{ __('admin.offers.save') }}</button>
-                    <button type="button" wire:click="resetForm" class="panel-secondary-btn">{{ __('admin.offers.reset') }}</button>
+                    <button type="button" wire:click="resetForm"
+                        class="panel-secondary-btn">{{ __('admin.offers.reset') }}</button>
                 </div>
             </form>
         </article>
@@ -166,11 +192,13 @@
             </div>
 
             <div class="panel-toolbar">
-                <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.offers.search') }}" />
+                <input type="search" wire:model.live.debounce.300ms="search"
+                    placeholder="{{ __('admin.offers.search') }}" />
                 <select wire:model.live="statusFilter">
                     <option value="">{{ __('admin.offers.all_statuses') }}</option>
                     @foreach ($statusFilterOptions as $statusOption)
-                        <option value="{{ $statusOption }}">{{ __('admin.offers.statuses.' . $statusOption) }}</option>
+                        <option value="{{ $statusOption }}">{{ __('admin.offers.statuses.' . $statusOption) }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -182,6 +210,7 @@
                             <th>Titre</th>
                             <th>{{ __('admin.offers.organization') }}</th>
                             <th>{{ __('admin.offers.status') }}</th>
+                            <th>{{ __('admin.offers.published') }}</th>
                             <th>{{ __('admin.offers.deadline') }}</th>
                             <th>{{ __('admin.users.actions') }}</th>
                         </tr>
@@ -195,10 +224,21 @@
                                 </td>
                                 <td>{{ $offer->organisation ?: '-' }}</td>
                                 <td>{{ __('admin.offers.statuses.' . $offer->statut) }}</td>
+                                <td>
+                                    @if ($offer->auto_publish && $offer->scheduled_for)
+                                        <span class="panel-badge">
+                                            {{ app()->getLocale() === 'fr' ? 'Programmé le ' : 'Scheduled on ' }}{{ $offer->scheduled_for->format('d/m/Y H:i') }}
+                                        </span>
+                                    @else
+                                        {{ $offer->date_publication?->format('d/m/Y') ?: '-' }}
+                                    @endif
+                                </td>
                                 <td>{{ $offer->date_expiration?->format('d/m/Y') ?: '-' }}</td>
                                 <td class="panel-inline-actions">
-                                    <button type="button" wire:click="editOffer({{ $offer->id }})" class="panel-secondary-btn panel-small-btn">{{ __('admin.offers.edit') }}</button>
-                                    <button type="button" wire:click="deleteOffer({{ $offer->id }})" class="panel-secondary-btn panel-small-btn">{{ __('admin.offers.delete') }}</button>
+                                    <button type="button" wire:click="editOffer({{ $offer->id }})"
+                                        class="panel-secondary-btn panel-small-btn">{{ __('admin.offers.edit') }}</button>
+                                    <button type="button" wire:click="deleteOffer({{ $offer->id }})"
+                                        class="panel-secondary-btn panel-small-btn">{{ __('admin.offers.delete') }}</button>
                                 </td>
                             </tr>
                         @endforeach

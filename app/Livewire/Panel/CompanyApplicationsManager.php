@@ -58,7 +58,7 @@ class CompanyApplicationsManager extends Component
         ]);
 
         $application = $this->companyApplicationsQuery()
-            ->with(['opportunite'])
+            ->with(['opportunite', 'user'])
             ->findOrFail($this->selectedApplicationId);
 
         abort_unless($application->statut === 'proposee_entreprise', 403);
@@ -77,8 +77,10 @@ class CompanyApplicationsManager extends Component
             Mail::to($application->email)->send(new OfferCandidateValidatedByCompanyMail($application));
         }
 
-        if ($application->user) {
-            $application->user->notify(new PlatformDatabaseNotification([
+        $candidateRecipients = $this->candidateRecipients($application);
+
+        if ($candidateRecipients->isNotEmpty()) {
+            Notification::send($candidateRecipients, new PlatformDatabaseNotification([
                 'title' => __('admin.notifications.events.company_validated.title'),
                 'message' => __('admin.notifications.events.company_validated.message', [
                     'offer' => $application->opportunite->titre,
@@ -171,5 +173,26 @@ class CompanyApplicationsManager extends Component
         return CandidatureOffre::query()
             ->whereHas('opportunite', fn ($query) => $query->where('user_id', auth()->id()))
             ->whereIn('statut', ['proposee_entreprise', 'validee_entreprise']);
+    }
+
+    protected function candidateRecipients(CandidatureOffre $application)
+    {
+        if (! $application->user_id && ! $application->email) {
+            return collect();
+        }
+
+        return User::query()
+            ->where(function ($nested) use ($application) {
+                if ($application->user_id) {
+                    $nested->orWhere('id', $application->user_id);
+                }
+
+                if ($application->email) {
+                    $nested->orWhere('email', $application->email);
+                }
+            })
+            ->get()
+            ->unique('id')
+            ->values();
     }
 }

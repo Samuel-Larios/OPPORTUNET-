@@ -4,11 +4,15 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? 'En face de la Mairie de Missérété, Ouémé, BJ';
-    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
+    $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
     $whatsappHref = $whatsappBase . '?text=' . urlencode($siteWhatsappMessage ?? __('home.forms.whatsapp_default'));
     $localizedContactPrayerUrl = \App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale());
+    $localizedDailyPrayersUrl = \App\Support\Seo::localizedUrl(
+        route('spiritual.daily-prayers.index'),
+        app()->getLocale(),
+    );
     $contactRedirect = $localizedContactPrayerUrl . '#contact-form';
     $prayerRedirect = $localizedContactPrayerUrl . '#prayer-form';
     $showPrayerEncouragement = (bool) $prayerEncouragement;
@@ -24,7 +28,10 @@
     $seoSchema = [
         \App\Support\Seo::breadcrumb([
             ['name' => $siteName, 'url' => \App\Support\Seo::localizedUrl(route('home'), app()->getLocale())],
-            ['name' => __('contact_prayer.page.label'), 'url' => \App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale())],
+            [
+                'name' => __('contact_prayer.page.label'),
+                'url' => \App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale()),
+            ],
         ]),
         \App\Support\Seo::schema('WebPage', [
             'name' => __('contact_prayer.meta.title'),
@@ -40,20 +47,9 @@
     ];
 @endphp
 
-<x-layouts.app
-    :title="__('contact_prayer.meta.title')"
-    :description="$seoDescription"
-    :canonical="\App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale())"
-    :schema-data="$seoSchema"
-    :site-name="$siteName"
-    :site-slogan="$siteSlogan"
-    :site-email="$siteEmail"
-    :site-hours="$siteHours"
-    :site-address="$siteAddress"
-    :site-whatsapp="$siteWhatsapp"
-    :site-whatsapp-message="$siteWhatsappMessage"
-    :show-hero="false"
->
+<x-layouts.app :title="__('contact_prayer.meta.title')" :description="$seoDescription" :canonical="\App\Support\Seo::localizedUrl(route('contact.prayer.index'), app()->getLocale())" :schema-data="$seoSchema" :site-name="$siteName"
+    :site-slogan="$siteSlogan" :site-email="$siteEmail" :site-hours="$siteHours" :site-address="$siteAddress" :site-whatsapp="$siteWhatsapp" :site-whatsapp-message="$siteWhatsappMessage"
+    :show-hero="false">
     <main class="contact-prayer-page">
         <section class="contact-prayer-hero">
             <div class="container">
@@ -126,39 +122,58 @@
                             <input type="hidden" name="redirect_to" value="{{ $contactRedirect }}" />
 
                             <div class="field-row">
-                                <input type="text" name="prenom" value="{{ old('prenom', auth()->user()?->prenom) }}" placeholder="{{ __('home.forms.contact.prenom') }}" />
-                                <input type="text" name="nom" value="{{ old('nom', auth()->user()?->nom) }}" placeholder="{{ __('home.forms.contact.nom') }}" />
+                                <input type="text" name="prenom"
+                                    value="{{ old('prenom', auth()->user()?->prenom) }}"
+                                    placeholder="{{ __('home.forms.contact.prenom') }}" />
+                                <input type="text" name="nom" value="{{ old('nom', auth()->user()?->nom) }}"
+                                    placeholder="{{ __('home.forms.contact.nom') }}" />
                             </div>
 
                             <div class="field-row">
-                                <input type="email" name="email" value="{{ old('email', auth()->user()?->email) }}" placeholder="{{ __('home.forms.contact.email') }}" />
-                                <input type="text" name="telephone" value="{{ old('telephone', auth()->user()?->telephone) }}" placeholder="{{ __('home.forms.contact.telephone') }}" />
+                                <input type="email" name="email" value="{{ old('email', auth()->user()?->email) }}"
+                                    placeholder="{{ __('home.forms.contact.email') }}" />
+                                <input type="text" name="telephone"
+                                    value="{{ old('telephone', auth()->user()?->telephone) }}"
+                                    placeholder="{{ __('home.forms.contact.telephone') }}" />
                             </div>
 
                             <div class="field-row">
-                                <input type="text" name="whatsapp" value="{{ old('whatsapp', auth()->user()?->whatsapp) }}" placeholder="{{ __('home.forms.contact.whatsapp_label') }}" />
-                                <input type="text" name="pays" value="{{ old('pays', auth()->user()?->pays) }}" placeholder="{{ __('home.forms.contact.pays') }}" />
+                                <input type="text" name="whatsapp"
+                                    value="{{ old('whatsapp', auth()->user()?->whatsapp) }}"
+                                    placeholder="{{ __('home.forms.contact.whatsapp_label') }}" />
+                                <input type="text" name="pays" value="{{ old('pays', auth()->user()?->pays) }}"
+                                    placeholder="{{ __('home.forms.contact.pays') }}" />
                             </div>
 
                             <div class="field-row">
                                 <select name="sujet">
                                     <option value="">{{ __('home.forms.contact.sujet_placeholder') }}</option>
-                                    <option value="information" @selected(old('sujet') === 'information')>{{ __('home.forms.contact.subjects.information') }}</option>
-                                    <option value="service" @selected(old('sujet') === 'service')>{{ __('home.forms.contact.subjects.service') }}</option>
-                                    <option value="formation" @selected(old('sujet') === 'formation')>{{ __('home.forms.contact.subjects.formation') }}</option>
-                                    <option value="offre" @selected(old('sujet') === 'offre')>{{ __('home.forms.contact.subjects.offre') }}</option>
-                                    <option value="partenariat" @selected(old('sujet') === 'partenariat')>{{ __('home.forms.contact.subjects.partenariat') }}</option>
-                                    <option value="technique" @selected(old('sujet') === 'technique')>{{ __('home.forms.contact.subjects.technique') }}</option>
-                                    <option value="autre" @selected(old('sujet') === 'autre')>{{ __('home.forms.contact.subjects.autre') }}</option>
+                                    <option value="information" @selected(old('sujet') === 'information')>
+                                        {{ __('home.forms.contact.subjects.information') }}</option>
+                                    <option value="service" @selected(old('sujet') === 'service')>
+                                        {{ __('home.forms.contact.subjects.service') }}</option>
+                                    <option value="formation" @selected(old('sujet') === 'formation')>
+                                        {{ __('home.forms.contact.subjects.formation') }}</option>
+                                    <option value="offre" @selected(old('sujet') === 'offre')>
+                                        {{ __('home.forms.contact.subjects.offre') }}</option>
+                                    <option value="partenariat" @selected(old('sujet') === 'partenariat')>
+                                        {{ __('home.forms.contact.subjects.partenariat') }}</option>
+                                    <option value="technique" @selected(old('sujet') === 'technique')>
+                                        {{ __('home.forms.contact.subjects.technique') }}</option>
+                                    <option value="autre" @selected(old('sujet') === 'autre')>
+                                        {{ __('home.forms.contact.subjects.autre') }}</option>
                                 </select>
-                                <input type="text" name="sujet_personnalise" value="{{ old('sujet_personnalise') }}" placeholder="{{ __('home.forms.contact.sujet_personnalise') }}" />
+                                <input type="text" name="sujet_personnalise" value="{{ old('sujet_personnalise') }}"
+                                    placeholder="{{ __('home.forms.contact.sujet_personnalise') }}" />
                             </div>
 
                             <textarea name="message" rows="6" placeholder="{{ __('home.forms.contact.message') }}">{{ old('message') }}</textarea>
 
                             <div class="contact-form-actions">
-                                <button type="submit" class="solid-submit">{{ __('home.forms.contact.submit') }}</button>
-                                <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('contact_prayer.contact.whatsapp_cta') }}</a>
+                                <button type="submit"
+                                    class="solid-submit">{{ __('home.forms.contact.submit') }}</button>
+                                <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank"
+                                    rel="noopener">{{ __('contact_prayer.contact.whatsapp_cta') }}</a>
                             </div>
                         </form>
                     </div>
@@ -190,6 +205,19 @@
                                 <p>{{ $prayerNoteText }}</p>
                             </div>
                         @endif
+
+                        @if ($featuredDailyPrayer)
+                            <div class="contact-prayer-verse-card">
+                                <span>{{ app()->getLocale() === 'fr' ? 'Prière du jour' : 'Prayer of the day' }}</span>
+                                <p>{{ $featuredDailyPrayer->titre }}</p>
+                                <small
+                                    style="display: block; color: #5c7882; line-height: 1.7;">{{ $featuredDailyPrayer->extrait ?: \Illuminate\Support\Str::limit($featuredDailyPrayer->contenu, 160) }}</small>
+                                <div style="margin-top: 12px;">
+                                    <a href="{{ $localizedDailyPrayersUrl }}"
+                                        class="ghost-submit">{{ app()->getLocale() === 'fr' ? 'Voir les prières du jour' : 'See daily prayers' }}</a>
+                                </div>
+                            </div>
+                        @endif
                     </aside>
                 </div>
             </div>
@@ -216,11 +244,14 @@
                         <input type="hidden" name="redirect_to" value="{{ $prayerRedirect }}" />
 
                         <div class="field-row">
-                            <input type="text" name="prenom" value="{{ old('prenom') }}" placeholder="{{ __('home.forms.prayer.prenom') }}" />
-                            <input type="text" name="pays" value="{{ old('pays') }}" placeholder="{{ __('home.forms.prayer.pays') }}" />
+                            <input type="text" name="prenom" value="{{ old('prenom') }}"
+                                placeholder="{{ __('home.forms.prayer.prenom') }}" />
+                            <input type="text" name="pays" value="{{ old('pays') }}"
+                                placeholder="{{ __('home.forms.prayer.pays') }}" />
                         </div>
 
-                        <input type="email" name="email" value="{{ old('email') }}" placeholder="{{ __('home.forms.prayer.email') }}" />
+                        <input type="email" name="email" value="{{ old('email') }}"
+                            placeholder="{{ __('home.forms.prayer.email') }}" />
                         <textarea name="sujet" rows="6" placeholder="{{ __('home.forms.prayer.sujet') }}">{{ old('sujet') }}</textarea>
 
                         <label class="checkbox-line">
@@ -230,7 +261,8 @@
 
                         <div class="contact-form-actions">
                             <button type="submit" class="solid-submit">{{ __('home.forms.prayer.submit') }}</button>
-                            <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank" rel="noopener">{{ __('contact_prayer.prayer.whatsapp_cta') }}</a>
+                            <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank"
+                                rel="noopener">{{ __('contact_prayer.prayer.whatsapp_cta') }}</a>
                         </div>
                     </form>
                 </div>
@@ -269,7 +301,8 @@
                         <article class="contact-prayer-wall-card reveal">
                             <div class="contact-prayer-wall-card-top">
                                 <span class="prayer-card-label">{{ $prayer->publicAuthorName() }}</span>
-                                <span class="contact-prayer-wall-country">{{ $prayer->pays ?: __('contact_prayer.wall.country_fallback') }}</span>
+                                <span
+                                    class="contact-prayer-wall-country">{{ $prayer->pays ?: __('contact_prayer.wall.country_fallback') }}</span>
                             </div>
 
                             <p class="contact-prayer-wall-message">{{ $prayer->sujet }}</p>
@@ -279,14 +312,17 @@
                                     {{ __('contact_prayer.wall.support_count', ['count' => $prayer->priants]) }}
                                 </span>
                                 @if (in_array($prayer->id, $supportedPrayerIds, true))
-                                    <span class="solid-submit contact-prayer-wall-button" style="pointer-events: none; opacity: 0.8;">
+                                    <span class="solid-submit contact-prayer-wall-button"
+                                        style="pointer-events: none; opacity: 0.8;">
                                         {{ __('contact_prayer.wall.supported_cta') }}
                                     </span>
                                 @else
                                     <form method="POST" action="{{ route('prayer.support', $prayer->id) }}">
                                         @csrf
-                                        <input type="hidden" name="redirect_to" value="{{ $localizedContactPrayerUrl . '#prayer-wall' }}" />
-                                        <button type="submit" class="solid-submit contact-prayer-wall-button">{{ __('contact_prayer.wall.support_cta') }}</button>
+                                        <input type="hidden" name="redirect_to"
+                                            value="{{ $localizedContactPrayerUrl . '#prayer-wall' }}" />
+                                        <button type="submit"
+                                            class="solid-submit contact-prayer-wall-button">{{ __('contact_prayer.wall.support_cta') }}</button>
                                     </form>
                                 @endif
                             </div>

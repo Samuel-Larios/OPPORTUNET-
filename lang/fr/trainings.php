@@ -101,4 +101,10 @@ return [
     'whatsapp' => [
         'default_message' => 'Bonjour Opportunet Mondiale, je souhaite plus d’informations sur la formation :formation.',
     ],
+    'pagination' => [
+        'label' => 'Pagination des formations',
+        'previous' => 'PrÃ©cÃ©dent',
+        'next' => 'Suivant',
+        'summary' => 'Page :page sur :last',
+    ],
 ];

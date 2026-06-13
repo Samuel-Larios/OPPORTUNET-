@@ -212,7 +212,7 @@
                         @if ($prayerRequests->onFirstPage())
                             <span class="ghost-submit" style="pointer-events: none; opacity: 0.7;">{{ __('community.prayers.pagination.previous') }}</span>
                         @else
-                            <a href="{{ $prayerRequests->previousPageUrl() }}" class="ghost-submit">{{ __('community.prayers.pagination.previous') }}</a>
+                            <a href="{{ \App\Support\Seo::localizedUrl(route('community.prayers.index'), app()->getLocale(), array_merge(request()->query(), ['page' => $prayerRequests->currentPage() - 1])) }}" class="ghost-submit">{{ __('community.prayers.pagination.previous') }}</a>
                         @endif
 
                         <span class="community-pagination-label">
@@ -220,7 +220,7 @@
                         </span>
 
                         @if ($prayerRequests->hasMorePages())
-                            <a href="{{ $prayerRequests->nextPageUrl() }}" class="ghost-submit">{{ __('community.prayers.pagination.next') }}</a>
+                            <a href="{{ \App\Support\Seo::localizedUrl(route('community.prayers.index'), app()->getLocale(), array_merge(request()->query(), ['page' => $prayerRequests->currentPage() + 1])) }}" class="ghost-submit">{{ __('community.prayers.pagination.next') }}</a>
                         @else
                             <span class="ghost-submit" style="pointer-events: none; opacity: 0.7;">{{ __('community.prayers.pagination.next') }}</span>
                         @endif

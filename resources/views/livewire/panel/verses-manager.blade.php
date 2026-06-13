@@ -1,4 +1,4 @@
-<div class="panel-stack">
+<div class="panel-stack" wire:poll.30s>
     @if (session('panel_success'))
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
@@ -12,46 +12,60 @@
 
             <form wire:submit="saveVerse" class="panel-form-grid">
                 <label class="panel-field">
-                    <span>FR {{ __('admin.verses.reference') }}</span>
+                    <span>{{ __('admin.verses.reference') }} FR</span>
                     <input type="text" wire:model="referenceFr" />
-                    @error('referenceFr') <small>{{ $message }}</small> @enderror
+                    @error('referenceFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN {{ __('admin.verses.reference') }}</span>
+                    <span>{{ __('admin.verses.reference') }} EN</span>
                     <input type="text" wire:model="referenceEn" />
-                    @error('referenceEn') <small>{{ $message }}</small> @enderror
+                    @error('referenceEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>FR {{ __('admin.verses.text') }}</span>
+                    <span>{{ __('admin.verses.text') }} FR</span>
                     <textarea rows="5" wire:model="texteFr"></textarea>
-                    @error('texteFr') <small>{{ $message }}</small> @enderror
+                    @error('texteFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field panel-field-span">
-                    <span>EN {{ __('admin.verses.text') }}</span>
+                    <span>{{ __('admin.verses.text') }} EN</span>
                     <textarea rows="5" wire:model="texteEn"></textarea>
-                    @error('texteEn') <small>{{ $message }}</small> @enderror
+                    @error('texteEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>FR {{ __('admin.verses.version') }}</span>
+                    <span>{{ __('admin.verses.version') }} FR</span>
                     <input type="text" wire:model="versionFr" />
-                    @error('versionFr') <small>{{ $message }}</small> @enderror
+                    @error('versionFr')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
-                    <span>EN {{ __('admin.verses.version') }}</span>
+                    <span>{{ __('admin.verses.version') }} EN</span>
                     <input type="text" wire:model="versionEn" />
-                    @error('versionEn') <small>{{ $message }}</small> @enderror
+                    @error('versionEn')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <label class="panel-field">
                     <span>{{ __('admin.verses.order') }}</span>
                     <input type="number" min="0" wire:model="ordre" />
                     <small>{{ __('admin.verses.order_hint') }}</small>
-                    @error('ordre') <small>{{ $message }}</small> @enderror
+                    @error('ordre')
+                        <small>{{ $message }}</small>
+                    @enderror
                 </label>
 
                 <div class="panel-check-grid">
@@ -65,9 +79,12 @@
                     </label>
                 </div>
 
+                @include('livewire.panel.partials.schedule-fields')
+
                 <div class="panel-action-row panel-field-span">
                     <button type="submit" class="panel-primary-btn">{{ __('admin.verses.save') }}</button>
-                    <button type="button" wire:click="resetForm" class="panel-secondary-btn">{{ __('admin.verses.reset') }}</button>
+                    <button type="button" wire:click="resetForm"
+                        class="panel-secondary-btn">{{ __('admin.verses.reset') }}</button>
                 </div>
             </form>
         </article>
@@ -78,7 +95,8 @@
             </div>
 
             <div class="panel-toolbar">
-                <input type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.verses.search') }}" />
+                <input type="search" wire:model.live.debounce.300ms="search"
+                    placeholder="{{ __('admin.verses.search') }}" />
                 <select wire:model.live="activeFilter">
                     <option value="">{{ __('admin.verses.all_statuses') }}</option>
                     <option value="1">{{ __('admin.verses.active') }}</option>
@@ -118,14 +136,21 @@
                                         <span class="panel-badge{{ $verse->afficher_accueil ? '' : ' is-muted' }}">
                                             {{ $verse->afficher_accueil ? __('admin.verses.show_on_home') : __('admin.verses.hide_from_home') }}
                                         </span>
+                                        @if ($verse->auto_publish && $verse->scheduled_for)
+                                            <span class="panel-badge">
+                                                {{ app()->getLocale() === 'fr' ? 'Programmé le ' : 'Scheduled on ' }}{{ $verse->scheduled_for->format('d/m/Y H:i') }}
+                                            </span>
+                                        @endif
                                     </div>
                                 </td>
                                 <td>{{ $verse->ordre }}</td>
                                 <td class="panel-inline-actions">
-                                    <button type="button" wire:click="editVerse({{ $verse->id }})" class="panel-secondary-btn panel-small-btn">
+                                    <button type="button" wire:click="editVerse({{ $verse->id }})"
+                                        class="panel-secondary-btn panel-small-btn">
                                         {{ __('admin.verses.edit') }}
                                     </button>
-                                    <button type="button" wire:click="deleteVerse({{ $verse->id }})" class="panel-secondary-btn panel-small-btn">
+                                    <button type="button" wire:click="deleteVerse({{ $verse->id }})"
+                                        class="panel-secondary-btn panel-small-btn">
                                         {{ __('admin.verses.delete') }}
                                     </button>
                                 </td>

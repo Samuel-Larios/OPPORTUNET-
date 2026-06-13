@@ -3,11 +3,13 @@
 namespace App\Livewire\Panel;
 
 use App\Mail\CompanyProfileProposalMail;
+use App\Mail\OfferApplicationProposedToCompanyMail;
 use App\Mail\OfferApplicationProcessedMail;
 use App\Models\CandidatureOffre;
 use App\Notifications\PlatformDatabaseNotification;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -67,10 +69,13 @@ class ApplicationsManager extends Component
         $application = CandidatureOffre::query()
             ->with(['messages.sender', 'opportunite', 'user'])
             ->findOrFail($this->selectedApplicationId);
+        $previousStatus = (string) $application->statut;
         $previousNotes = trim((string) ($application->notes_admin ?? ''));
         $normalizedNotes = trim($this->adminNotes);
         $normalizedReply = trim($this->replyMessage);
         $attachmentPath = $this->replyAttachment?->store('offer-applications/messages', 'local');
+        $statusChanged = $previousStatus !== $this->processingStatus;
+        $proposedToCompany = $previousStatus !== 'proposee_entreprise' && $this->processingStatus === 'proposee_entreprise';
 
         $application->update([
             'statut' => $this->processingStatus,
@@ -78,7 +83,7 @@ class ApplicationsManager extends Component
             'traite_par' => auth()->id(),
             'traite_le' => now(),
             'proposee_entreprise_le' => $this->processingStatus === 'proposee_entreprise' ? now() : $application->proposee_entreprise_le,
-            'email_traitement_envoye_le' => now(),
+            'email_traitement_envoye_le' => $statusChanged ? now() : $application->email_traitement_envoye_le,
         ]);
 
         if ($normalizedNotes !== '' && $normalizedNotes !== $previousNotes) {
@@ -102,19 +107,40 @@ class ApplicationsManager extends Component
 
         $application = $application->fresh(['opportunite.user']);
 
-        Mail::to($application->email)->send(new OfferApplicationProcessedMail($application));
+        if ($statusChanged && $application->email) {
+            if ($proposedToCompany) {
+                Mail::to($application->email)->send(new OfferApplicationProposedToCompanyMail($application));
+            } else {
+                Mail::to($application->email)->send(new OfferApplicationProcessedMail($application));
+            }
+        }
 
-        if ($application->user) {
-            $application->user->notify(new PlatformDatabaseNotification([
-                'title' => __('admin.notifications.events.application_status.title'),
-                'message' => __('admin.notifications.events.application_status.message', [
-                    'offer' => $application->opportunite->titre,
-                    'status' => $application->statusLabel(),
-                ]),
+        $candidateRecipients = $this->candidateRecipients($application);
+
+        if ($statusChanged && $candidateRecipients->isNotEmpty()) {
+            Notification::send($candidateRecipients, new PlatformDatabaseNotification([
+                'title' => __(
+                    $proposedToCompany
+                        ? 'admin.notifications.events.application_proposed_to_company.title'
+                        : 'admin.notifications.events.application_status.title'
+                ),
+                'message' => __(
+                    $proposedToCompany
+                        ? 'admin.notifications.events.application_proposed_to_company.message'
+                        : 'admin.notifications.events.application_status.message',
+                    $proposedToCompany
+                        ? ['offer' => $application->opportunite->titre]
+                        : [
+                            'offer' => $application->opportunite->titre,
+                            'status' => $application->statusLabel(),
+                        ]
+                ),
                 'action_url' => route('panel.user.applications', ['application' => $application->id]),
                 'action_label' => __('admin.notifications.open'),
                 'category' => 'application',
-                'level' => in_array($this->processingStatus, ['retenue', 'validee_entreprise'], true) ? 'success' : ($this->processingStatus === 'rejetee' ? 'danger' : 'info'),
+                'level' => $proposedToCompany
+                    ? 'info'
+                    : (in_array($this->processingStatus, ['retenue', 'validee_entreprise'], true) ? 'success' : ($this->processingStatus === 'rejetee' ? 'danger' : 'info')),
                 'resource_type' => 'offer_application',
                 'resource_id' => $application->id,
             ]));
@@ -188,5 +214,26 @@ class ApplicationsManager extends Component
     {
         $this->reset(['replyMessage', 'replyAttachment']);
         $this->resetValidation(['replyMessage', 'replyAttachment']);
+    }
+
+    protected function candidateRecipients(CandidatureOffre $application)
+    {
+        if (! $application->user_id && ! $application->email) {
+            return collect();
+        }
+
+        return \App\Models\User::query()
+            ->where(function ($nested) use ($application) {
+                if ($application->user_id) {
+                    $nested->orWhere('id', $application->user_id);
+                }
+
+                if ($application->email) {
+                    $nested->orWhere('email', $application->email);
+                }
+            })
+            ->get()
+            ->unique('id')
+            ->values();
     }
 }

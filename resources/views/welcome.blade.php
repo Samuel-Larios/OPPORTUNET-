@@ -4,12 +4,17 @@
     $siteEmail = $siteEmail ?? 'contact@opportunetmondiale.com';
     $siteHours = $siteHours ?? 'Lundi - Samedi 08:00 - 22:00';
     $siteAddress = $siteAddress ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ";
-    $siteWhatsapp = $siteWhatsapp ?? '+2290167229575';
+$siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
     $siteWhatsappMessage = $siteWhatsappMessage ?? __('home.forms.whatsapp_default');
     $whatsappBase = 'https://wa.me/' . preg_replace('/\D+/', '', $siteWhatsapp ?? '');
     $whatsappHref = $whatsappBase . '?text=' . urlencode($siteWhatsappMessage ?? __('home.forms.whatsapp_default'));
     $localizedHomeUrl = \App\Support\Seo::localizedUrl(route('home'), app()->getLocale());
     $localizedArticlesUrl = \App\Support\Seo::localizedUrl(route('articles.index'), app()->getLocale());
+    $localizedVersesUrl = \App\Support\Seo::localizedUrl(route('spiritual.verses.index'), app()->getLocale());
+    $localizedThoughtsUrl = \App\Support\Seo::localizedUrl(route('spiritual.thoughts.index'), app()->getLocale());
+    $localizedExhortationsUrl = \App\Support\Seo::localizedUrl(route('spiritual.exhortations.index'), app()->getLocale());
+    $localizedDailyPrayersUrl = \App\Support\Seo::localizedUrl(route('spiritual.daily-prayers.index'), app()->getLocale());
+    $localizedConversionUrl = \App\Support\Seo::localizedUrl(route('spiritual.conversion.index'), app()->getLocale());
     $isFrench = app()->getLocale() === 'fr';
     $supportWhatsappMessage = $isFrench
         ? 'Bonjour Opportunet Mondiale, je souhaite confirmer un soutien financier par Mobile Money.'
@@ -44,6 +49,54 @@
         ],
     ];
     $welcomeVerses = collect($welcomeVerses ?? [])->take(3)->values();
+    $welcomeThoughts = collect($welcomeThoughts ?? ($featuredThought ? [$featuredThought] : []))->take(3)->values();
+    $welcomeExhortations = collect($welcomeExhortations ?? ($featuredExhortation ? [$featuredExhortation] : []))->take(3)->values();
+    $welcomeDailyPrayers = collect($welcomeDailyPrayers ?? ($featuredDailyPrayer ? [$featuredDailyPrayer] : []))->take(3)->values();
+    $spiritualSectionCopy = [
+        'verse' => [
+            'label' => $isFrench ? 'Verset du moment' : 'Verse of the moment',
+            'title' => $isFrench ? "Une parole à méditer aujourd'hui" : 'A word to reflect on today',
+            'subtitle' => $isFrench
+                ? 'Prenez un moment pour lire, méditer et vous laisser encourager par les versets mis en avant sur la plateforme.'
+                : 'Take time to read, reflect, and be encouraged by the verses highlighted on the platform.',
+            'cta' => $isFrench ? 'Voir tous les versets' : 'See all verses',
+        ],
+        'thought' => [
+            'label' => $isFrench ? 'Pensée du jour' : 'Thought of the day',
+            'title' => $isFrench ? 'Une pensée pour éclairer la journée' : 'A thought to guide the day',
+            'subtitle' => $isFrench
+                ? 'Recevez une courte méditation biblique pour avancer avec clarté.'
+                : 'Receive a short biblical meditation to move forward with clarity.',
+            'cta' => $isFrench ? 'Voir les pensées du jour' : 'See thoughts of the day',
+            'empty' => $isFrench ? 'La première pensée du jour apparaîtra ici après publication.' : 'The first thought of the day will appear here after publication.',
+        ],
+        'exhortation' => [
+            'label' => $isFrench ? 'Exhortation' : 'Exhortation',
+            'title' => $isFrench ? 'Des paroles pour tenir ferme' : 'Words to help you stand firm',
+            'subtitle' => $isFrench
+                ? "Retrouvez des exhortations bibliques pour fortifier la foi et l'espérance."
+                : 'Find biblical exhortations that strengthen faith and hope.',
+            'cta' => $isFrench ? 'Voir les exhortations' : 'See exhortations',
+            'empty' => $isFrench ? 'La première exhortation apparaîtra ici après publication.' : 'The first exhortation will appear here after publication.',
+        ],
+        'daily_prayer' => [
+            'label' => $isFrench ? 'Prière du jour' : 'Prayer of the day',
+            'title' => $isFrench ? "Une prière pour aujourd'hui" : 'A prayer to carry today',
+            'subtitle' => $isFrench
+                ? 'Prenez un moment de recueillement avec des prières écrites pour la journée.'
+                : 'Pause and pray through curated written prayers for the day.',
+            'cta' => $isFrench ? 'Voir les prières du jour' : 'See daily prayers',
+            'empty' => $isFrench ? 'La première prière du jour apparaîtra ici après publication.' : 'The first prayer of the day will appear here after publication.',
+        ],
+        'conversion' => [
+            'label' => $isFrench ? 'Se convertir' : 'Convert',
+            'title' => $isFrench ? 'Faire un pas vers Jésus-Christ' : 'Take a step toward Jesus Christ',
+            'subtitle' => $isFrench
+                ? "Un espace simple pour découvrir l'Évangile, prier et commencer une marche de foi."
+                : 'A simple space to understand the Gospel, pray, and begin a life of faith.',
+            'cta' => $isFrench ? 'Découvrir comment se convertir' : 'Discover how to convert',
+        ],
+    ];
     $approvedPrayerRequests = collect($approvedPrayerRequests ?? [])->values();
     $prayerRequestSlides = $approvedPrayerRequests->count() > 1
         ? $approvedPrayerRequests->concat($approvedPrayerRequests)
@@ -64,8 +117,8 @@
             'about' => [
                 ['@type' => 'Thing', 'name' => 'Emploi au Benin'],
                 ['@type' => 'Thing', 'name' => 'Opportunites internationales'],
-                ['@type' => 'Thing', 'name' => 'Spiritualite chretienne'],
-                ['@type' => 'Thing', 'name' => 'Priere et temoignages'],
+                ['@type' => 'Thing', 'name' => 'Spiritualité chrétienne'],
+                ['@type' => 'Thing', 'name' => 'Prière et témoignages'],
             ],
         ]),
         \App\Support\Seo::schema('ItemList', [
@@ -116,6 +169,23 @@
         ],
     ];
 @endphp
+
+@once
+    <script>
+        document.addEventListener('click', function (event) {
+            const card = event.target.closest('[data-card-link]');
+
+            if (!card || event.target.closest('a, button, input, textarea, select, label')) {
+                return;
+            }
+
+            const target = card.getAttribute('data-card-link');
+            if (target) {
+                window.location.href = target;
+            }
+        });
+    </script>
+@endonce
 
 <style>
     .home-prayer-stream {
@@ -573,6 +643,72 @@
         line-height: 1.72;
     }
 
+    .home-conversion-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 14px;
+        margin-top: 10px;
+    }
+
+    .home-conversion-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        min-height: 52px;
+        width: min(100%, 324px);
+        padding: 14px 20px;
+        border-radius: 18px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .home-conversion-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .home-conversion-btn-primary {
+        background: linear-gradient(135deg, #0d6f7c 0%, #1399a8 100%);
+        color: #f7feff;
+        box-shadow: 0 18px 34px rgba(17, 109, 121, 0.22);
+    }
+
+    .home-conversion-btn-primary:hover {
+        box-shadow: 0 22px 38px rgba(17, 109, 121, 0.28);
+    }
+
+    .home-conversion-btn-secondary {
+        border: 1px solid rgba(32, 160, 104, 0.22);
+        background:
+            linear-gradient(135deg, rgba(233, 255, 245, 0.96), rgba(214, 250, 233, 0.96));
+        color: #16794e;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .home-conversion-btn-secondary:hover {
+        border-color: rgba(32, 160, 104, 0.34);
+        box-shadow: 0 16px 30px rgba(22, 121, 78, 0.14);
+    }
+
+    .home-conversion-btn-icon {
+        width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 20px;
+    }
+
+    .home-conversion-btn-icon svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+        fill: currentColor;
+    }
+
     @media (max-width: 1024px) {
         .home-support-grid {
             grid-template-columns: 1fr;
@@ -589,6 +725,14 @@
         .home-support-lane-top {
             align-items: flex-start;
             flex-direction: column;
+        }
+
+        .home-conversion-actions {
+            flex-direction: column;
+        }
+
+        .home-conversion-btn {
+            width: 100%;
         }
 
         .home-support-number {
@@ -714,6 +858,7 @@
                             <x-share-buttons
                                 :url="route('offers.show', $opportunity->slug)"
                                 :title="$opportunity->titre"
+                                :text="$opportunity->description"
                                 variant="compact"
                             />
                         </article>
@@ -790,6 +935,7 @@
                                 <x-share-buttons
                                     :url="route('articles.show', $article->slug)"
                                     :title="$article->titre"
+                                    :text="$article->extrait ?: \Illuminate\Support\Str::limit(strip_tags($article->contenu), 170)"
                                     variant="compact"
                                 />
                             </div>
@@ -918,18 +1064,38 @@
         <section class="home-prayer" id="home-verse">
             <div class="container">
                 <div class="home-section-head reveal">
-                    <span class="section-label">{{ __('home.sections.verse.label') }}</span>
-                    <h2 class="section-title">{{ __('home.sections.verse.title') }}</h2>
-                    <p class="section-sub">{{ __('home.sections.verse.subtitle') }}</p>
+                    <span class="section-label">{{ $spiritualSectionCopy['verse']['label'] }}</span>
+                    <h2 class="section-title">{{ $spiritualSectionCopy['verse']['title'] }}</h2>
+                    <p class="section-sub">{{ $spiritualSectionCopy['verse']['subtitle'] }}</p>
+                    <a href="{{ $localizedVersesUrl }}" class="home-prayer-stream-cta" style="margin-top: 10px;">
+                        {{ $spiritualSectionCopy['verse']['cta'] }}
+                        <span>&gt;</span>
+                    </a>
                 </div>
 
                 <div class="prayer-verse-grid">
                     @forelse ($welcomeVerses as $index => $verse)
-                        <article class="prayer-card prayer-verse prayer-verse-card reveal reveal-delay-{{ min($index + 1, 3) }}">
+                        <article
+                            class="prayer-card prayer-verse prayer-verse-card reveal reveal-delay-{{ min($index + 1, 3) }}"
+                            data-card-link="{{ \App\Support\Seo::localizedUrl(route('spiritual.verses.show', $verse), app()->getLocale()) }}"
+                            style="cursor: pointer;"
+                        >
                             <span class="prayer-card-label">{{ __('home.sections.prayer.verse_label') }}</span>
                             <h3>{{ $verse->reference }}</h3>
                             <p>{{ $verse->texte }}</p>
                             <strong class="prayer-verse-version">{{ $verse->version }}</strong>
+                            <a
+                                href="{{ \App\Support\Seo::localizedUrl(route('spiritual.verses.show', $verse), app()->getLocale()) }}"
+                                class="solid-submit"
+                                style="width: fit-content;"
+                            >
+                                {{ $isFrench ? 'Voir les détails' : 'View details' }}
+                            </a>
+                            <x-share-buttons
+                                :url="\App\Support\Seo::localizedUrl(route('spiritual.verses.show', $verse), app()->getLocale())"
+                                :title="$verse->reference"
+                                :text="$verse->texte . ' - ' . $verse->version"
+                            />
                         </article>
                     @empty
                         <article class="empty-card prayer-empty-card reveal">
@@ -937,6 +1103,195 @@
                             <p>{{ __('home.sections.prayer.verse_empty_text') }}</p>
                         </article>
                     @endforelse
+                </div>
+            </div>
+        </section>
+
+        <section class="home-prayer" id="home-thought">
+            <div class="container">
+                <div class="home-section-head reveal">
+                    <span class="section-label">{{ $spiritualSectionCopy['thought']['label'] }}</span>
+                    <h2 class="section-title">{{ $spiritualSectionCopy['thought']['title'] }}</h2>
+                    <p class="section-sub">{{ $spiritualSectionCopy['thought']['subtitle'] }}</p>
+                </div>
+
+                <div class="prayer-verse-grid">
+                    @forelse ($welcomeThoughts as $index => $thought)
+                        <article
+                            class="prayer-card prayer-verse prayer-verse-card reveal reveal-delay-{{ min($index + 1, 3) }}"
+                            data-card-link="{{ \App\Support\Seo::localizedUrl(route('spiritual.thoughts.show', $thought->slug), app()->getLocale()) }}"
+                            style="cursor: pointer;"
+                        >
+                            @if ($thought->reference)
+                                <span class="prayer-card-label">{{ $thought->reference }}</span>
+                            @endif
+                            <h3>{{ $thought->titre }}</h3>
+                            <p>{{ $thought->extrait ?: \Illuminate\Support\Str::limit($thought->contenu, 220) }}</p>
+                            @if ($thought->auteur)
+                                <strong class="prayer-verse-version">{{ $thought->auteur }}</strong>
+                            @endif
+                            <a
+                                href="{{ \App\Support\Seo::localizedUrl(route('spiritual.thoughts.show', $thought->slug), app()->getLocale()) }}"
+                                class="solid-submit"
+                                style="width: fit-content;"
+                            >
+                                {{ $isFrench ? 'Voir les détails' : 'View details' }}
+                            </a>
+                            <x-share-buttons
+                                :url="\App\Support\Seo::localizedUrl(route('spiritual.thoughts.show', $thought->slug), app()->getLocale())"
+                                :title="$thought->titre"
+                                :text="$thought->extrait ?: \Illuminate\Support\Str::limit($thought->contenu, 170)"
+                            />
+                        </article>
+                    @empty
+                        <article class="empty-card prayer-empty-card reveal">
+                            <h3>{{ $spiritualSectionCopy['thought']['title'] }}</h3>
+                            <p>{{ $spiritualSectionCopy['thought']['empty'] }}</p>
+                        </article>
+                    @endforelse
+                </div>
+
+                <div style="margin-top: 18px;">
+                    <a href="{{ $localizedThoughtsUrl }}" class="solid-submit">{{ $spiritualSectionCopy['thought']['cta'] }}</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-prayer" id="home-exhortation">
+            <div class="container">
+                <div class="home-section-head reveal">
+                    <span class="section-label">{{ $spiritualSectionCopy['exhortation']['label'] }}</span>
+                    <h2 class="section-title">{{ $spiritualSectionCopy['exhortation']['title'] }}</h2>
+                    <p class="section-sub">{{ $spiritualSectionCopy['exhortation']['subtitle'] }}</p>
+                </div>
+
+                <div class="prayer-verse-grid">
+                    @forelse ($welcomeExhortations as $index => $exhortation)
+                        <article
+                            class="prayer-card prayer-verse prayer-verse-card reveal reveal-delay-{{ min($index + 1, 3) }}"
+                            data-card-link="{{ \App\Support\Seo::localizedUrl(route('spiritual.exhortations.show', $exhortation->slug), app()->getLocale()) }}"
+                            style="cursor: pointer;"
+                        >
+                            @if ($exhortation->reference)
+                                <span class="prayer-card-label">{{ $exhortation->reference }}</span>
+                            @endif
+                            <h3>{{ $exhortation->titre }}</h3>
+                            <p>{{ $exhortation->extrait ?: \Illuminate\Support\Str::limit($exhortation->contenu, 220) }}</p>
+                            @if ($exhortation->auteur)
+                                <strong class="prayer-verse-version">{{ $exhortation->auteur }}</strong>
+                            @endif
+                            <a
+                                href="{{ \App\Support\Seo::localizedUrl(route('spiritual.exhortations.show', $exhortation->slug), app()->getLocale()) }}"
+                                class="solid-submit"
+                                style="width: fit-content;"
+                            >
+                                {{ $isFrench ? 'Voir les détails' : 'View details' }}
+                            </a>
+                            <x-share-buttons
+                                :url="\App\Support\Seo::localizedUrl(route('spiritual.exhortations.show', $exhortation->slug), app()->getLocale())"
+                                :title="$exhortation->titre"
+                                :text="$exhortation->extrait ?: \Illuminate\Support\Str::limit($exhortation->contenu, 170)"
+                            />
+                        </article>
+                    @empty
+                        <article class="empty-card prayer-empty-card reveal">
+                            <h3>{{ $spiritualSectionCopy['exhortation']['title'] }}</h3>
+                            <p>{{ $spiritualSectionCopy['exhortation']['empty'] }}</p>
+                        </article>
+                    @endforelse
+                </div>
+
+                <div style="margin-top: 18px;">
+                    <a href="{{ $localizedExhortationsUrl }}" class="solid-submit">{{ $spiritualSectionCopy['exhortation']['cta'] }}</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-prayer" id="home-daily-prayer">
+            <div class="container">
+                <div class="home-section-head reveal">
+                    <span class="section-label">{{ $spiritualSectionCopy['daily_prayer']['label'] }}</span>
+                    <h2 class="section-title">{{ $spiritualSectionCopy['daily_prayer']['title'] }}</h2>
+                    <p class="section-sub">{{ $spiritualSectionCopy['daily_prayer']['subtitle'] }}</p>
+                </div>
+
+                <div class="prayer-verse-grid">
+                    @forelse ($welcomeDailyPrayers as $index => $dailyPrayer)
+                        <article class="prayer-card prayer-verse prayer-verse-card reveal reveal-delay-{{ min($index + 1, 3) }}">
+                            @if ($dailyPrayer->reference)
+                                <span class="prayer-card-label">{{ $dailyPrayer->reference }}</span>
+                            @endif
+                            <h3>{{ $dailyPrayer->titre }}</h3>
+                            <p>{{ $dailyPrayer->extrait ?: \Illuminate\Support\Str::limit($dailyPrayer->contenu, 220) }}</p>
+                            @if ($dailyPrayer->auteur)
+                                <strong class="prayer-verse-version">{{ $dailyPrayer->auteur }}</strong>
+                            @endif
+                            <x-share-buttons
+                                :url="$localizedDailyPrayersUrl"
+                                :title="$dailyPrayer->titre"
+                                :text="$dailyPrayer->extrait ?: \Illuminate\Support\Str::limit($dailyPrayer->contenu, 170)"
+                            />
+                        </article>
+                    @empty
+                        <article class="empty-card prayer-empty-card reveal">
+                            <h3>{{ $spiritualSectionCopy['daily_prayer']['title'] }}</h3>
+                            <p>{{ $spiritualSectionCopy['daily_prayer']['empty'] }}</p>
+                        </article>
+                    @endforelse
+                </div>
+
+                <div style="margin-top: 18px;">
+                    <a href="{{ $localizedDailyPrayersUrl }}" class="solid-submit">{{ $spiritualSectionCopy['daily_prayer']['cta'] }}</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-contact" id="home-conversion">
+            <div class="container">
+                <div class="contact-shell reveal">
+                    <div class="contact-copy">
+                        <span class="section-label">{{ $spiritualSectionCopy['conversion']['label'] }}</span>
+                        <h2 class="section-title">{{ $spiritualSectionCopy['conversion']['title'] }}</h2>
+                        <p class="section-sub">{{ $spiritualSectionCopy['conversion']['subtitle'] }}</p>
+
+                        <div class="contact-cards">
+                            <article class="contact-info-card">
+                                <span>{{ $isFrench ? 'Foi' : 'Faith' }}</span>
+                                <strong>{{ $isFrench ? 'Comprendre le message du salut en Jésus-Christ.' : 'Understand the message of salvation in Jesus Christ.' }}</strong>
+                            </article>
+                            <article class="contact-info-card">
+                                <span>{{ $isFrench ? 'Prière' : 'Prayer' }}</span>
+                                <strong>{{ $isFrench ? 'Recevoir une prière simple pour commencer votre marche avec Dieu.' : 'Receive a simple prayer to begin your walk with God.' }}</strong>
+                            </article>
+                            <article class="contact-info-card">
+                                <span>{{ $isFrench ? 'Accompagnement' : 'Guidance' }}</span>
+                                <strong>{{ $isFrench ? 'Entrer en contact avec une equipe qui peut vous orienter.' : 'Connect with a team that can guide you.' }}</strong>
+                            </article>
+                        </div>
+                    </div>
+
+                    <div class="contact-form-wrap">
+                        <div class="contact-form-card" style="display: grid; gap: 18px;">
+                            <p style="margin: 0; color: #35555d; line-height: 1.85;">
+                                {{ $isFrench ? 'Vous y trouverez une explication simple de la conversion, une prière guidée et des étapes concrètes pour aller plus loin.' : 'You can discover a simple explanation of conversion, a guided prayer, and practical next steps on the dedicated page.' }}
+                            </p>
+
+                            <div class="home-conversion-actions">
+                                <a href="{{ $localizedConversionUrl }}" class="home-conversion-btn home-conversion-btn-primary">
+                                    <span class="home-conversion-btn-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V6zm3.5 9.2-4.2 4.2a1 1 0 0 1-1.4 0l-2.4-2.4 1.4-1.4 1.7 1.7 3.5-3.5z"/></svg>
+                                    </span>
+                                    <span>{{ $spiritualSectionCopy['conversion']['cta'] }}</span>
+                                </a>
+                                <a href="{{ $whatsappHref }}" class="home-conversion-btn home-conversion-btn-secondary" target="_blank" rel="noopener">
+                                    <span class="home-conversion-btn-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24"><path d="M20 3.9A11 11 0 0 0 2.9 17.1L1.5 22.5l5.5-1.4A11 11 0 1 0 20 3.9zm-8 16.2c-1.8 0-3.6-.5-5.1-1.5l-.4-.2-3.2.8.8-3.1-.2-.4A8.4 8.4 0 1 1 12 20.1zm4.6-6.3c-.3-.2-1.6-.8-1.9-.9-.3-.1-.5-.2-.7.2l-.5.7c-.2.2-.3.3-.6.1-.3-.2-1.1-.4-2.1-1.4-.8-.7-1.4-1.7-1.6-2-.2-.3 0-.4.1-.6l.4-.5.3-.5c.1-.2.1-.4 0-.6l-.7-1.8c-.2-.4-.4-.4-.6-.4h-.5c-.2 0-.6.1-.9.4-.3.3-1.1 1-1.1 2.5 0 1.5 1.1 2.9 1.3 3.1.2.2 2.2 3.3 5.3 4.7.7.3 1.3.5 1.8.6.7.2 1.4.2 1.9.1.6-.1 1.6-.7 1.9-1.3.2-.6.2-1.2.2-1.3 0-.1-.2-.2-.5-.4z"/></svg>
+                                    </span>
+                                    <span>{{ $isFrench ? 'Échanger sur WhatsApp' : 'Chat on WhatsApp' }}</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>

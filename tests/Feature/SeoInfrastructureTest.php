@@ -21,6 +21,7 @@ class SeoInfrastructureTest extends TestCase
         $response->assertSee('<meta name="description"', false);
         $response->assertSee('<link rel="canonical" href="http://localhost?lang=fr"', false);
         $response->assertSee('hreflang="en"', false);
+        $response->assertSee('hreflang="fr-BJ"', false);
         $response->assertSee('application/ld+json', false);
     }
 
@@ -43,6 +44,7 @@ class SeoInfrastructureTest extends TestCase
         $response->assertSee('<loc>http://localhost/offres-opportunites?lang=en</loc>', false);
         $response->assertSee('<loc>http://localhost/articles/5-erreurs-qui-bloquent-votre-candidature?lang=fr</loc>', false);
         $response->assertSee('<loc>http://localhost/offres-opportunites/assistant-projet-benin?lang=fr</loc>', false);
+        $response->assertSee('xhtml:link rel="alternate" hreflang="fr-BJ"', false);
     }
 
     public function test_robots_endpoint_mentions_the_sitemap(): void

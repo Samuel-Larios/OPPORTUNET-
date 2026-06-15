@@ -833,8 +833,7 @@
 }
 
 .panel-pagination nav {
-  display: flex;
-  justify-content: center;
+  display: block;
 }
 
 .panel-pagination svg {
@@ -842,18 +841,33 @@
   height: 18px;
 }
 
-.panel-pagination .hidden.sm\\:flex-1,
-.panel-pagination .sm\\:hidden {
+.panel-pagination nav > div:first-child {
   display: none;
 }
 
-.panel-pagination .relative.z-0.inline-flex {
+.panel-pagination nav > div:last-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.panel-pagination nav > div:last-child > div:first-child {
+  display: none;
+}
+
+.panel-pagination nav > div:last-child > div:last-child {
+  display: flex;
+  justify-content: center;
+}
+
+.panel-pagination span[class*="inline-flex"] {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 6px;
 }
 
 .panel-pagination span[aria-current="page"] span,
+.panel-pagination button,
 .panel-pagination a,
 .panel-pagination span[aria-disabled="true"] span {
   display: inline-flex;
@@ -871,6 +885,15 @@
 .panel-pagination span[aria-current="page"] span {
   background: rgba(26, 122, 110, 0.12);
   color: var(--accent);
+}
+
+.panel-pagination button {
+  cursor: pointer;
+}
+
+.panel-pagination button[wire\\:loading\\.attr="disabled"] {
+  opacity: 0.72;
+  cursor: wait;
 }
 
 .panel-image-grid {
@@ -1171,5 +1194,17 @@
 
   .panel-site-topbar .site-topbar-right {
     gap: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .panel-pagination nav > div:first-child {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .panel-pagination nav > div:last-child {
+    display: none;
   }
 }

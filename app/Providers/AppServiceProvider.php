@@ -33,6 +33,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        config()->set('livewire.csp_safe', true);
+
         $publicUrl = rtrim((string) config('app.public_url', config('app.url')), '/');
 
         if ($this->app->runningInConsole() && $publicUrl !== '') {

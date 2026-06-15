@@ -33,6 +33,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $publicUrl = rtrim((string) config('app.public_url', config('app.url')), '/');
+
+        if ($this->app->runningInConsole() && $publicUrl !== '') {
+            URL::forceRootUrl($publicUrl);
+        }
+
         if ((bool) env('APP_FORCE_HTTPS', false)) {
             URL::forceScheme('https');
         }
@@ -65,6 +71,12 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinutes(10, 12)->by($key . '|' . $request->path()),
             ];
         });
+
+        Opportunite::flushEventListeners();
+        Formation::flushEventListeners();
+        BlogArticle::flushEventListeners();
+        Verset::flushEventListeners();
+        SpiritualPublication::flushEventListeners();
 
         Opportunite::observe(OpportuniteObserver::class);
         Formation::observe(FormationObserver::class);

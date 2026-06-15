@@ -56,6 +56,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public Application URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used to force absolute links generated from console commands,
+    | queued jobs, and emails. Set it to the public production domain.
+    |
+    */
+
+    'public_url' => env('APP_PUBLIC_URL', env('APP_URL', 'http://localhost')),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |
@@ -65,7 +77,19 @@ return [
     |
     */
 
-    'timezone' => env('APP_TIMEZONE', 'UTC'),
+    'timezone' => env('APP_TIMEZONE', 'Africa/Porto-Novo'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Publication Schedule Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Scheduled publication times entered in the admin are interpreted in this
+    | timezone so that the scheduler and the back-office stay aligned.
+    |
+    */
+
+    'schedule_timezone' => env('APP_SCHEDULE_TIMEZONE', env('APP_TIMEZONE', 'Africa/Porto-Novo')),
 
     /*
     |--------------------------------------------------------------------------

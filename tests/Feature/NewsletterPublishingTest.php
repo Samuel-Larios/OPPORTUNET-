@@ -355,4 +355,43 @@ class NewsletterPublishingTest extends TestCase
             'content_id' => $publication->id,
         ]);
     }
+
+    public function test_scheduled_newsletter_records_are_actually_delivered_when_due(): void
+    {
+        Mail::fake();
+
+        NewsletterSubscriber::query()->create([
+            'prenom' => 'Abonnee',
+            'email' => 'abonnee@example.com',
+            'langue' => 'fr',
+            'source' => 'website',
+            'is_active' => true,
+            'subscribed_at' => now(),
+        ]);
+
+        $newsletter = Newsletter::query()->create([
+            'subject' => 'Publication programmee',
+            'audience' => 'subscribers_only',
+            'content_title' => 'Contenu programme',
+            'content_url' => 'https://opportunetmondiale.test/publication-programmee',
+            'status' => 'scheduled',
+            'auto_publish' => true,
+            'scheduled_for' => now()->subMinute(),
+            'meta' => [
+                'label' => 'Publication',
+                'summary' => 'Resume de la publication programmee.',
+            ],
+        ]);
+
+        Artisan::call('content:publish-scheduled');
+
+        $newsletter->refresh();
+
+        Mail::assertSent(PublicationNewsletterMail::class, 1);
+        $this->assertSame('sent', $newsletter->status);
+        $this->assertSame(1, $newsletter->recipients_count);
+        $this->assertFalse($newsletter->auto_publish);
+        $this->assertNull($newsletter->scheduled_for);
+        $this->assertNotNull($newsletter->sent_at);
+    }
 }

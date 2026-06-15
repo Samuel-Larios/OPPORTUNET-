@@ -12,6 +12,7 @@ use App\Models\SpiritualPublication;
 use App\Models\User;
 use App\Models\Verset;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
@@ -30,7 +31,6 @@ class PublicationNewsletterService
         }
 
         $payload = $this->buildPayload($content);
-        $recipients = $this->resolveRecipients();
 
         $newsletter = Newsletter::query()->create([
             'subject' => $payload['subject'],
@@ -39,14 +39,23 @@ class PublicationNewsletterService
             'content_id' => $content->getKey(),
             'content_title' => $payload['title'],
             'content_url' => $payload['url'],
-            'status' => 'sent',
-            'recipients_count' => $recipients->count(),
-            'sent_at' => now(),
+            'status' => 'draft',
             'meta' => [
                 'label' => $payload['label'],
                 'summary' => $payload['summary'],
             ],
         ]);
+
+        $this->deliverNewsletter($newsletter, $payload);
+
+        return $newsletter;
+    }
+
+    public function deliverNewsletter(Newsletter $newsletter, ?array $payload = null, ?Carbon $sentAt = null): int
+    {
+        $payload ??= $this->buildPayloadFromNewsletter($newsletter);
+        $sentAt ??= now();
+        $recipients = $this->resolveRecipients((string) ($newsletter->audience ?: 'platform_users_and_subscribers'));
 
         foreach ($recipients as $recipient) {
             Mail::to($recipient['email'])->send(new PublicationNewsletterMail([
@@ -55,7 +64,23 @@ class PublicationNewsletterService
             ]));
         }
 
-        return $newsletter;
+        $newsletter->forceFill([
+            'subject' => $payload['subject'],
+            'content_title' => $payload['title'],
+            'content_url' => $payload['url'],
+            'status' => 'sent',
+            'recipients_count' => $recipients->count(),
+            'sent_at' => $sentAt,
+            'auto_publish' => false,
+            'scheduled_for' => null,
+            'published_at' => $newsletter->published_at ?: $sentAt,
+            'meta' => array_merge($newsletter->meta ?? [], [
+                'label' => $payload['label'],
+                'summary' => $payload['summary'],
+            ]),
+        ])->save();
+
+        return $recipients->count();
     }
 
     public function sendForPublishedOpportunity(Opportunite $opportunity): ?Newsletter
@@ -123,6 +148,30 @@ class PublicationNewsletterService
     /**
      * @return array{subject:string,label:string,title:string,summary:string,url:string}
      */
+    protected function buildPayloadFromNewsletter(Newsletter $newsletter): array
+    {
+        $contentModel = $this->resolveSupportedContentFromNewsletter($newsletter);
+
+        if ($contentModel !== null) {
+            return $this->buildPayload($contentModel);
+        }
+
+        $meta = is_array($newsletter->meta) ? $newsletter->meta : [];
+        $label = $meta['label'] ?? $newsletter->content_type ?? 'Publication';
+        $summary = trim((string) ($meta['summary'] ?? ''));
+
+        return [
+            'subject' => (string) $newsletter->subject,
+            'label' => Str::headline((string) $label),
+            'title' => (string) ($newsletter->content_title ?: $newsletter->subject),
+            'summary' => $summary !== '' ? $summary : 'Une nouvelle publication Opportunet Mondiale est disponible.',
+            'url' => (string) ($newsletter->content_url ?: route('home')),
+        ];
+    }
+
+    /**
+     * @return array{subject:string,label:string,title:string,summary:string,url:string}
+     */
     protected function buildPayload(Model $content): array
     {
         if ($content instanceof Opportunite) {
@@ -178,6 +227,20 @@ class PublicationNewsletterService
         throw new InvalidArgumentException('Unsupported newsletter content type.');
     }
 
+    protected function resolveSupportedContentFromNewsletter(Newsletter $newsletter): ?Model
+    {
+        $contentType = $newsletter->content_type;
+        $contentId = $newsletter->content_id;
+
+        if (! is_string($contentType) || $contentType === '' || ! is_numeric($contentId) || ! class_exists($contentType)) {
+            return null;
+        }
+
+        $content = $contentType::query()->find($contentId);
+
+        return $content instanceof Model && $this->supports($content) ? $content : null;
+    }
+
     protected function spiritualSubject(SpiritualPublication $publication): string
     {
         return match ($publication->type) {
@@ -211,24 +274,28 @@ class PublicationNewsletterService
     /**
      * @return \Illuminate\Support\Collection<int, array{email:string,name:?string}>
      */
-    protected function resolveRecipients(): Collection
+    protected function resolveRecipients(string $audience = 'platform_users_and_subscribers'): Collection
     {
-        $subscribers = NewsletterSubscriber::query()
-            ->where('is_active', true)
-            ->get(['email', 'prenom'])
-            ->map(fn (NewsletterSubscriber $subscriber) => [
-                'email' => Str::lower((string) $subscriber->email),
-                'name' => $subscriber->prenom ?: null,
-            ]);
+        $subscribers = in_array($audience, ['platform_users_and_subscribers', 'subscribers_only'], true)
+            ? NewsletterSubscriber::query()
+                ->where('is_active', true)
+                ->get(['email', 'prenom'])
+                ->map(fn (NewsletterSubscriber $subscriber) => [
+                    'email' => Str::lower((string) $subscriber->email),
+                    'name' => $subscriber->prenom ?: null,
+                ])
+            : collect();
 
-        $users = User::query()
-            ->where('actif', true)
-            ->whereNotNull('email')
-            ->get(['email', 'name', 'prenom', 'nom'])
-            ->map(fn (User $user) => [
-                'email' => Str::lower((string) $user->email),
-                'name' => $user->fullName(),
-            ]);
+        $users = in_array($audience, ['platform_users_and_subscribers', 'users_only'], true)
+            ? User::query()
+                ->where('actif', true)
+                ->whereNotNull('email')
+                ->get(['email', 'name', 'prenom', 'nom'])
+                ->map(fn (User $user) => [
+                    'email' => Str::lower((string) $user->email),
+                    'name' => $user->fullName(),
+                ])
+            : collect();
 
         return collect($subscribers->all())
             ->merge($users->all())

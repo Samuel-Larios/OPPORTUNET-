@@ -209,8 +209,16 @@
     @livewireStyles
 </head>
 <body class="panel-body">
+    <input type="checkbox" id="panel-nav-toggle" class="panel-nav-toggle" />
+
     <div class="panel-layout">
         <aside class="panel-sidebar">
+            <div class="panel-sidebar-mobile-head">
+                <label for="panel-nav-toggle" class="panel-mobile-close" aria-label="{{ app()->getLocale() === 'fr' ? 'Fermer le menu' : 'Close menu' }}">
+                    <span aria-hidden="true">&times;</span>
+                </label>
+            </div>
+
             <a href="{{ route('dashboard') }}" class="panel-brand">
                 <img src="{{ asset('images/logo/imgi_27_cropped-cropped-Logo-OPM-1-600x427.png') }}" alt="Opportunet Mondiale" />
                 <div>
@@ -254,14 +262,28 @@
         </aside>
 
         <div class="panel-main">
+            <div class="panel-mobile-bar">
+                <label for="panel-nav-toggle" class="panel-mobile-toggle" aria-label="{{ app()->getLocale() === 'fr' ? 'Ouvrir le menu' : 'Open menu' }}">
+                    <span class="panel-mobile-toggle-icon" aria-hidden="true"></span>
+                    <span>{{ app()->getLocale() === 'fr' ? 'Menu admin' : 'Admin menu' }}</span>
+                </label>
+
+                <a href="{{ route('panel.notifications') }}" class="panel-mobile-notifications{{ request()->routeIs('panel.notifications') ? ' is-active' : '' }}">
+                    {{ __('admin.nav.notifications') }}
+                    @if ($unreadNotificationsCount > 0)
+                        <span class="panel-nav-badge">{{ $unreadNotificationsCount > 99 ? '99+' : $unreadNotificationsCount }}</span>
+                    @endif
+                </a>
+            </div>
+
             <div class="site-topbar panel-site-topbar">
                 <div class="container site-topbar-inner">
                     <div class="site-topbar-left">
                         <a href="mailto:{{ $siteEmail }}" class="topbar-link">{{ __('home.topbar.email') }}: {{ $siteEmail }}</a>
-                        <span class="topbar-link">{{ __('home.topbar.hours') }}: {{ $siteHours }}</span>
+                        <span class="topbar-link topbar-hours">{{ __('home.topbar.hours') }}: {{ $siteHours }}</span>
                     </div>
                     <div class="site-topbar-right">
-                        <span class="topbar-link">{{ $siteAddress }}</span>
+                        <span class="topbar-link topbar-location panel-site-address">{{ $siteAddress }}</span>
                         <div class="topbar-locale-switcher" aria-label="{{ __('home.nav.language_switcher') }}">
                             <a href="{{ route('locale.switch', ['locale' => 'fr']) }}"
                                 class="locale-flag-link{{ app()->getLocale() === 'fr' ? ' active' : '' }}"
@@ -303,6 +325,8 @@
                 </main>
             </div>
         </div>
+
+        <label for="panel-nav-toggle" class="panel-sidebar-scrim" aria-hidden="true"></label>
     </div>
 
     @livewireScripts

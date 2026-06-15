@@ -10,9 +10,11 @@ use App\Models\Opportunite;
 use App\Models\Service;
 use App\Models\SpiritualPublication;
 use App\Models\Verset;
+use App\Services\PublicationNewsletterService;
 use Illuminate\Console\Command;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Throwable;
 
 class PublishScheduledContentCommand extends Command
 {
@@ -22,7 +24,7 @@ class PublishScheduledContentCommand extends Command
 
     public function handle(): int
     {
-        $now = now();
+        $now = now((string) config('app.schedule_timezone', config('app.timezone')));
         $published = 0;
 
         $published += $this->publishBooleanContent(Category::class, $now);
@@ -109,21 +111,30 @@ class PublishScheduledContentCommand extends Command
     protected function publishNewsletters(Carbon $now): int
     {
         $count = 0;
+        $newsletterService = app(PublicationNewsletterService::class);
 
         Newsletter::query()
             ->where('auto_publish', true)
             ->whereNotNull('scheduled_for')
             ->where('scheduled_for', '<=', $now)
-            ->each(function (Newsletter $newsletter) use (&$count, $now): void {
+            ->each(function (Newsletter $newsletter) use (&$count, $now, $newsletterService): void {
                 $publishAt = $newsletter->scheduled_for instanceof Carbon ? $newsletter->scheduled_for : $now;
 
-                $newsletter->forceFill([
-                    'status' => 'sent',
-                    'sent_at' => $publishAt,
-                    'auto_publish' => false,
-                    'scheduled_for' => null,
-                    'published_at' => $newsletter->published_at ?: $publishAt,
-                ])->save();
+                try {
+                    $newsletterService->deliverNewsletter($newsletter, sentAt: $publishAt);
+                } catch (Throwable $exception) {
+                    report($exception);
+
+                    $newsletter->forceFill([
+                        'status' => 'failed',
+                        'auto_publish' => false,
+                        'scheduled_for' => null,
+                    ])->save();
+
+                    $this->error("Scheduled newsletter {$newsletter->id} failed: {$exception->getMessage()}");
+
+                    return;
+                }
 
                 $count++;
             });

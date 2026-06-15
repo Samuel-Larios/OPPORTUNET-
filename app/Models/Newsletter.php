@@ -25,7 +25,11 @@ class Newsletter extends Model
     protected function casts(): array
     {
         return [
+            'auto_publish' => 'boolean',
+            'scheduled_for' => 'datetime',
+            'published_at' => 'datetime',
             'sent_at' => 'datetime',
+            'recipients_count' => 'integer',
             'meta' => 'array',
         ];
     }

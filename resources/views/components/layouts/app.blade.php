@@ -60,6 +60,37 @@
     $privacyUrl = \App\Support\Seo::localizedUrl(route('site.privacy'), $locale);
     $termsUrl = \App\Support\Seo::localizedUrl(route('site.terms'), $locale);
     $cookiesUrl = \App\Support\Seo::localizedUrl(route('site.cookies'), $locale);
+    $legalNoticeStorageKey = 'opm-legal-notices-seen-v1';
+    $legalNoticeItems = collect([
+        [
+            'id' => 'privacy',
+            'href' => $privacyUrl,
+            'title' => __('home.footer.privacy'),
+            'message' => __('home.legal_notices.privacy_message'),
+            'delay' => 3000,
+            'current' => request()->routeIs('site.privacy'),
+        ],
+        [
+            'id' => 'terms',
+            'href' => $termsUrl,
+            'title' => __('home.footer.terms'),
+            'message' => __('home.legal_notices.terms_message'),
+            'delay' => 12000,
+            'current' => request()->routeIs('site.terms'),
+        ],
+        [
+            'id' => 'cookies',
+            'href' => $cookiesUrl,
+            'title' => __('home.footer.cookies'),
+            'message' => __('home.legal_notices.cookies_message'),
+            'delay' => 21000,
+            'current' => request()->routeIs('site.cookies'),
+        ],
+    ])
+        ->reject(fn (array $item) => $item['current'])
+        ->map(fn (array $item) => collect($item)->except('current')->all())
+        ->values()
+        ->all();
     $statusUrl = url('/up');
     $schemaBlocks = array_values(array_filter(array_merge([
         \App\Support\Seo::schema('Organization', [
@@ -200,17 +231,155 @@
     @foreach ($schemaBlocks as $schemaBlock)
         <script type="application/ld+json">{!! json_encode($schemaBlock, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}</script>
     @endforeach
+    <style>
+        .legal-popover-layer {
+            position: fixed;
+            right: 18px;
+            bottom: 18px;
+            z-index: 1400;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 12px;
+            pointer-events: none;
+        }
+
+        .legal-popover {
+            width: min(380px, calc(100vw - 28px));
+            padding: 18px 18px 16px;
+            border-radius: 24px;
+            background: linear-gradient(145deg, rgba(9, 30, 38, 0.96), rgba(19, 60, 72, 0.94));
+            border: 1px solid rgba(133, 225, 233, 0.22);
+            box-shadow: 0 22px 48px rgba(4, 18, 23, 0.28);
+            color: #f3feff;
+            pointer-events: auto;
+            opacity: 0;
+            transform: translateY(18px) scale(0.96);
+            transition: opacity 0.24s ease, transform 0.24s ease;
+        }
+
+        .legal-popover.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .legal-popover.is-hiding {
+            opacity: 0;
+            transform: translateY(14px) scale(0.97);
+        }
+
+        .legal-popover-top {
+            display: flex;
+            align-items: start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .legal-popover-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.76rem;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: #95edf5;
+        }
+
+        .legal-popover-kicker::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: #f7b733;
+            box-shadow: 0 0 0 6px rgba(247, 183, 51, 0.14);
+        }
+
+        .legal-popover-title {
+            margin: 0;
+            color: #ffffff;
+            font-size: 1.04rem;
+        }
+
+        .legal-popover-text {
+            margin: 0;
+            color: rgba(231, 249, 252, 0.84);
+            line-height: 1.62;
+            font-size: 0.95rem;
+        }
+
+        .legal-popover-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .legal-popover-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            background: #f5fbfc;
+            color: #0d3b46;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .legal-popover-link:hover,
+        .legal-popover-link:focus-visible {
+            background: #ffffff;
+            color: #0a2c34;
+        }
+
+        .legal-popover-close {
+            border: 0;
+            background: transparent;
+            color: rgba(231, 249, 252, 0.78);
+            font-size: 1.25rem;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .legal-popover-close:hover,
+        .legal-popover-close:focus-visible {
+            color: #ffffff;
+        }
+
+        @media (max-width: 640px) {
+            .legal-popover-layer {
+                right: 14px;
+                left: 14px;
+                bottom: 14px;
+                align-items: stretch;
+            }
+
+            .legal-popover {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .legal-popover {
+                transition: none;
+            }
+        }
+    </style>
 </head>
 
 <body>
     <div class="site-topbar">
         <div class="container site-topbar-inner">
             <div class="site-topbar-left">
-                <a href="mailto:{{ $siteEmail }}" class="topbar-link">{{ __('home.topbar.email') }}:
+                <a href="mailto:{{ $siteEmail }}" class="topbar-link topbar-contact">{{ __('home.topbar.email') }}:
                     {{ $siteEmail }}</a>
-                <a href="tel:{{ preg_replace('/\s+/', '', $siteWhatsapp) }}" class="topbar-link">{{ __('home.topbar.phone') }}:
+                <a href="tel:{{ preg_replace('/\s+/', '', $siteWhatsapp) }}" class="topbar-link topbar-phone">{{ __('home.topbar.phone') }}:
                     {{ $siteWhatsapp }}</a>
-                <span class="topbar-link">{{ __('home.topbar.hours') }}: {{ $siteHours }}</span>
+                <span class="topbar-link topbar-hours">{{ __('home.topbar.hours') }}: {{ $siteHours }}</span>
             </div>
             <div class="site-topbar-right">
                 <span class="topbar-locale-text">{{ __('home.nav.language') }}</span>
@@ -319,6 +488,11 @@
                             <h1 class="header-slide-title">{{ $banner?->titre ?? __('home.hero.slide_1.title') }}</h1>
                             <p class="header-slide-text">{{ $banner?->sous_titre ?? __('home.hero.slide_1.text') }}
                             </p>
+                            <div class="hero-project-note">
+                                <span class="hero-project-label">{{ __('home.hero.slide_2.project_label') }}</span>
+                                <strong>{{ __('home.hero.slide_2.project_name') }}</strong>
+                                <p>{{ __('home.hero.slide_2.project_text') }}</p>
+                            </div>
                             <div class="hero-actions">
                                 <a href="{{ $offersUrl }}" class="btn-primary-lg">
                                     {{ $banner?->bouton1_texte ?? __('home.hero.slide_1.primary') }}
@@ -336,6 +510,11 @@
                             <span class="header-slide-kicker">{{ __('home.hero.slide_2.kicker') }}</span>
                             <h2 class="header-slide-title">{{ __('home.hero.slide_2.title') }}</h2>
                             <p class="header-slide-text">{{ __('home.hero.slide_2.text') }}</p>
+                            <div class="hero-project-note">
+                                <span class="hero-project-label">{{ __('home.hero.slide_2.project_label') }}</span>
+                                <strong>{{ __('home.hero.slide_2.project_name') }}</strong>
+                                <p>{{ __('home.hero.slide_2.project_text') }}</p>
+                            </div>
                             <div class="hero-actions">
                                 <a href="#home-prayer" class="btn-primary-lg">
                                     {{ __('home.hero.slide_2.primary') }}
@@ -391,6 +570,10 @@
                                 <span class="hero-panel-tag">{{ __('home.hero.slide_2.card_tag') }}</span>
                                 <h3>{{ __('home.hero.slide_2.card_title') }}</h3>
                                 <p>{{ __('home.hero.slide_2.card_text') }}</p>
+                                <div class="hero-project-chip">
+                                    <span>{{ __('home.hero.slide_2.project_chip') }}</span>
+                                    <strong>{{ __('home.hero.slide_2.project_name') }}</strong>
+                                </div>
                             </div>
                             @if ($headerVerseTwo)
                                 <div class="hero-verse-snippet">
@@ -431,6 +614,17 @@
     @endif
 
     {{ $slot }}
+
+    <div
+        class="legal-popover-layer"
+        id="legalPopoverLayer"
+        aria-live="polite"
+        data-storage-key="{{ $legalNoticeStorageKey }}"
+        data-kicker="{{ __('home.legal_notices.kicker') }}"
+        data-cta="{{ __('home.legal_notices.cta') }}"
+        data-close-label="{{ __('home.legal_notices.close') }}"
+        data-items='@json($legalNoticeItems)'>
+    </div>
 
     <footer class="footer">
         <div class="container">
@@ -560,6 +754,90 @@
     </footer>
 
     <script src="{{ asset('templatemo-622-clearwave.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const layer = document.getElementById('legalPopoverLayer');
+
+            if (!layer) {
+                return;
+            }
+
+            let items = [];
+
+            try {
+                items = JSON.parse(layer.dataset.items || '[]');
+            } catch (error) {
+                items = [];
+            }
+
+            if (!Array.isArray(items) || items.length === 0) {
+                return;
+            }
+
+            const storageKey = layer.dataset.storageKey || 'opm-legal-notices-seen-v1';
+            const kicker = layer.dataset.kicker || '';
+            const ctaLabel = layer.dataset.cta || 'Lire';
+            const closeLabel = layer.dataset.closeLabel || 'Fermer';
+
+            try {
+                if (window.localStorage.getItem(storageKey) === '1') {
+                    return;
+                }
+
+                window.localStorage.setItem(storageKey, '1');
+            } catch (error) {
+                // Continue even if storage is unavailable.
+            }
+
+            const dismissPopover = (popover) => {
+                if (!popover || popover.dataset.state === 'closing') {
+                    return;
+                }
+
+                popover.dataset.state = 'closing';
+                popover.classList.remove('is-visible');
+                popover.classList.add('is-hiding');
+
+                window.setTimeout(() => {
+                    popover.remove();
+                }, 240);
+            };
+
+            const showPopover = (item) => {
+                const popover = document.createElement('section');
+                popover.className = 'legal-popover';
+                popover.setAttribute('role', 'status');
+
+                popover.innerHTML = `
+                    <div class="legal-popover-top">
+                        <div>
+                            <span class="legal-popover-kicker">${kicker}</span>
+                            <h3 class="legal-popover-title">${item.title}</h3>
+                        </div>
+                        <button type="button" class="legal-popover-close" aria-label="${closeLabel}">&times;</button>
+                    </div>
+                    <p class="legal-popover-text">${item.message}</p>
+                    <div class="legal-popover-actions">
+                        <a class="legal-popover-link" href="${item.href}">${ctaLabel}<span aria-hidden="true">&gt;</span></a>
+                    </div>
+                `;
+
+                const closeButton = popover.querySelector('.legal-popover-close');
+                if (closeButton) {
+                    closeButton.addEventListener('click', () => dismissPopover(popover));
+                }
+
+                layer.appendChild(popover);
+                window.requestAnimationFrame(() => popover.classList.add('is-visible'));
+                window.setTimeout(() => dismissPopover(popover), 12000);
+            };
+
+            items.forEach((item) => {
+                const delay = Number(item.delay) || 0;
+                window.setTimeout(() => showPopover(item), delay);
+            });
+        });
+    </script>
     @livewireScripts
 </body>
 

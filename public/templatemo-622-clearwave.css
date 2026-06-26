@@ -86,6 +86,7 @@ Free for personal and commercial use
       font-size: clamp(2rem, 4vw, 3rem);
       font-weight: 700; letter-spacing: -0.03em;
       line-height: 1.15; color: var(--text-1);
+      overflow-wrap: anywhere;
     }
     .section-title em {
       font-style: italic;
@@ -199,7 +200,8 @@ Free for personal and commercial use
       line-height: 0.98;
       color: #ffffff;
       text-wrap: balance;
-      max-width: 12ch;
+      max-width: 18ch;
+      overflow-wrap: anywhere;
     }
     .page-banner-subtitle {
       margin-top: 16px;
@@ -221,14 +223,18 @@ Free for personal and commercial use
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
       font-size: 0.96rem;
       color: rgba(231, 243, 252, 0.7);
+      width: fit-content;
+      max-width: 100%;
     }
     .page-banner-breadcrumbs a {
       color: #8be9d0;
       font-weight: 600;
+      overflow-wrap: anywhere;
     }
     .page-banner-breadcrumbs strong {
       color: #ffffff;
       font-weight: 700;
+      overflow-wrap: anywhere;
     }
 
     /* ── SCROLL REVEAL ── */
@@ -2160,7 +2166,8 @@ Free for personal and commercial use
     .header-slide.is-active .header-slide-kicker { transition-delay: 0.04s; }
     .header-slide.is-active .header-slide-title { transition-delay: 0.1s; }
     .header-slide.is-active .header-slide-text { transition-delay: 0.16s; }
-    .header-slide.is-active .hero-actions { transition-delay: 0.22s; }
+    .header-slide.is-active .hero-project-note { transition-delay: 0.22s; }
+    .header-slide.is-active .hero-actions { transition-delay: 0.28s; }
 
     .header-slide-kicker {
       display: inline-flex;
@@ -2186,13 +2193,14 @@ Free for personal and commercial use
     }
 
     .header-slide-title {
-      max-width: 13.5ch;
+      max-width: 15ch;
       margin-top: 18px;
       font-size: clamp(3rem, 4.6vw, 4.75rem);
       line-height: 0.96;
       letter-spacing: -0.055em;
       color: #0a2034;
       text-wrap: pretty;
+      overflow-wrap: anywhere;
     }
 
     .header-slide-text {
@@ -2201,6 +2209,50 @@ Free for personal and commercial use
       font-size: 1.04rem;
       line-height: 1.85;
       color: #47667a;
+    }
+
+    .hero-project-note {
+      max-width: 58ch;
+      margin-top: 18px;
+      padding: 18px 20px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(15, 111, 133, 0.08), rgba(239, 179, 65, 0.12));
+      border: 1px solid rgba(15, 111, 133, 0.12);
+      box-shadow: 0 18px 34px rgba(13, 74, 115, 0.08);
+    }
+
+    .hero-project-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+      color: #0f6f85;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .hero-project-label::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #efb341;
+      box-shadow: 0 0 0 6px rgba(239, 179, 65, 0.18);
+    }
+
+    .hero-project-note strong {
+      display: block;
+      color: #0a2034;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .hero-project-note p {
+      margin: 8px 0 0;
+      color: #35576a;
+      line-height: 1.72;
     }
 
     .hero-actions {
@@ -2459,6 +2511,28 @@ Free for personal and commercial use
       line-height: 1.62;
     }
 
+    .hero-project-chip {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+      display: grid;
+      gap: 6px;
+    }
+
+    .hero-project-chip span {
+      color: rgba(233, 246, 249, 0.74);
+      font-size: 0.73rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .hero-project-chip strong {
+      color: #ffffff;
+      font-size: 1rem;
+      letter-spacing: 0.03em;
+    }
+
     .hero-verse-snippet {
       position: relative;
       z-index: 1;
@@ -2583,6 +2657,39 @@ Free for personal and commercial use
 
       .hero-verse-snippet {
         margin-right: 0;
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .page-banner {
+        padding: 148px 0 36px;
+      }
+
+      .page-banner-inner {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+        padding: 28px 26px;
+      }
+
+      .page-banner-title {
+        max-width: none;
+        font-size: clamp(2.2rem, 5vw, 3.4rem);
+      }
+
+      .page-banner-breadcrumbs {
+        justify-self: start;
+      }
+
+      .hero-frame-wide {
+        min-height: 0;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+        gap: 18px;
+        padding: 40px clamp(24px, 4vw, 40px);
+      }
+
+      .header-slide-title {
+        max-width: 100%;
+        font-size: clamp(2.8rem, 5vw, 4rem);
       }
     }
 
@@ -3546,11 +3653,43 @@ Free for personal and commercial use
 
       .nav-logo-mark,
       .nav.scrolled .nav-logo-mark {
-        width: 132px;
-        height: 78px;
-        padding: 10px 12px;
+        width: 108px;
+        height: 64px;
+        padding: 8px 10px;
         border-radius: 18px;
         transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .topbar-locale-text,
+      .topbar-hours {
+        display: none;
+      }
+
+      .site-topbar-inner {
+        min-height: 44px;
+        gap: 12px;
+      }
+
+      .site-topbar-left,
+      .site-topbar-right {
+        gap: 10px;
+      }
+
+      .topbar-link {
+        font-size: 0.78rem;
+      }
+
+      .topbar-locale-switcher {
+        gap: 6px;
+        padding: 4px;
+      }
+
+      .topbar-locale-switcher .locale-flag-link {
+        min-width: 34px;
+        min-height: 32px;
+        padding: 0 8px;
       }
     }
 
@@ -3571,13 +3710,14 @@ Free for personal and commercial use
 
       .page-banner-breadcrumbs {
         justify-self: start;
+        width: 100%;
       }
 
       .site-topbar-inner {
-        min-height: auto;
-        padding-top: 8px;
-        padding-bottom: 8px;
-        align-items: flex-start;
+        min-height: 46px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        align-items: center;
       }
 
       .site-topbar-left,
@@ -3587,6 +3727,8 @@ Free for personal and commercial use
 
       .site-topbar-left {
         flex: 1;
+        gap: 8px;
+        flex-wrap: wrap;
       }
 
       .site-topbar-right {
@@ -3598,7 +3740,7 @@ Free for personal and commercial use
       }
 
       .nav-inner {
-        padding: 12px 18px;
+        padding: 10px 14px;
       }
     }
 
@@ -3618,6 +3760,53 @@ Free for personal and commercial use
         padding: 12px 14px;
       }
 
+      .hero-actions,
+      .contact-form-actions,
+      .offers-application-actions,
+      .training-card-actions,
+      .training-detail-actions,
+      .spiritual-card-actions,
+      .footer-legal {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-actions > *,
+      .contact-form-actions > *,
+      .offers-application-actions > *,
+      .training-card-actions > *,
+      .training-detail-actions > *,
+      .spiritual-card-actions > * {
+        width: 100%;
+      }
+
+      .footer-newsletter-btn {
+        width: 100%;
+      }
+
+      .offers-detail-main,
+      .offers-detail-panel,
+      .offers-detail-action-card,
+      .offers-detail-stat-card,
+      .article-detail-main,
+      .contact-form-card,
+      .training-card,
+      .training-details-shell,
+      .training-registration-shell,
+      .contact-prayer-hero-shell,
+      .contact-prayer-request-shell,
+      .cv-services-hero-shell,
+      .cv-form-shell,
+      .cv-whatsapp-shell,
+      .whatsapp-focus-card {
+        padding: 18px;
+      }
+
+      .offers-detail-meta span,
+      .article-detail-meta span,
+      .offer-date {
+        white-space: normal;
+      }
       .site-topbar-inner {
         gap: 10px;
       }
@@ -3625,7 +3814,7 @@ Free for personal and commercial use
       .site-topbar-left {
         flex-direction: column;
         align-items: flex-start;
-        gap: 6px;
+        gap: 4px;
       }
 
       .site-topbar-right {
@@ -3634,9 +3823,9 @@ Free for personal and commercial use
 
       .nav-logo-mark,
       .nav.scrolled .nav-logo-mark {
-        width: 112px;
-        height: 66px;
-        padding: 8px 10px;
+        width: 88px;
+        height: 52px;
+        padding: 6px 8px;
         border-radius: 16px;
         transform: translateY(0);
       }
@@ -3646,8 +3835,8 @@ Free for personal and commercial use
       }
 
       .nav-logo-copy strong {
-        max-width: 180px;
-        font-size: 0.9rem;
+        max-width: 150px;
+        font-size: 0.82rem;
       }
 
       .nav-hamburger {
@@ -3676,25 +3865,26 @@ Free for personal and commercial use
     /* MOBILE HEADER COMPACTION */
     @media (max-width: 760px) {
       html {
-        scroll-padding-top: 176px;
+        scroll-padding-top: 126px;
       }
 
       body {
-        padding-top: 170px;
+        padding-top: 120px;
       }
 
       .site-topbar-inner {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        min-height: 86px;
-        align-items: start;
-        gap: 10px 12px;
-        padding: 8px 12px;
+        display: flex;
+        min-height: 46px;
+        align-items: center;
+        gap: 8px 10px;
+        padding: 6px 10px;
       }
 
       .site-topbar-left {
-        display: grid;
-        gap: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 8px;
         min-width: 0;
       }
 
@@ -3706,36 +3896,36 @@ Free for personal and commercial use
       }
 
       .topbar-link {
-        display: block;
-        width: 100%;
-        font-size: 0.76rem;
-        line-height: 1.35;
-        white-space: normal;
-        overflow-wrap: anywhere;
+        display: inline-flex;
+        width: auto;
+        max-width: 100%;
+        font-size: 0.72rem;
+        line-height: 1.25;
+        white-space: nowrap;
       }
 
       .topbar-locale-switcher {
         gap: 4px;
-        padding: 3px;
-        border-radius: 14px;
+        padding: 2px;
+        border-radius: 12px;
       }
 
       .topbar-locale-switcher .locale-flag-link {
-        min-width: 34px;
-        min-height: 32px;
-        padding: 0 7px;
+        min-width: 30px;
+        min-height: 30px;
+        padding: 0 6px;
         border-radius: 10px;
       }
 
       .nav {
-        top: 86px;
+        top: 46px;
         padding: 0;
       }
 
       .nav-inner {
-        min-height: 72px;
+        min-height: 62px;
         grid-template-columns: minmax(0, 1fr) auto;
-        padding: 12px 14px;
+        padding: 8px 12px;
         align-items: center;
       }
 
@@ -3751,64 +3941,136 @@ Free for personal and commercial use
 
       .nav-logo-mark,
       .nav.scrolled .nav-logo-mark {
-        width: 86px;
-        height: 52px;
-        padding: 6px 8px;
-        border-radius: 14px;
+        width: 72px;
+        height: 44px;
+        padding: 4px 6px;
+        border-radius: 12px;
         transform: translateY(0);
       }
 
       .nav-logo-copy-mobile span {
-        font-size: 0.54rem;
+        font-size: 0.5rem;
         letter-spacing: 0.13em;
       }
 
       .nav-logo-copy-mobile strong {
         max-width: none;
-        font-size: 0.9rem;
+        font-size: 0.82rem;
         line-height: 1.1;
         white-space: normal;
       }
 
       .nav-hamburger {
-        width: 44px;
-        height: 44px;
+        width: 40px;
+        height: 40px;
+      }
+
+      .hero {
+        min-height: auto;
+        padding: 18px 0 36px;
+      }
+
+      .hero-frame,
+      .hero-frame-wide {
+        grid-template-columns: 1fr;
+        gap: 0;
+        padding: 20px 16px 24px;
+      }
+
+      .hero-copy {
+        max-width: none;
+      }
+
+      .hero-slider {
+        min-height: auto;
+      }
+
+      .header-slide-title {
+        max-width: 11ch;
+        font-size: clamp(2.1rem, 8vw, 3rem);
+      }
+
+      .header-slide-text {
+        margin-top: 16px;
+        max-width: none;
+        font-size: 0.94rem;
+        line-height: 1.65;
+      }
+
+      .header-slider-controls {
+        margin-top: 18px;
+      }
+
+      .hero-visual {
+        display: none;
       }
 
       .mobile-menu {
-        padding-top: 146px;
+        padding-top: 118px;
       }
     }
 
     @media (max-width: 520px) {
       html {
-        scroll-padding-top: 166px;
+        scroll-padding-top: 118px;
       }
 
       body {
-        padding-top: 160px;
+        padding-top: 112px;
       }
 
       .site-topbar-inner {
-        min-height: 82px;
-        padding: 8px 10px;
+        min-height: 42px;
+        padding: 5px 8px;
       }
 
       .site-topbar-left {
-        gap: 3px;
+        gap: 4px 6px;
+      }
+
+      .topbar-contact {
+        display: none;
       }
 
       .topbar-link {
-        font-size: 0.71rem;
+        font-size: 0.68rem;
       }
 
       .nav {
-        top: 82px;
+        top: 42px;
       }
 
       .nav-inner {
-        min-height: 68px;
-        padding: 10px 12px;
+        min-height: 58px;
+        padding: 8px 10px;
+      }
+
+      .hero {
+        padding: 14px 0 30px;
+      }
+
+      .hero-frame,
+      .hero-frame-wide {
+        padding: 16px 12px 20px;
+      }
+
+      .header-slide-kicker {
+        padding: 8px 10px;
+        font-size: 0.68rem;
+      }
+
+      .header-slide-title {
+        max-width: none;
+        font-size: clamp(1.9rem, 10vw, 2.7rem);
+        line-height: 1.02;
+      }
+
+      .header-slide-text {
+        font-size: 0.9rem;
+      }
+
+      .header-slider-controls {
+        margin-top: 16px;
       }
 
       .nav-logo-mark,
@@ -5443,7 +5705,7 @@ Free for personal and commercial use
         left: 0;
         right: 0;
         width: 100%;
-        top: 86px;
+        top: 46px;
       }
 
       .nav-shell {
@@ -5471,7 +5733,7 @@ Free for personal and commercial use
       .nav {
         left: 0;
         right: 0;
-        top: 82px;
+        top: 42px;
       }
 
       .nav-inner {

@@ -68,6 +68,9 @@ return [
             'kicker' => 'Qui sommes-nous ?',
             'title' => 'Une plateforme née au Bénin, avec un cœur africain et une vision mondiale.',
             'text' => 'Notre mission est de relier appel, compétences et impact grâce à une plateforme qui allie foi, excellence, service et transformation durable.',
+            'project_label' => 'Projet porté par',
+            'project_name' => 'PECHAP SERVICE PLUS',
+            'project_text' => 'OpportuNet Mondiale est un projet porté par PECHAP SERVICE PLUS, qui en assure la vision, la coordination et le développement.',
             'pill_1' => 'Mission claire',
             'pill_2' => 'Vision internationale',
             'pill_3' => 'Communauté engagée',
@@ -76,6 +79,7 @@ return [
             'card_tag' => 'Pourquoi nous suivre',
             'card_title' => 'Foi, action et transformation',
             'card_text' => 'Nous aidons chacun à avancer avec clarté, discipline et accompagnement concret vers un avenir plus solide.',
+            'project_chip' => 'Projet de référence',
         ],
         'stats' => [
             'value_1' => '+4,720',
@@ -320,6 +324,14 @@ return [
         'terms' => 'Conditions d’utilisation',
         'cookies' => 'Politique des cookies',
         'copyright' => 'Copyright 2026 Opportunet Mondiale. Design par',
+    ],
+    'legal_notices' => [
+        'kicker' => 'Avertissement important',
+        'cta' => 'Consulter',
+        'close' => 'Fermer cette notification',
+        'privacy_message' => 'Prenez un instant pour lire comment vos informations personnelles sont collectées, protégées et utilisées sur la plateforme.',
+        'terms_message' => 'Consultez les conditions d’utilisation pour comprendre les règles, les engagements et le bon usage du site.',
+        'cookies_message' => 'Notre politique des cookies explique les traceurs utilisés sur le site et la manière dont ils améliorent votre expérience.',
     ],
     'support_section' => [
         'label' => 'Nous soutenir',

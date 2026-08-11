@@ -12,6 +12,7 @@ class NewsletterSubscriber extends Model
         'langue',
         'source',
         'is_active',
+        'content_preference',
         'subscribed_at',
     ];
 

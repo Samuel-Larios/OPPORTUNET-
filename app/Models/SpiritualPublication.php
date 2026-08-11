@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasScheduledPublication;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class SpiritualPublication extends Model
 {
     use Bilingual;
+    use HasScheduledPublication;
 
     protected $table = 'spiritual_publications';
 
@@ -31,6 +33,7 @@ class SpiritualPublication extends Model
         'auteur_en',
         'actif',
         'afficher_accueil',
+        'vues',
         'auto_publish',
         'scheduled_for',
         'published_at',
@@ -50,6 +53,7 @@ class SpiritualPublication extends Model
         return [
             'actif' => 'boolean',
             'afficher_accueil' => 'boolean',
+            'vues' => 'integer',
             'auto_publish' => 'boolean',
             'scheduled_for' => 'datetime',
             'published_at' => 'datetime',

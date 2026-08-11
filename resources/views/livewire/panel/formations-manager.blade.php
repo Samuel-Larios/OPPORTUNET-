@@ -405,6 +405,7 @@
                                     · {{ $formation->date_debut->format('d/m/Y') }}
                                 @endif
                             </span>
+                            <span>{{ number_format($formation->vues ?? 0, 0, ',', ' ') }} vues</span>
                         </div>
                         <div class="panel-inline-actions">
                             <button type="button" class="panel-secondary-btn"

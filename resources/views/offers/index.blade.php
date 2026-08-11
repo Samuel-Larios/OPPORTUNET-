@@ -96,7 +96,7 @@
                     @if ($recentBeninOpportunities->isNotEmpty())
                         <div class="articles-grid" style="margin-top: 24px;">
                             @foreach ($recentBeninOpportunities as $opportunity)
-                                <article class="article-card reveal visible">
+                                <article class="article-card offers-recent-card reveal visible">
                                     <div class="article-card-body">
                                         <div class="article-card-top">
                                             <span class="article-category-badge">{{ __('offers.seo.recent_badge') }}</span>
@@ -145,13 +145,12 @@
                         @endphp
                         <article class="article-card offers-service-card reveal reveal-delay-{{ min($index + 1, 4) }}">
                             <div class="article-card-visual" style="--article-accent: {{ $accent }};">
+                                <div class="article-card-placeholder">
+                                    <span>{{ $service->category?->nom ?: __('offers.services.category_fallback') }}</span>
+                                    <strong>{{ $service->titre }}</strong>
+                                </div>
                                 @if ($imageUrl)
-                                    <img src="{{ $imageUrl }}" alt="{{ $service->titre }}">
-                                @else
-                                    <div class="article-card-placeholder">
-                                        <span>{{ $service->category?->nom ?: __('offers.services.category_fallback') }}</span>
-                                        <strong>{{ $service->titre }}</strong>
-                                    </div>
+                                    <img src="{{ $imageUrl }}" alt="" onerror="this.remove()">
                                 @endif
                             </div>
 

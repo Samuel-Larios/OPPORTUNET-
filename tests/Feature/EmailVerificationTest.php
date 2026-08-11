@@ -35,6 +35,7 @@ class EmailVerificationTest extends TestCase
             'pays' => 'Benin',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
+            'personal_data_consent' => true,
         ]));
 
         $user = User::query()->where('email', 'samuel.etudiant@example.com')->first();
@@ -72,6 +73,7 @@ class EmailVerificationTest extends TestCase
             'pays' => 'Benin',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
+            'personal_data_consent' => true,
         ]));
 
         $user = User::query()->where('email', 'samuel.echec@example.com')->first();

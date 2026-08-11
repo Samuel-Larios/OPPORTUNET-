@@ -58,34 +58,11 @@
     $securityUrl = \App\Support\Seo::localizedUrl(route('site.security'), $locale);
     $communityUrl = \App\Support\Seo::localizedUrl(route('community.testimonials.index'), $locale);
     $privacyUrl = \App\Support\Seo::localizedUrl(route('site.privacy'), $locale);
+    $legalUrl = \App\Support\Seo::localizedUrl(route('site.legal'), $locale);
     $termsUrl = \App\Support\Seo::localizedUrl(route('site.terms'), $locale);
     $cookiesUrl = \App\Support\Seo::localizedUrl(route('site.cookies'), $locale);
     $legalNoticeStorageKey = 'opm-legal-notices-seen-v1';
     $legalNoticeItems = collect([
-        [
-            'id' => 'privacy',
-            'href' => $privacyUrl,
-            'title' => __('home.footer.privacy'),
-            'message' => __('home.legal_notices.privacy_message'),
-            'delay' => 3000,
-            'current' => request()->routeIs('site.privacy'),
-        ],
-        [
-            'id' => 'terms',
-            'href' => $termsUrl,
-            'title' => __('home.footer.terms'),
-            'message' => __('home.legal_notices.terms_message'),
-            'delay' => 12000,
-            'current' => request()->routeIs('site.terms'),
-        ],
-        [
-            'id' => 'cookies',
-            'href' => $cookiesUrl,
-            'title' => __('home.footer.cookies'),
-            'message' => __('home.legal_notices.cookies_message'),
-            'delay' => 21000,
-            'current' => request()->routeIs('site.cookies'),
-        ],
     ])
         ->reject(fn (array $item) => $item['current'])
         ->map(fn (array $item) => collect($item)->except('current')->all())
@@ -470,6 +447,12 @@
                         rel="noopener">{{ __('home.nav.start_trial') }}</a>
                 </div>
 
+                @guest
+                    <a href="{{ route('login') }}" class="btn-ghost nav-mobile-login">
+                        {{ __('admin.auth.login_submit') }}
+                    </a>
+                @endguest
+
                 <button class="nav-hamburger" id="hamburger" aria-label="{{ __('home.nav.toggle_menu') }}"
                     aria-expanded="false">
                     <span></span><span></span><span></span>
@@ -596,7 +579,7 @@
         <section class="page-banner">
             <div class="page-banner-glow page-banner-glow-one" aria-hidden="true"></div>
             <div class="page-banner-glow page-banner-glow-two" aria-hidden="true"></div>
-            <div class="container">
+            <div class="page-banner-container">
                 <div class="page-banner-inner reveal visible">
                     <div class="page-banner-copy">
                         <span class="page-banner-kicker">{{ __('home.nav.kicker') }}</span>
@@ -730,7 +713,30 @@
                             class="footer-newsletter-input"
                             required />
 
+                        <div class="footer-newsletter-preferences" role="group" aria-labelledby="newsletter-preferences-label">
+                            <span id="newsletter-preferences-label">{{ __('home.forms.newsletter.preference_label') }}</span>
+                            <span class="footer-newsletter-options">
+                                <label class="footer-newsletter-option">
+                                    <input type="radio" name="content_preference" value="all_publications" {{ old('content_preference', 'all_publications') === 'all_publications' ? 'checked' : '' }} />
+                                    <span class="footer-newsletter-option-copy">
+                                        <strong>{{ __('home.forms.newsletter.preference_all_short') }}</strong>
+                                        <small>{{ __('home.forms.newsletter.preference_all_detail') }}</small>
+                                    </span>
+                                </label>
+                                <label class="footer-newsletter-option">
+                                    <input type="radio" name="content_preference" value="job_offers_only" {{ old('content_preference') === 'job_offers_only' ? 'checked' : '' }} />
+                                    <span class="footer-newsletter-option-copy">
+                                        <strong>{{ __('home.forms.newsletter.preference_offers_short') }}</strong>
+                                        <small>{{ __('home.forms.newsletter.preference_offers_detail') }}</small>
+                                    </span>
+                                </label>
+                            </span>
+                        </div>
+
                         @error('email')
+                            <small class="footer-newsletter-error">{{ $message }}</small>
+                        @enderror
+                        @error('content_preference')
                             <small class="footer-newsletter-error">{{ $message }}</small>
                         @enderror
 
@@ -746,6 +752,7 @@
                 </div>
                 <div class="footer-legal">
                     <a href="{{ $privacyUrl }}">{{ __('home.footer.privacy') }}</a>
+                    <a href="{{ $legalUrl }}">{{ __('home.footer.legal') }}</a>
                     <a href="{{ $termsUrl }}">{{ __('home.footer.terms') }}</a>
                     <a href="{{ $cookiesUrl }}">{{ __('home.footer.cookies') }}</a>
                 </div>

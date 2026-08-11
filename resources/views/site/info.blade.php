@@ -25,6 +25,22 @@
                                 <p>{{ $section['body'] }}</p>
                             </div>
                         @endforeach
+
+                        @if (! empty($documentUrl))
+                            <div class="offers-detail-section terms-document">
+                                <h2>{{ $documentTitle ?? __('site.terms.document_title') }}</h2>
+                                <p>{{ $documentIntro ?? __('site.terms.document_intro') }}</p>
+                                <p>
+                                    <a class="btn-primary" href="{{ $documentUrl }}" target="_blank" rel="noopener noreferrer">
+                                        {{ $documentOpenLabel ?? __('site.terms.document_open') }}
+                                    </a>
+                                    <a class="btn-secondary" href="{{ $documentUrl }}" download>
+                                        {{ $documentDownloadLabel ?? __('site.terms.document_download') }}
+                                    </a>
+                                </p>
+                                <iframe class="terms-document__viewer" src="{{ $documentUrl }}#view=FitH" title="{{ $documentName }}"></iframe>
+                            </div>
+                        @endif
                     </article>
 
                     <aside class="article-detail-aside reveal reveal-delay-1">

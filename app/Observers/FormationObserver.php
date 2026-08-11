@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Formation;
 use App\Services\PublicationNewsletterService;
+use Throwable;
 
 class FormationObserver
 {
@@ -17,6 +18,10 @@ class FormationObserver
             return;
         }
 
-        app(PublicationNewsletterService::class)->sendForVisibleTraining($formation);
+        try {
+            app(PublicationNewsletterService::class)->sendForVisibleTraining($formation);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }

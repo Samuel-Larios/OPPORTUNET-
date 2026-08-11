@@ -148,6 +148,9 @@ Free for personal and commercial use
       height: 260px;
       background: radial-gradient(circle, rgba(16, 185, 129, 0.34), rgba(16, 185, 129, 0));
     }
+    .page-banner-container {
+      width: 100%;
+    }
     .page-banner-inner {
       position: relative;
       z-index: 1;
@@ -155,8 +158,10 @@ Free for personal and commercial use
       grid-template-columns: minmax(0, 1.2fr) max-content;
       align-items: end;
       gap: 26px;
-      padding: 34px 38px;
-      border-radius: 34px;
+      width: 100%;
+      min-height: 230px;
+      padding: 34px clamp(24px, 6vw, 120px);
+      border-radius: 0;
       background:
         linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.08)),
         rgba(7, 28, 49, 0.38);
@@ -1584,7 +1589,7 @@ Free for personal and commercial use
       display: grid;
       gap: 8px;
       margin: 0;
-      color: rgba(255,255,255,0.86);
+      color: rgba(255,255,255,0.96);
       font-size: 0.9rem;
     }
     .footer-captcha-field span {
@@ -1592,14 +1597,14 @@ Free for personal and commercial use
       color: #ffffff;
     }
     .footer-captcha-field small {
-      color: rgba(255,255,255,0.72);
+      color: rgba(255,255,255,0.88);
       line-height: 1.55;
     }
     .footer-captcha-field input {
       width: 100%;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.32);
       border-radius: 14px;
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.10);
       color: #fff;
       padding: 13px 16px;
       font-size: 0.92rem;
@@ -1607,7 +1612,8 @@ Free for personal and commercial use
       transition: border-color 0.25s ease, background 0.25s ease;
     }
     .footer-captcha-field input::placeholder {
-      color: rgba(255,255,255,0.42);
+      color: rgba(255,255,255,0.82);
+      opacity: 1;
     }
     .footer-captcha-field input:focus {
       border-color: rgba(118,230,191,0.7);
@@ -1615,19 +1621,71 @@ Free for personal and commercial use
     }
     .footer-newsletter-input {
       width: 100%;
-      border: 1px solid rgba(255,255,255,0.14);
+      border: 1px solid rgba(255,255,255,0.32);
       border-radius: 14px;
-      background: rgba(255,255,255,0.04);
+      background: rgba(255,255,255,0.10);
       color: #fff;
       padding: 13px 16px;
       font-size: 0.92rem;
       outline: none;
       transition: border-color 0.25s ease, background 0.25s ease;
     }
-    .footer-newsletter-input::placeholder { color: rgba(255,255,255,0.36); }
+    .footer-newsletter-input::placeholder { color: rgba(255,255,255,0.82); opacity: 1; }
     .footer-newsletter-input:focus {
       border-color: rgba(118,230,191,0.7);
       background: rgba(255,255,255,0.07);
+    }
+    .footer-newsletter-preferences {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+      color: #ffffff;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+    .footer-newsletter-preferences > span {
+      display: block;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .footer-newsletter-options {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .footer-newsletter-option {
+      display: grid;
+      grid-template-columns: 16px minmax(0, 1fr);
+      align-items: start;
+      gap: 8px;
+      min-width: 0;
+      padding: 10px;
+      border: 1px solid rgba(255,255,255,0.24);
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    }
+    .footer-newsletter-option:hover { border-color: rgba(118,230,191,0.72); background: rgba(255,255,255,0.13); }
+    .footer-newsletter-option:has(input:checked) {
+      border-color: #76e6bf;
+      background: rgba(118,230,191,0.16);
+    }
+    .footer-newsletter-option input {
+      width: 16px;
+      height: 16px;
+      margin: 2px 0 0;
+      accent-color: #76e6bf;
+    }
+    .footer-newsletter-option-copy {
+      display: grid;
+      gap: 3px;
+      min-width: 0;
+    }
+    .footer-newsletter-option-copy strong { color: #ffffff; font-size: 0.78rem; line-height: 1.3; }
+    .footer-newsletter-option-copy small { color: rgba(255,255,255,0.82); font-size: 0.68rem; line-height: 1.35; }
+    @media (max-width: 430px) {
+      .footer-newsletter-options { grid-template-columns: 1fr; }
     }
     .footer-newsletter-btn {
       width: fit-content;
@@ -1723,6 +1781,31 @@ Free for personal and commercial use
       }
       .phone-card[data-pos="left2"],
       .phone-card[data-pos="right2"] { opacity: 0.35; }
+    }
+
+    .terms-document {
+      display: grid;
+      gap: 18px;
+    }
+
+    .terms-document p:has(.btn-primary) {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .terms-document__viewer {
+      width: 100%;
+      min-height: 720px;
+      border: 1px solid rgba(14, 76, 94, 0.16);
+      border-radius: 18px;
+      background: #f7faf9;
+    }
+
+    @media (max-width: 768px) {
+      .terms-document__viewer {
+        min-height: 520px;
+      }
     }
     @media (max-width: 480px) {
       .nav-logo-copy span { letter-spacing: 0.12em; }
@@ -4836,6 +4919,8 @@ Free for personal and commercial use
     }
 
     .article-card-visual img {
+      position: relative;
+      z-index: 1;
       width: 100%;
       height: 100%;
       object-fit: cover;
@@ -4869,6 +4954,14 @@ Free for personal and commercial use
       display: grid;
       gap: 16px;
       padding: 24px;
+    }
+
+    .offers-recent-card {
+      grid-template-rows: auto;
+    }
+
+    .offers-recent-card .article-card-body {
+      min-height: 0;
     }
 
     .article-card-top,
@@ -5324,7 +5417,7 @@ Free for personal and commercial use
 
     .cv-services-grid {
       display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 18px;
     }
 
@@ -6129,5 +6222,56 @@ Free for personal and commercial use
       .contact-prayer-wall-empty {
         grid-column: auto;
         padding: 24px;
+      }
+    }
+
+    /* Keep the sign-in action visible in the mobile header. */
+    .nav-mobile-login { display: none; }
+
+    @media (max-width: 980px) {
+      .nav-inner { grid-template-columns: minmax(0, 1fr) auto auto; }
+      .nav-mobile-login {
+        display: inline-flex;
+        min-height: 40px;
+        padding: 0 12px;
+        font-size: 0.76rem;
+        white-space: nowrap;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .nav-inner { grid-template-columns: minmax(0, 1fr) auto auto; }
+      .nav-mobile-login {
+        min-height: 36px;
+        padding: 0 9px;
+        font-size: 0.7rem;
+      }
+    }
+
+    /* Keep the hero content compact: no artificial gap before the verse card. */
+    .hero-frame-wide { min-height: 0; }
+    .hero-slider { min-height: 0; }
+    .header-slider-controls { margin-top: 22px; }
+    .hero-panel-card.has-verse { justify-content: flex-start; }
+    .hero-panel-card.has-verse .hero-verse-snippet {
+      margin-top: 26px;
+      margin-right: 0;
+    }
+
+    @media (min-width: 1025px) {
+      .hero-frame-wide {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        justify-content: stretch;
+        gap: 48px;
+      }
+
+      .hero-panel-card.has-verse .hero-panel-copy,
+      .hero-panel-card.has-verse .hero-panel-copy > p {
+        max-width: none;
+        width: 100%;
+      }
+
+      .hero-panel-card.has-verse h3 {
+        max-width: none;
       }
     }

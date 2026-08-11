@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasScheduledPublication;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class BlogArticle extends Model
 {
     use Bilingual;
+    use HasScheduledPublication;
     use SoftDeletes;
 
     protected $table = 'blog_articles';
@@ -39,6 +41,8 @@ class BlogArticle extends Model
         'meta_description_fr',
         'meta_description_en',
         'tags',
+        'tags_fr',
+        'tags_en',
         'statut',
         'publie_le',
         'en_vedette',
@@ -68,6 +72,8 @@ class BlogArticle extends Model
             'en_vedette' => 'boolean',
             'commentaires_actifs' => 'boolean',
             'tags' => 'array',
+            'tags_fr' => 'array',
+            'tags_en' => 'array',
             'auto_publish' => 'boolean',
             'scheduled_for' => 'datetime',
             'published_at' => 'datetime',
@@ -137,7 +143,7 @@ class BlogArticle extends Model
             return asset($this->image_couverture);
         }
 
-        return asset('storage/' . ltrim((string) $this->image_couverture, '/'));
+        return asset('storage/'.ltrim((string) $this->image_couverture, '/'));
     }
 
     public function primaryImageAlt(): string

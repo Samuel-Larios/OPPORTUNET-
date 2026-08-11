@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\SpiritualPublication;
 use App\Services\PublicationNewsletterService;
+use Throwable;
 
 class SpiritualPublicationObserver
 {
@@ -16,6 +17,10 @@ class SpiritualPublicationObserver
             return;
         }
 
-        app(PublicationNewsletterService::class)->sendForPublishedSpiritualPublication($publication);
+        try {
+            app(PublicationNewsletterService::class)->sendForPublishedSpiritualPublication($publication);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }

@@ -16,7 +16,6 @@ use App\Models\SiteVisit;
 use App\Models\Temoignage;
 use App\Models\User;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 
 class WeeklySiteReportBuilder
 {
@@ -99,15 +98,15 @@ class WeeklySiteReportBuilder
     {
         $map = [
             'home' => 'Accueil',
-            'offers.index' => 'Offres & opportunités',
-            'offers.show' => 'Détail d’une offre',
+            'offers.index' => 'Offres & opportunites',
+            'offers.show' => 'Detail d\'une offre',
             'articles.index' => 'Articles',
-            'articles.show' => 'Détail d’un article',
-            'cv.services.index' => 'Dépôt CV et services',
+            'articles.show' => 'Detail d\'un article',
+            'cv.services.index' => 'Depot CV et services',
             'trainings.index' => 'Formations',
-            'contact.prayer.index' => 'Contact et prière',
-            'community.prayers.index' => 'Mur de prière',
-            'community.testimonials.index' => 'Témoignages',
+            'contact.prayer.index' => 'Contact et priere',
+            'community.prayers.index' => 'Mur de priere',
+            'community.testimonials.index' => 'Temoignages',
         ];
 
         return $map[$label] ?? $label;

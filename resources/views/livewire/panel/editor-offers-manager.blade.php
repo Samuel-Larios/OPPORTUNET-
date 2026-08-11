@@ -39,9 +39,9 @@
                 </label>
 
                 <label class="panel-field">
-                    <span>Catégorie</span>
+                    <span>{{ __('admin.offers.category') }}</span>
                     <select wire:model="categorieId">
-                        <option value="">Choisir une catégorie</option>
+                        <option value="">{{ __('admin.offers.category_placeholder') }}</option>
                         @foreach ($categories as $category)
                             <option value="{{ $category->id }}">{{ $category->nom }}</option>
                         @endforeach
@@ -52,7 +52,7 @@
                 </label>
 
                 <label class="panel-field">
-                    <span>Type</span>
+                    <span>{{ __('admin.offers.type') }}</span>
                     <select wire:model="type">
                         @foreach (__('offers.types') as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
@@ -64,7 +64,7 @@
                 </label>
 
                 <label class="panel-field">
-                    <span>Contrat</span>
+                    <span>{{ __('admin.offers.contract') }}</span>
                     <select wire:model="contrat">
                         @foreach (__('offers.contracts') as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
@@ -76,12 +76,12 @@
                 </label>
 
                 <label class="panel-field">
-                    <span>Lieu</span>
+                    <span>{{ __('admin.offers.location') }}</span>
                     <input type="text" wire:model="lieu" />
                 </label>
 
                 <label class="panel-field">
-                    <span>Pays</span>
+                    <span>{{ __('admin.offers.country') }}</span>
                     <input type="text" wire:model="pays" />
                 </label>
 
@@ -212,6 +212,7 @@
                             <th>{{ __('admin.offers.status') }}</th>
                             <th>{{ __('admin.offers.published') }}</th>
                             <th>{{ __('admin.offers.deadline') }}</th>
+                            <th>Vues</th>
                             <th>{{ __('admin.users.actions') }}</th>
                         </tr>
                     </thead>
@@ -220,7 +221,7 @@
                             <tr>
                                 <td>
                                     <strong>{{ $offer->titre }}</strong>
-                                    <span>{{ $offer->type }}</span>
+                                    <span>{{ __('offers.types.' . $offer->type) }}</span>
                                 </td>
                                 <td>{{ $offer->organisation ?: '-' }}</td>
                                 <td>{{ __('admin.offers.statuses.' . $offer->statut) }}</td>
@@ -234,6 +235,7 @@
                                     @endif
                                 </td>
                                 <td>{{ $offer->date_expiration?->format('d/m/Y') ?: '-' }}</td>
+                                <td>{{ number_format($offer->vues ?? 0, 0, ',', ' ') }}</td>
                                 <td class="panel-inline-actions">
                                     <button type="button" wire:click="editOffer({{ $offer->id }})"
                                         class="panel-secondary-btn panel-small-btn">{{ __('admin.offers.edit') }}</button>

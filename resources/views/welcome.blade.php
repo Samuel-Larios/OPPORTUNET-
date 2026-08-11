@@ -894,13 +894,12 @@ $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
                         @endphp
                         <article class="article-card reveal reveal-delay-{{ min($index + 1, 4) }}">
                             <div class="article-card-visual" style="--article-accent: {{ $accent }};">
+                                <div class="article-card-placeholder">
+                                    <span>{{ $article->category?->nom ?: __('articles.card.default_badge') }}</span>
+                                    <strong>{{ $article->titre }}</strong>
+                                </div>
                                 @if ($imageUrl)
-                                    <img src="{{ $imageUrl }}" alt="{{ $imageAlt }}">
-                                @else
-                                    <div class="article-card-placeholder">
-                                        <span>{{ $article->category?->nom ?: __('articles.card.default_badge') }}</span>
-                                        <strong>{{ $article->titre }}</strong>
-                                    </div>
+                                    <img src="{{ $imageUrl }}" alt="" onerror="this.remove()">
                                 @endif
                             </div>
 

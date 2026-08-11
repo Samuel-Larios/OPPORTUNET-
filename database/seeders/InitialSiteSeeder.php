@@ -298,6 +298,7 @@ class InitialSiteSeeder extends Seeder
     private function seedFormations(): void
     {
         $categoryId = DB::table('categories')->where('slug', 'developpement-personnel')->value('id');
+        $seededAt = now()->subDays(14);
 
         $formations = [
             [
@@ -366,8 +367,8 @@ class InitialSiteSeeder extends Seeder
                     'statut' => $formation['statut'],
                     'en_vedette' => $formation['en_vedette'],
                     'whatsapp_message' => $formation['whatsapp_fr'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'created_at' => $seededAt,
+                    'updated_at' => $seededAt,
                 ], $this->localizedValues('titre', $formation['titre_fr'], $formation['titre_en']), $this->localizedValues('description_courte', $formation['description_courte_fr'], $formation['description_courte_en']), $this->localizedValues('description_longue', $formation['description_longue_fr'], $formation['description_longue_en']), $this->localizedValues('whatsapp_message', $formation['whatsapp_fr'], $formation['whatsapp_en']))
             );
         }
@@ -378,6 +379,7 @@ class InitialSiteSeeder extends Seeder
         $jobCategoryId = DB::table('categories')->where('slug', 'emploi-carriere')->value('id');
         $scholarshipCategoryId = DB::table('categories')->where('slug', 'bourses-etudes')->value('id');
         $projectCategoryId = DB::table('categories')->where('slug', 'appels-projets')->value('id');
+        $seededAt = now()->subDays(14);
 
         $opportunities = [
             [
@@ -398,7 +400,7 @@ class InitialSiteSeeder extends Seeder
                 'avantages_fr' => 'Encadrement, environnement stimulant et possibilites d evolution.',
                 'avantages_en' => 'Mentoring, a stimulating environment, and growth opportunities.',
                 'lien_candidature' => 'mailto:contact@opportunetmondiale.com',
-                'date_publication' => now()->subDays(2)->toDateString(),
+                'date_publication' => now()->subDays(14)->toDateString(),
                 'date_expiration' => now()->addDays(18)->toDateString(),
                 'statut' => 'publie',
                 'en_vedette' => true,
@@ -422,7 +424,7 @@ class InitialSiteSeeder extends Seeder
                 'avantages_fr' => 'Formation, mentorat international et mise en reseau.',
                 'avantages_en' => 'Training, international mentoring, and networking opportunities.',
                 'lien_candidature' => 'mailto:contact@opportunetmondiale.com',
-                'date_publication' => now()->subDays(4)->toDateString(),
+                'date_publication' => now()->subDays(12)->toDateString(),
                 'date_expiration' => now()->addDays(24)->toDateString(),
                 'statut' => 'publie',
                 'en_vedette' => true,
@@ -446,7 +448,7 @@ class InitialSiteSeeder extends Seeder
                 'avantages_fr' => 'Visibilite, mentorat, accompagnement et acces a notre ecosysteme.',
                 'avantages_en' => 'Visibility, mentoring, support, and access to our ecosystem.',
                 'lien_candidature' => 'mailto:contact@opportunetmondiale.com',
-                'date_publication' => now()->subDay()->toDateString(),
+                'date_publication' => now()->subDays(10)->toDateString(),
                 'date_expiration' => now()->addDays(30)->toDateString(),
                 'statut' => 'publie',
                 'en_vedette' => true,
@@ -475,8 +477,8 @@ class InitialSiteSeeder extends Seeder
                     'statut' => $opportunity['statut'],
                     'en_vedette' => $opportunity['en_vedette'],
                     'urgent' => $opportunity['urgent'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'created_at' => $seededAt,
+                    'updated_at' => $seededAt,
                 ], $this->localizedValues('titre', $opportunity['titre_fr'], $opportunity['titre_en']), $this->localizedValues('description', $opportunity['description_fr'], $opportunity['description_en']), $this->localizedValues('profil_recherche', $opportunity['profil_fr'], $opportunity['profil_en']), $this->localizedValues('avantages', $opportunity['avantages_fr'], $opportunity['avantages_en']))
             );
         }
@@ -488,6 +490,7 @@ class InitialSiteSeeder extends Seeder
         $careerAdviceCategoryId = DB::table('categories')->where('slug', 'conseils-emploi')->value('id');
         $inspirationCategoryId = DB::table('categories')->where('slug', 'inspiration')->value('id');
         $newsCategoryId = DB::table('categories')->where('slug', 'actualites')->value('id');
+        $seededAt = now()->subDays(14);
 
         $articles = [
             [
@@ -501,7 +504,7 @@ class InitialSiteSeeder extends Seeder
                 'contenu_en' => "A strong profile can go unnoticed when the application lacks clarity.\n\nFirst mistake: sending the same resume everywhere without adapting it.\n\nSecond mistake: neglecting the email subject line and message structure.\n\nThird mistake: failing to provide concrete proof of results.\n\nFourth mistake: forgetting to proofread before sending.\n\nFifth mistake: staying passive after the application.\n\nAn effective application tells a story, shows clear value, and makes the recruiter's job easier.",
                 'tags' => ['cv', 'candidature', 'emploi'],
                 'temps_lecture' => '4 min',
-                'publie_le' => now()->subDays(5),
+                'publie_le' => now()->subDays(14),
                 'en_vedette' => true,
                 'vues' => 124,
             ],
@@ -516,7 +519,7 @@ class InitialSiteSeeder extends Seeder
                 'contenu_en' => "Slow seasons are not useless seasons.\n\nThey reveal the depth of your motivation, the quality of your discipline, and the strength of your calling.\n\nIn such moments, it becomes essential to keep a healthy routine, document your progress, and keep learning.\n\nVision does not grow only in acceleration. It also grows in consistency.",
                 'tags' => ['inspiration', 'discipline', 'vision'],
                 'temps_lecture' => '3 min',
-                'publie_le' => now()->subDays(3),
+                'publie_le' => now()->subDays(12),
                 'en_vedette' => true,
                 'vues' => 96,
             ],
@@ -531,7 +534,7 @@ class InitialSiteSeeder extends Seeder
                 'contenu_en' => "Opportunet Mondiale is expanding its platform with an editorial space dedicated to articles.\n\nYou will find content on employability, training, faith, vision, and initiatives that transform journeys.\n\nThe goal is simple: offer a clear, inspiring, and practical space to help people move forward.",
                 'tags' => ['actualites', 'plateforme', 'contenus'],
                 'temps_lecture' => '2 min',
-                'publie_le' => now()->subDay(),
+                'publie_le' => now()->subDays(10),
                 'en_vedette' => false,
                 'vues' => 51,
             ],
@@ -554,8 +557,8 @@ class InitialSiteSeeder extends Seeder
                     'vues' => $article['vues'],
                     'partages' => 0,
                     'temps_lecture' => $article['temps_lecture'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'created_at' => $seededAt,
+                    'updated_at' => $seededAt,
                 ], $this->localizedValues('titre', $article['titre_fr'], $article['titre_en']), $this->localizedValues('extrait', $article['extrait_fr'], $article['extrait_en']), $this->localizedValues('contenu', $article['contenu_fr'], $article['contenu_en']))
             );
         }
@@ -563,6 +566,8 @@ class InitialSiteSeeder extends Seeder
 
     private function seedTestimonials(): void
     {
+        $seededAt = now()->subDays(14);
+
         $testimonials = [
             [
                 'prenom' => 'Grace',
@@ -614,8 +619,8 @@ class InitialSiteSeeder extends Seeder
                     'statut' => 'approuve',
                     'en_vedette' => true,
                     'ordre' => $testimonial['ordre'],
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'created_at' => $seededAt,
+                    'updated_at' => $seededAt,
                 ], $this->localizedValues('contenu', $testimonial['contenu_fr'], $testimonial['contenu_en']))
             );
         }
@@ -623,6 +628,8 @@ class InitialSiteSeeder extends Seeder
 
     private function seedPrayerWall(): void
     {
+        $seededAt = now()->subDays(14);
+
         $entries = [
             [
                 'prenom' => 'Equipe OPM',
@@ -666,8 +673,8 @@ class InitialSiteSeeder extends Seeder
                     'anonyme' => $entry['anonyme'],
                     'priants' => $entry['priants'],
                     'statut' => 'approuve',
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'created_at' => $seededAt,
+                    'updated_at' => $seededAt,
                 ]
             );
         }
@@ -676,8 +683,8 @@ class InitialSiteSeeder extends Seeder
     private function localizedValues(string $base, string $french, ?string $english = null): array
     {
         return [
-            $base . '_fr' => $french,
-            $base . '_en' => $english ?? $french,
+            $base.'_fr' => $french,
+            $base.'_en' => $english ?? $french,
         ];
     }
 }

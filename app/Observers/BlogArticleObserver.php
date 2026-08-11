@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\BlogArticle;
 use App\Services\PublicationNewsletterService;
+use Throwable;
 
 class BlogArticleObserver
 {
@@ -16,6 +17,10 @@ class BlogArticleObserver
             return;
         }
 
-        app(PublicationNewsletterService::class)->sendForPublishedArticle($article);
+        try {
+            app(PublicationNewsletterService::class)->sendForPublishedArticle($article);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }

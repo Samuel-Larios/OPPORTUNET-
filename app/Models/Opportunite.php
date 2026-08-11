@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasScheduledPublication;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Opportunite extends Model
 {
     use Bilingual;
+    use HasScheduledPublication;
     use SoftDeletes;
 
     protected $table = 'opportunites';
@@ -103,6 +105,6 @@ class Opportunite extends Model
 
     public function statusLabel(): string
     {
-        return (string) __('admin.offers.statuses.' . $this->statut);
+        return (string) __('admin.offers.statuses.'.$this->statut);
     }
 }

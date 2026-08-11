@@ -164,6 +164,7 @@
                             <th>{{ $isFrench ? 'Titre' : 'Title' }}</th>
                             <th>{{ $isFrench ? 'Référence' : 'Reference' }}</th>
                             <th>{{ $isFrench ? 'Visibilité' : 'Visibility' }}</th>
+                            <th>{{ $isFrench ? 'Vues' : 'Views' }}</th>
                             <th>{{ $isFrench ? 'Ordre' : 'Order' }}</th>
                             <th>{{ __('admin.users.actions') }}</th>
                         </tr>
@@ -193,6 +194,7 @@
                                         @endif
                                     </div>
                                 </td>
+                                <td>{{ number_format($publication->vues ?? 0, 0, ',', ' ') }}</td>
                                 <td>{{ $publication->ordre }}</td>
                                 <td class="panel-inline-actions">
                                     <button type="button" wire:click="editPublication({{ $publication->id }})"

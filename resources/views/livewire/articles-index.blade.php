@@ -90,13 +90,12 @@
 
                     <article class="article-card reveal visible reveal-delay-{{ min(($index % 4) + 1, 4) }}" wire:key="article-{{ $article->id }}">
                         <div class="article-card-visual" style="--article-accent: {{ $accent }};">
+                            <div class="article-card-placeholder">
+                                <span>{{ $article->category?->nom ?: __('articles.card.default_badge') }}</span>
+                                <strong>{{ $article->titre }}</strong>
+                            </div>
                             @if ($primaryImageUrl)
-                                <img src="{{ $primaryImageUrl }}" alt="{{ $primaryImageAlt }}">
-                            @else
-                                <div class="article-card-placeholder">
-                                    <span>{{ $article->category?->nom ?: __('articles.card.default_badge') }}</span>
-                                    <strong>{{ $article->titre }}</strong>
-                                </div>
+                                <img src="{{ $primaryImageUrl }}" alt="" onerror="this.remove()">
                             @endif
                         </div>
 

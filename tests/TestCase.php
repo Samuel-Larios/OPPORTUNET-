@@ -3,6 +3,7 @@
 namespace Tests;
 
 use App\Support\SecuritySettings;
+use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Crypt;
 
@@ -13,6 +14,14 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         SecuritySettings::flush();
+    }
+
+    protected function tearDown(): void
+    {
+        RefreshDatabaseState::$migrated = false;
+        RefreshDatabaseState::$inMemoryConnections = [];
+
+        parent::tearDown();
     }
 
     protected function withFormCaptcha(int $left = 4, int $right = 5): static

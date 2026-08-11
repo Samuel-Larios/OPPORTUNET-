@@ -43,6 +43,7 @@ class PublicationNewsletterService
             'meta' => [
                 'label' => $payload['label'],
                 'summary' => $payload['summary'],
+                'category' => $payload['category'],
             ],
         ]);
 
@@ -55,7 +56,10 @@ class PublicationNewsletterService
     {
         $payload ??= $this->buildPayloadFromNewsletter($newsletter);
         $sentAt ??= now();
-        $recipients = $this->resolveRecipients((string) ($newsletter->audience ?: 'platform_users_and_subscribers'));
+        $recipients = $this->resolveRecipients(
+            (string) ($newsletter->audience ?: 'platform_users_and_subscribers'),
+            (string) ($payload['category'] ?? 'general')
+        );
 
         foreach ($recipients as $recipient) {
             Mail::to($recipient['email'])->send(new PublicationNewsletterMail([
@@ -77,6 +81,7 @@ class PublicationNewsletterService
             'meta' => array_merge($newsletter->meta ?? [], [
                 'label' => $payload['label'],
                 'summary' => $payload['summary'],
+                'category' => $payload['category'],
             ]),
         ])->save();
 
@@ -146,7 +151,7 @@ class PublicationNewsletterService
     }
 
     /**
-     * @return array{subject:string,label:string,title:string,summary:string,url:string}
+     * @return array{subject:string,label:string,title:string,summary:string,url:string,category:string}
      */
     protected function buildPayloadFromNewsletter(Newsletter $newsletter): array
     {
@@ -166,51 +171,56 @@ class PublicationNewsletterService
             'title' => (string) ($newsletter->content_title ?: $newsletter->subject),
             'summary' => $summary !== '' ? $summary : 'Une nouvelle publication Opportunet Mondiale est disponible.',
             'url' => (string) ($newsletter->content_url ?: route('home')),
+            'category' => (string) ($meta['category'] ?? 'general'),
         ];
     }
 
     /**
-     * @return array{subject:string,label:string,title:string,summary:string,url:string}
+     * @return array{subject:string,label:string,title:string,summary:string,url:string,category:string}
      */
     protected function buildPayload(Model $content): array
     {
         if ($content instanceof Opportunite) {
             return [
-                'subject' => 'Nouvelle opportunite publiee : ' . $content->titre,
+                'subject' => 'Nouvelle opportunite publiee : '.$content->titre,
                 'label' => 'Offre / Opportunite',
                 'title' => (string) $content->titre,
                 'summary' => Str::limit(trim(strip_tags((string) $content->description)), 220),
                 'url' => route('offers.show', $content->slug),
+                'category' => 'job_offer',
             ];
         }
 
         if ($content instanceof Formation) {
             return [
-                'subject' => 'Nouvelle formation disponible : ' . $content->titre,
+                'subject' => 'Nouvelle formation disponible : '.$content->titre,
                 'label' => 'Formation',
                 'title' => (string) $content->titre,
                 'summary' => Str::limit(trim(strip_tags((string) $content->description_courte)), 220),
                 'url' => route('trainings.index', ['formation' => $content->id]),
+                'category' => 'general',
             ];
         }
 
         if ($content instanceof BlogArticle) {
             return [
-                'subject' => 'Nouvel article publie : ' . $content->titre,
+                'subject' => 'Nouvel article publie : '.$content->titre,
                 'label' => 'Article',
                 'title' => (string) $content->titre,
                 'summary' => Str::limit(trim(strip_tags((string) ($content->extrait ?: $content->contenu))), 220),
                 'url' => route('articles.show', $content->slug),
+                'category' => 'general',
             ];
         }
 
         if ($content instanceof Verset) {
             return [
-                'subject' => 'Nouveau verset publie : ' . $content->reference,
+                'subject' => 'Nouveau verset publie : '.$content->reference,
                 'label' => 'Verset biblique',
                 'title' => (string) $content->reference,
                 'summary' => Str::limit(trim(strip_tags((string) $content->texte)), 220),
                 'url' => route('spiritual.verses.show', $content),
+                'category' => 'general',
             ];
         }
 
@@ -221,6 +231,7 @@ class PublicationNewsletterService
                 'title' => (string) $content->titre,
                 'summary' => Str::limit(trim(strip_tags((string) ($content->extrait ?: $content->contenu))), 220),
                 'url' => $this->spiritualUrl($content),
+                'category' => 'general',
             ];
         }
 
@@ -244,10 +255,10 @@ class PublicationNewsletterService
     protected function spiritualSubject(SpiritualPublication $publication): string
     {
         return match ($publication->type) {
-            'pensee' => 'Nouvelle pensee publiee : ' . $publication->titre,
-            'exhortation' => 'Nouvelle exhortation publiee : ' . $publication->titre,
-            'priere_jour' => 'Nouvelle priere du jour publiee : ' . $publication->titre,
-            default => 'Nouveau contenu spirituel publie : ' . $publication->titre,
+            'pensee' => 'Nouvelle pensee publiee : '.$publication->titre,
+            'exhortation' => 'Nouvelle exhortation publiee : '.$publication->titre,
+            'priere_jour' => 'Nouvelle priere du jour publiee : '.$publication->titre,
+            default => 'Nouveau contenu spirituel publie : '.$publication->titre,
         };
     }
 
@@ -272,13 +283,18 @@ class PublicationNewsletterService
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, array{email:string,name:?string}>
+     * @return Collection<int, array{email:string,name:?string}>
      */
-    protected function resolveRecipients(string $audience = 'platform_users_and_subscribers'): Collection
+    protected function resolveRecipients(string $audience = 'platform_users_and_subscribers', string $category = 'general'): Collection
     {
         $subscribers = in_array($audience, ['platform_users_and_subscribers', 'subscribers_only'], true)
             ? NewsletterSubscriber::query()
                 ->where('is_active', true)
+                ->when(
+                    $category === 'job_offer',
+                    fn ($query) => $query->whereIn('content_preference', ['all_publications', 'job_offers_only']),
+                    fn ($query) => $query->where('content_preference', 'all_publications')
+                )
                 ->get(['email', 'prenom'])
                 ->map(fn (NewsletterSubscriber $subscriber) => [
                     'email' => Str::lower((string) $subscriber->email),

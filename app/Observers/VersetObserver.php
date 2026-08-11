@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Verset;
 use App\Services\PublicationNewsletterService;
+use Throwable;
 
 class VersetObserver
 {
@@ -16,6 +17,10 @@ class VersetObserver
             return;
         }
 
-        app(PublicationNewsletterService::class)->sendForPublishedVerse($verse);
+        try {
+            app(PublicationNewsletterService::class)->sendForPublishedVerse($verse);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }

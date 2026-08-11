@@ -2,22 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\BlogArticle;
-use App\Models\Category;
-use App\Models\Formation;
-use App\Models\Opportunite;
-use App\Models\Service;
-use App\Models\SpiritualPublication;
-use App\Models\Verset;
-use App\Models\Role;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Storage;
-use Livewire\Livewire;
-use Tests\TestCase;
 use App\Livewire\Panel\ArticlesManager;
 use App\Livewire\Panel\CategoriesManager;
 use App\Livewire\Panel\EditorOffersManager;
@@ -25,12 +9,137 @@ use App\Livewire\Panel\FormationsManager;
 use App\Livewire\Panel\ServicesManager;
 use App\Livewire\Panel\SpiritualPublicationsManager;
 use App\Livewire\Panel\VersesManager;
+use App\Models\BlogArticle;
+use App\Models\Category;
+use App\Models\Formation;
+use App\Models\Opportunite;
+use App\Models\Role;
+use App\Models\Service;
+use App\Models\SpiritualPublication;
+use App\Models\User;
+use App\Models\Verset;
+use App\Services\PublicationNewsletterService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
+use Tests\TestCase;
 
 class ScheduledPublishingTest extends TestCase
 {
     use RefreshDatabase;
 
     protected bool $seed = true;
+
+    public function test_due_scheduled_content_is_only_published_by_the_scheduler(): void
+    {
+        $publishAt = Carbon::now()->subMinute();
+
+        $category = Category::query()->create([
+            'type' => 'service',
+            'nom' => 'Categorie due',
+            'nom_fr' => 'Categorie due',
+            'nom_en' => 'Due category',
+            'slug' => 'categorie-due',
+            'actif' => false,
+            'auto_publish' => true,
+            'scheduled_for' => $publishAt,
+            'ordre' => 1,
+        ]);
+
+        $article = BlogArticle::query()->create([
+            'user_id' => User::factory()->create()->id,
+            'titre' => 'Article due',
+            'titre_fr' => 'Article due',
+            'titre_en' => 'Due article',
+            'slug' => 'article-due',
+            'contenu' => 'Contenu article',
+            'contenu_fr' => 'Contenu article',
+            'contenu_en' => 'Article content',
+            'statut' => 'brouillon',
+            'auto_publish' => true,
+            'scheduled_for' => $publishAt,
+            'scheduled_status' => 'publie',
+        ]);
+
+        $category = Category::query()->find($category->id);
+        $article = BlogArticle::query()->find($article->id);
+
+        $this->assertFalse($category->actif);
+        $this->assertSame('brouillon', $article->statut);
+
+        Artisan::call('content:publish-scheduled');
+
+        $category->refresh();
+        $article->refresh();
+
+        $this->assertTrue($category->actif);
+        $this->assertFalse($category->auto_publish);
+        $this->assertNull($category->scheduled_for);
+
+        $this->assertSame('publie', $article->statut);
+        $this->assertFalse($article->auto_publish);
+        $this->assertNull($article->scheduled_for);
+    }
+
+    public function test_a_newsletter_failure_cannot_block_a_scheduled_article_publication(): void
+    {
+        $user = User::factory()->create(['actif' => true]);
+        $article = BlogArticle::query()->create([
+            'user_id' => $user->id,
+            'titre' => 'Article resilient',
+            'titre_fr' => 'Article resilient',
+            'titre_en' => 'Resilient article',
+            'slug' => 'article-resilient',
+            'contenu' => 'Contenu article',
+            'contenu_fr' => 'Contenu article',
+            'contenu_en' => 'Article content',
+            'statut' => 'brouillon',
+            'auto_publish' => true,
+            'scheduled_for' => now()->subMinute(),
+            'scheduled_status' => 'publie',
+        ]);
+
+        $newsletterService = \Mockery::mock(PublicationNewsletterService::class);
+        $newsletterService
+            ->shouldReceive('sendForPublishedArticle')
+            ->once()
+            ->andThrow(new \RuntimeException('SMTP unavailable'));
+        app()->instance(PublicationNewsletterService::class, $newsletterService);
+
+        Artisan::call('content:publish-scheduled');
+
+        $article->refresh();
+
+        $this->assertSame('publie', $article->statut);
+        $this->assertFalse($article->auto_publish);
+        $this->assertNull($article->scheduled_for);
+    }
+
+    public function test_scheduled_articles_are_listed_with_a_dedicated_admin_filter(): void
+    {
+        $article = BlogArticle::query()->create([
+            'user_id' => User::factory()->create()->id,
+            'titre' => 'Article visible comme programme',
+            'titre_fr' => 'Article visible comme programme',
+            'titre_en' => 'Article shown as scheduled',
+            'slug' => 'article-visible-comme-programme',
+            'contenu' => 'Contenu article',
+            'contenu_fr' => 'Contenu article',
+            'contenu_en' => 'Article content',
+            'statut' => 'brouillon',
+            'auto_publish' => true,
+            'scheduled_for' => now()->addHour(),
+            'scheduled_status' => 'publie',
+        ]);
+
+        Livewire::test(ArticlesManager::class)
+            ->set('statusFilter', 'programme')
+            ->assertSee($article->titre)
+            ->assertSee(__('admin.articles.statuses.programme'));
+    }
 
     public function test_scheduled_publishing_command_publishes_all_supported_content_types(): void
     {

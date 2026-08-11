@@ -17,4 +17,5 @@ Schedule::command('report:weekly-site')
 
 Schedule::command('content:publish-scheduled')
     ->everyMinute()
+    ->withoutOverlapping()
     ->timezone($scheduleTimezone);

@@ -3,11 +3,11 @@
 namespace App\Models;
 
 use App\Notifications\VerifyEmailNotification;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -40,6 +40,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'password',
         'actif',
         'newsletter',
+        'personal_data_consent_at',
+        'personal_data_consent_version',
         'langue',
     ];
 
@@ -67,6 +69,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'actif' => 'boolean',
             'newsletter' => 'boolean',
+            'personal_data_consent_at' => 'datetime',
         ];
     }
 
@@ -142,7 +145,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function fullName(): string
     {
-        $name = trim(($this->prenom ?? '') . ' ' . ($this->nom ?? ''));
+        $name = trim(($this->prenom ?? '').' '.($this->nom ?? ''));
 
         return $name !== '' ? $name : (string) $this->name;
     }
@@ -192,7 +195,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification(): void
     {
         $this->notify(
-            (new VerifyEmailNotification())->locale($this->langue ?: app()->getLocale())
+            (new VerifyEmailNotification)->locale($this->langue ?: app()->getLocale())
         );
     }
 }

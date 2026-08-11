@@ -116,6 +116,7 @@
                             <th>{{ __('admin.verses.reference') }}</th>
                             <th>{{ __('admin.verses.version') }}</th>
                             <th>{{ __('admin.verses.home_display') }}</th>
+                            <th>Vues</th>
                             <th>{{ __('admin.verses.order') }}</th>
                             <th>{{ __('admin.users.actions') }}</th>
                         </tr>
@@ -143,6 +144,7 @@
                                         @endif
                                     </div>
                                 </td>
+                                <td>{{ number_format($verse->vues ?? 0, 0, ',', ' ') }}</td>
                                 <td>{{ $verse->ordre }}</td>
                                 <td class="panel-inline-actions">
                                     <button type="button" wire:click="editVerse({{ $verse->id }})"

@@ -2,9 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Database\Seeders\InitialSiteSeeder;
-
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -17,8 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seed initial Opportunet Mondiale
         $this->call(InitialSiteSeeder::class);
-        $this->call(BulkCrudSeeder::class);
+
+        // Keep tests focused on the baseline site fixture.
+        if (! app()->environment('testing')) {
+            $this->call(BulkCrudSeeder::class);
+        }
     }
 }

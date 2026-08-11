@@ -12,7 +12,7 @@ class SendWeeklySiteReportCommand extends Command
 {
     protected $signature = 'report:weekly-site {--email=}';
 
-    protected $description = 'Envoie le rapport hebdomadaire de visites et d’activités du site.';
+    protected $description = 'Envoie le rapport hebdomadaire de visites et d\'activites du site.';
 
     public function handle(WeeklySiteReportBuilder $builder): int
     {
@@ -24,7 +24,7 @@ class SendWeeklySiteReportCommand extends Command
 
         Mail::to($recipient)->send(new WeeklySiteReportMail($report));
 
-        $this->info("Rapport hebdomadaire envoyé à {$recipient}.");
+        $this->info("Rapport hebdomadaire envoye a {$recipient}.");
 
         return self::SUCCESS;
     }

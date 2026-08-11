@@ -74,6 +74,7 @@ class AuthController extends Controller
             'telephone' => ['nullable', 'string', 'max:20'],
             'pays' => ['nullable', 'string', 'max:80'],
             'password' => ['required', 'confirmed', Password::min(8)->letters()->numbers()],
+            'personal_data_consent' => ['accepted'],
         ]);
 
         $roleName = $request->routeIs('register.store', 'register.company.store')
@@ -86,13 +87,15 @@ class AuthController extends Controller
             'role_id' => $userRoleId,
             'prenom' => $data['prenom'],
             'nom' => $data['nom'],
-            'name' => trim($data['prenom'] . ' ' . $data['nom']),
+            'name' => trim($data['prenom'].' '.$data['nom']),
             'email' => $data['email'],
             'telephone' => $data['telephone'] ?? null,
             'pays' => $data['pays'] ?? null,
             'password' => Hash::make($data['password']),
             'actif' => true,
             'newsletter' => true,
+            'personal_data_consent_at' => now(),
+            'personal_data_consent_version' => '2026-07-24',
             'langue' => app()->getLocale(),
         ]);
 
@@ -164,11 +167,11 @@ class AuthController extends Controller
                 $target = $path;
 
                 if (! empty($parts['query'])) {
-                    $target .= '?' . $parts['query'];
+                    $target .= '?'.$parts['query'];
                 }
 
                 if (! empty($parts['fragment'])) {
-                    $target .= '#' . $parts['fragment'];
+                    $target .= '#'.$parts['fragment'];
                 }
 
                 return $target;

@@ -59,6 +59,8 @@ class ArticlesIndex extends Component
 
     public function render(): View
     {
+        $this->publishDueArticles();
+
         $filteredQuery = $this->filteredQuery();
         $articles = (clone $filteredQuery)
             ->with(['category', 'featuredImage'])
@@ -75,6 +77,16 @@ class ArticlesIndex extends Component
         ]);
     }
 
+    protected function publishDueArticles(): void
+    {
+        BlogArticle::query()
+            ->where('auto_publish', true)
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<=', now())
+            ->get()
+            ->each(fn (BlogArticle $article) => $article->publishIfDue());
+    }
+
     protected function filteredQuery(): Builder
     {
         $search = trim($this->search);
@@ -82,7 +94,7 @@ class ArticlesIndex extends Component
         return BlogArticle::query()
             ->where('statut', 'publie')
             ->when($search !== '', function (Builder $builder) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $builder->where(function (Builder $nested) use ($term) {
                     $nested

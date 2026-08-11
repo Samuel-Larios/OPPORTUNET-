@@ -78,6 +78,8 @@ class OffersIndex extends Component
 
     public function render(): View
     {
+        $this->publishDueOffers();
+
         $filteredQuery = $this->filteredQuery();
         $opportunities = (clone $filteredQuery)
             ->orderByDesc('en_vedette')
@@ -95,6 +97,16 @@ class OffersIndex extends Component
         ]);
     }
 
+    protected function publishDueOffers(): void
+    {
+        Opportunite::query()
+            ->where('auto_publish', true)
+            ->whereNotNull('scheduled_for')
+            ->where('scheduled_for', '<=', now())
+            ->get()
+            ->each(fn (Opportunite $offer) => $offer->publishIfDue());
+    }
+
     protected function filteredQuery(): Builder
     {
         $search = trim($this->search);
@@ -102,7 +114,7 @@ class OffersIndex extends Component
         return Opportunite::query()
             ->where('statut', 'publie')
             ->when($search !== '', function (Builder $builder) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $builder->where(function (Builder $nested) use ($term) {
                     $nested

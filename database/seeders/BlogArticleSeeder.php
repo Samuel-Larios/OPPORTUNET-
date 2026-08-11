@@ -17,6 +17,12 @@ class BlogArticleSeeder extends Seeder
         $inspirationCategoryId = Category::query()->where('slug', 'inspiration')->value('id');
         $newsCategoryId = Category::query()->where('slug', 'actualites')->value('id');
         $faithCategoryId = Category::query()->where('slug', 'temoignages-foi')->value('id');
+        $seededPublishDates = [
+            now()->subDays(14),
+            now()->subDays(12),
+            now()->subDays(10),
+            now()->subDays(9),
+        ];
 
         $articles = [
             [
@@ -30,7 +36,7 @@ class BlogArticleSeeder extends Seeder
                 'contenu_en' => "A strong profile can go unnoticed when the application lacks clarity.\n\nFirst mistake: sending the same resume everywhere without adapting it.\n\nSecond mistake: neglecting the email subject line and message structure.\n\nThird mistake: failing to provide concrete proof of results.\n\nFourth mistake: forgetting to proofread before sending.\n\nFifth mistake: staying passive after the application.\n\nAn effective application tells a story, shows clear value, and makes the recruiter's job easier.",
                 'tags' => ['cv', 'candidature', 'emploi'],
                 'temps_lecture' => '4 min',
-                'publie_le' => now()->subDays(5),
+                'publie_le' => $seededPublishDates[0],
                 'en_vedette' => true,
                 'vues' => 124,
                 'images' => [
@@ -63,7 +69,7 @@ class BlogArticleSeeder extends Seeder
                 'contenu_en' => "Slow seasons are not useless seasons.\n\nThey reveal the depth of your motivation, the quality of your discipline, and the strength of your calling.\n\nIn such moments, it becomes essential to keep a healthy routine, document your progress, and keep learning.\n\nVision does not grow only in acceleration. It also grows in consistency.",
                 'tags' => ['inspiration', 'discipline', 'vision'],
                 'temps_lecture' => '3 min',
-                'publie_le' => now()->subDays(3),
+                'publie_le' => $seededPublishDates[1],
                 'en_vedette' => true,
                 'vues' => 96,
                 'images' => [
@@ -91,7 +97,7 @@ class BlogArticleSeeder extends Seeder
                 'contenu_en' => "Opportunet Mondiale is expanding its platform with an editorial space dedicated to articles.\n\nYou will find content on employability, training, faith, vision, and initiatives that transform journeys.\n\nThe goal is simple: offer a clear, inspiring, and practical space to help people move forward.",
                 'tags' => ['actualites', 'plateforme', 'contenus'],
                 'temps_lecture' => '2 min',
-                'publie_le' => now()->subDay(),
+                'publie_le' => $seededPublishDates[2],
                 'en_vedette' => false,
                 'vues' => 51,
                 'images' => [
@@ -119,7 +125,7 @@ class BlogArticleSeeder extends Seeder
                 'contenu_en' => "In many professional environments, witnessing your faith requires wisdom.\n\nIt is not about speaking louder, but about living more faithfully.\n\nExcellence, reliability, listening, and integrity make a testimony credible.\n\nWhen competence meets inner peace, it becomes a visible light.",
                 'tags' => ['foi', 'travail', 'integrite'],
                 'temps_lecture' => '5 min',
-                'publie_le' => now()->subDays(2),
+                'publie_le' => $seededPublishDates[3],
                 'en_vedette' => false,
                 'vues' => 68,
                 'images' => [
@@ -200,8 +206,8 @@ class BlogArticleSeeder extends Seeder
     private function localizedValues(string $base, string $french, ?string $english = null): array
     {
         return [
-            $base . '_fr' => $french,
-            $base . '_en' => $english ?? $french,
+            $base.'_fr' => $french,
+            $base.'_en' => $english ?? $french,
         ];
     }
 }

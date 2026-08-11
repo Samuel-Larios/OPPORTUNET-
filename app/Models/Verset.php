@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasScheduledPublication;
 use Illuminate\Database\Eloquent\Model;
 
 class Verset extends Model
 {
     use Bilingual;
+    use HasScheduledPublication;
 
     protected $table = 'versets';
 
@@ -22,6 +24,7 @@ class Verset extends Model
         'version_en',
         'actif',
         'afficher_accueil',
+        'vues',
         'auto_publish',
         'scheduled_for',
         'published_at',
@@ -39,6 +42,7 @@ class Verset extends Model
         return [
             'actif' => 'boolean',
             'afficher_accueil' => 'boolean',
+            'vues' => 'integer',
             'auto_publish' => 'boolean',
             'scheduled_for' => 'datetime',
             'published_at' => 'datetime',

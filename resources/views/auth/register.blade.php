@@ -59,6 +59,8 @@
         </label>
 
         <button type="submit" class="panel-primary-btn">{{ __('admin.auth.register_company_submit') }}</button>
+
+        <x-auth-data-consent />
     </form>
 
     <p class="panel-auth-alt">

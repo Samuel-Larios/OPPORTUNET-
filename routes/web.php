@@ -9,9 +9,6 @@ use App\Http\Controllers\TrainingRegistrationAttachmentController;
 use App\Mail\ContactConfirmationMail;
 use App\Mail\ContactReceivedMail;
 use App\Mail\TrainingRegistrationReceivedMail;
-use App\Notifications\PlatformDatabaseNotification;
-use App\Support\NotificationRecipients;
-use App\Support\SubmissionGuard;
 use App\Models\Banniere;
 use App\Models\BlogArticle;
 use App\Models\BlogCommentaire;
@@ -30,7 +27,10 @@ use App\Models\SpiritualPublication;
 use App\Models\Temoignage;
 use App\Models\User;
 use App\Models\Verset;
+use App\Notifications\PlatformDatabaseNotification;
+use App\Support\NotificationRecipients;
 use App\Support\Seo;
+use App\Support\SubmissionGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Notification;
@@ -75,11 +75,11 @@ $resolveRedirectTarget = function (Request $request, string $fallbackRoute, stri
             $target = $path;
 
             if (! empty($parts['query'])) {
-                $target .= '?' . $parts['query'];
+                $target .= '?'.$parts['query'];
             }
 
             if (! empty($parts['fragment'])) {
-                $target .= '#' . $parts['fragment'];
+                $target .= '#'.$parts['fragment'];
             }
 
             return $target;
@@ -88,7 +88,7 @@ $resolveRedirectTarget = function (Request $request, string $fallbackRoute, stri
 
     $target = route($fallbackRoute);
 
-    return $fallbackFragment !== '' ? $target . '#' . $fallbackFragment : $target;
+    return $fallbackFragment !== '' ? $target.'#'.$fallbackFragment : $target;
 };
 
 $resolvePrayerWhatsappGroupUrl = function (): ?string {
@@ -98,7 +98,7 @@ $resolvePrayerWhatsappGroupUrl = function (): ?string {
         return null;
     }
 
-    $normalizedUrl = preg_match('#^https?://#i', $rawUrl) ? $rawUrl : 'https://' . ltrim($rawUrl, '/');
+    $normalizedUrl = preg_match('#^https?://#i', $rawUrl) ? $rawUrl : 'https://'.ltrim($rawUrl, '/');
 
     return filter_var($normalizedUrl, FILTER_VALIDATE_URL) ? $normalizedUrl : null;
 };
@@ -125,17 +125,17 @@ Route::get('/robots.txt', function (Request $request) {
 
     return response(
         "User-agent: *\n"
-        . "Allow: /\n"
-        . "Disallow: /admin\n"
-        . "Disallow: /espace-administration\n"
-        . "Disallow: /connexion\n"
-        . "Disallow: /inscription\n"
-        . "Disallow: /inscription-entreprise\n"
-        . "Disallow: /inscription-utilisateur\n"
-        . "Disallow: /verification-email\n"
-        . "Disallow: /mon-espace\n"
-        . "Disallow: /espace-entreprise\n"
-        . "Sitemap: {$baseUrl}/sitemap.xml\n",
+        ."Allow: /\n"
+        ."Disallow: /admin\n"
+        ."Disallow: /espace-administration\n"
+        ."Disallow: /connexion\n"
+        ."Disallow: /inscription\n"
+        ."Disallow: /inscription-entreprise\n"
+        ."Disallow: /inscription-utilisateur\n"
+        ."Disallow: /verification-email\n"
+        ."Disallow: /mon-espace\n"
+        ."Disallow: /espace-entreprise\n"
+        ."Sitemap: {$baseUrl}/sitemap.xml\n",
         200,
         ['Content-Type' => 'text/plain; charset=UTF-8']
     );
@@ -220,9 +220,54 @@ Route::get('/a-propos', fn () => $siteInfoPage('about'))->name('site.about');
 Route::get('/centre-aide', fn () => $siteInfoPage('help'))->name('site.help');
 Route::get('/documentation', fn () => $siteInfoPage('documentation'))->name('site.documentation');
 Route::get('/securite', fn () => $siteInfoPage('security'))->name('site.security');
-Route::get('/politique-confidentialite', fn () => $siteInfoPage('privacy'))->name('site.privacy');
-Route::get('/conditions-utilisation', fn () => $siteInfoPage('terms'))->name('site.terms');
-Route::get('/politique-cookies', fn () => $siteInfoPage('cookies'))->name('site.cookies');
+Route::get('/politique-confidentialite', function () use ($siteInfoPage) {
+    $page = $siteInfoPage('privacy');
+
+    return $page->with([
+        'documentUrl' => asset('documents/politique-confidentialite-donnees-personnelles.pdf'),
+        'documentName' => 'Politique de confidentialité des données personnelles — OpportuNet Mondiale',
+        'documentTitle' => __('site.privacy.document_title'),
+        'documentIntro' => __('site.privacy.document_intro'),
+        'documentOpenLabel' => __('site.privacy.document_open'),
+        'documentDownloadLabel' => __('site.privacy.document_download'),
+    ]);
+})->name('site.privacy');
+Route::get('/mentions-legales', function () use ($siteInfoPage) {
+    $page = $siteInfoPage('legal');
+
+    return $page->with([
+        'documentUrl' => asset('documents/mentions-legales.pdf'),
+        'documentName' => 'Projet de mentions légales — OpportuNet Mondiale',
+        'documentTitle' => __('site.legal.document_title'),
+        'documentIntro' => __('site.legal.document_intro'),
+        'documentOpenLabel' => __('site.legal.document_open'),
+        'documentDownloadLabel' => __('site.legal.document_download'),
+    ]);
+})->name('site.legal');
+Route::get('/conditions-utilisation', function () use ($siteInfoPage) {
+    $page = $siteInfoPage('terms');
+
+    return $page->with([
+        'documentUrl' => asset('documents/conditions-generales-utilisation.pdf'),
+        'documentName' => 'Conditions générales d’utilisation — OpportuNet Mondiale',
+        'documentTitle' => __('site.terms.document_title'),
+        'documentIntro' => __('site.terms.document_intro'),
+        'documentOpenLabel' => __('site.terms.document_open'),
+        'documentDownloadLabel' => __('site.terms.document_download'),
+    ]);
+})->name('site.terms');
+Route::get('/politique-cookies', function () use ($siteInfoPage) {
+    $page = $siteInfoPage('cookies');
+
+    return $page->with([
+        'documentUrl' => asset('documents/politique-relative-aux-cookies.pdf'),
+        'documentName' => 'Politique relative aux cookies — OpportuNet Mondiale',
+        'documentTitle' => __('site.cookies.document_title'),
+        'documentIntro' => __('site.cookies.document_intro'),
+        'documentOpenLabel' => __('site.cookies.document_open'),
+        'documentDownloadLabel' => __('site.cookies.document_download'),
+    ]);
+})->name('site.cookies');
 
 Route::get('/admin', function (Request $request) {
     $user = $request->user();
@@ -461,7 +506,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ]);
 
         return redirect()
-            ->to(route('home') . '#testimonial-form')
+            ->to(route('home').'#testimonial-form')
             ->with('testimonial_success', __('home.forms.testimonial.success'));
     })->middleware('throttle:user-form')->name('testimonials.store');
 });
@@ -598,6 +643,7 @@ Route::post('/newsletter/abonnement', function (Request $request) use ($resolveR
     $data = $request->validate([
         'prenom' => ['nullable', 'string', 'max:80'],
         'email' => ['required', 'email', 'max:191'],
+        'content_preference' => ['nullable', Rule::in(['all_publications', 'job_offers_only'])],
     ]);
 
     SubmissionGuard::ensureSafeRequest($request, ['prenom'], true);
@@ -609,6 +655,7 @@ Route::post('/newsletter/abonnement', function (Request $request) use ($resolveR
             'langue' => app()->getLocale(),
             'source' => 'website',
             'is_active' => true,
+            'content_preference' => $data['content_preference'] ?? 'all_publications',
             'subscribed_at' => now(),
         ]
     );
@@ -689,7 +736,7 @@ Route::post('/depot-cv-services', function (Request $request) {
         new PlatformDatabaseNotification([
             'title' => __('admin.notifications.events.cv_depot_received.title'),
             'message' => __('admin.notifications.events.cv_depot_received.message', [
-                'name' => trim($cvDepot->prenom . ' ' . $cvDepot->nom),
+                'name' => trim($cvDepot->prenom.' '.$cvDepot->nom),
             ]),
             'action_url' => route('panel.admin.cv-depots', ['cv' => $cvDepot->id]),
             'action_label' => __('admin.notifications.open'),
@@ -700,7 +747,7 @@ Route::post('/depot-cv-services', function (Request $request) {
         ])
     );
 
-    return redirect()->to(route('cv.services.index') . '#cv-form')->with('cv_success', __('cv_services.form.success'));
+    return redirect()->to(route('cv.services.index').'#cv-form')->with('cv_success', __('cv_services.form.success'));
 })->middleware(['auth', 'verified', 'throttle:user-form'])->name('cv.services.store');
 
 Route::post('/formations/inscription', function (Request $request) {
@@ -733,7 +780,7 @@ Route::post('/formations/inscription', function (Request $request) {
 
     if (! $formation->isRegistrationOpen()) {
         return redirect()
-            ->to(route('trainings.index', ['formation' => $formation->id]) . '#training-registration')
+            ->to(route('trainings.index', ['formation' => $formation->id]).'#training-registration')
             ->withErrors(['formation_id' => __('trainings.form.closed')])
             ->withInput();
     }
@@ -751,7 +798,7 @@ Route::post('/formations/inscription', function (Request $request) {
         }
 
         return redirect()
-            ->to(route('trainings.index', ['formation' => $formation->id]) . '#training-registration')
+            ->to(route('trainings.index', ['formation' => $formation->id]).'#training-registration')
             ->withErrors(['formation_id' => __('trainings.form.already_registered')])
             ->withInput();
     }
@@ -792,7 +839,7 @@ Route::post('/formations/inscription', function (Request $request) {
         new PlatformDatabaseNotification([
             'title' => __('admin.notifications.events.training_registration.title'),
             'message' => __('admin.notifications.events.training_registration.message', [
-                'name' => trim($registration->prenom . ' ' . $registration->nom),
+                'name' => trim($registration->prenom.' '.$registration->nom),
                 'training' => $formation->titre,
             ]),
             'action_url' => route('panel.admin.training-registrations', ['registration' => $registration->id]),
@@ -804,7 +851,7 @@ Route::post('/formations/inscription', function (Request $request) {
         ])
     );
 
-    return redirect()->to(route('trainings.index', ['formation' => $formation->id]) . '#training-registration')->with(
+    return redirect()->to(route('trainings.index', ['formation' => $formation->id]).'#training-registration')->with(
         'training_success',
         __('trainings.form.success', ['formation' => $formation->titre])
     );
@@ -890,7 +937,6 @@ Route::get('/depot-cv-services', function () use ($siteSettings) {
         ->where('actif', true)
         ->orderByDesc('en_vedette')
         ->orderBy('ordre')
-        ->take(4)
         ->get();
 
     return view('cv-services.index', [
@@ -1020,7 +1066,7 @@ Route::post('/articles/{article:slug}/commentaires', function (Request $request,
 
     if (! $user) {
         return redirect()->route('login', [
-            'redirect_to' => route('articles.show', $article->slug) . '#article-comments',
+            'redirect_to' => route('articles.show', $article->slug).'#article-comments',
         ]);
     }
 
@@ -1032,7 +1078,7 @@ Route::post('/articles/{article:slug}/commentaires', function (Request $request,
         'parent_id' => [
             'nullable',
             'integer',
-            function (string $attribute, mixed $value, \Closure $fail) use ($article) {
+            function (string $attribute, mixed $value, Closure $fail) use ($article) {
                 if ($value === null || $value === '') {
                     return;
                 }
@@ -1066,7 +1112,7 @@ Route::post('/articles/{article:slug}/commentaires', function (Request $request,
     ]);
 
     return redirect()
-        ->to(route('articles.show', $article->slug) . '#article-comments')
+        ->to(route('articles.show', $article->slug).'#article-comments')
         ->with('article_comment_success', __('articles.comments.success'));
 })->middleware('throttle:user-form')->name('articles.comments.store');
 
@@ -1254,6 +1300,7 @@ Route::get('/versets-bibliques/{verse}', function (Verset $verse) use ($siteSett
     abort_unless($verse->actif, 404);
 
     $settings = $siteSettings();
+    $verse->increment('vues');
     $detailUrl = Seo::localizedUrl(route('spiritual.verses.show', $verse), app()->getLocale());
 
     return view('spiritual.show', [
@@ -1278,7 +1325,7 @@ Route::get('/versets-bibliques/{verse}', function (Verset $verse) use ($siteSett
         'author' => null,
         'shareUrl' => $detailUrl,
         'shareTitle' => $verse->reference,
-        'shareText' => $verse->texte . ' - ' . $verse->version,
+        'shareText' => $verse->texte.' - '.$verse->version,
     ]);
 })->whereNumber('verse')->name('spiritual.verses.show');
 
@@ -1307,6 +1354,7 @@ Route::get('/pensees-du-jour/{publication:slug}', function (SpiritualPublication
     abort_unless($publication->actif && $publication->type === 'pensee', 404);
 
     $settings = $siteSettings();
+    $publication->increment('vues');
     $detailUrl = Seo::localizedUrl(route('spiritual.thoughts.show', $publication->slug), app()->getLocale());
 
     return view('spiritual.show', [
@@ -1360,6 +1408,7 @@ Route::get('/exhortations/{publication:slug}', function (SpiritualPublication $p
     abort_unless($publication->actif && $publication->type === 'exhortation', 404);
 
     $settings = $siteSettings();
+    $publication->increment('vues');
     $detailUrl = Seo::localizedUrl(route('spiritual.exhortations.show', $publication->slug), app()->getLocale());
 
     return view('spiritual.show', [

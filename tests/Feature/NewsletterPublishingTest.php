@@ -32,6 +32,86 @@ class NewsletterPublishingTest extends TestCase
         $this->assertDatabaseHas('newsletter_subscribers', [
             'email' => 'ruth@example.com',
             'is_active' => true,
+            'content_preference' => 'all_publications',
+        ]);
+    }
+
+    public function test_subscriber_can_choose_to_receive_job_offers_only(): void
+    {
+        $this->withFormCaptcha()->post(route('newsletter.subscribe'), $this->captchaPayload([
+            'prenom' => 'Ruth',
+            'email' => 'ruth@example.com',
+            'content_preference' => 'job_offers_only',
+        ]));
+
+        $this->assertDatabaseHas('newsletter_subscribers', [
+            'email' => 'ruth@example.com',
+            'content_preference' => 'job_offers_only',
+        ]);
+    }
+
+    public function test_job_offers_only_subscribers_do_not_receive_spiritual_publications(): void
+    {
+        Mail::fake();
+
+        NewsletterSubscriber::query()->create([
+            'prenom' => 'Toutes publications',
+            'email' => 'all@example.com',
+            'langue' => 'fr',
+            'source' => 'website',
+            'is_active' => true,
+            'content_preference' => 'all_publications',
+            'subscribed_at' => now(),
+        ]);
+
+        NewsletterSubscriber::query()->create([
+            'prenom' => 'Offres seulement',
+            'email' => 'offers@example.com',
+            'langue' => 'fr',
+            'source' => 'website',
+            'is_active' => true,
+            'content_preference' => 'job_offers_only',
+            'subscribed_at' => now(),
+        ]);
+
+        $opportunity = Opportunite::query()->create([
+            'titre' => 'Chargé de projet',
+            'slug' => 'charge-de-projet-preferences',
+            'type' => 'emploi',
+            'description' => 'Une offre destinée aux abonnés.',
+            'statut' => 'brouillon',
+            'teletravail' => false,
+            'urgent' => false,
+            'en_vedette' => false,
+            'vues' => 0,
+        ]);
+
+        $opportunity->update(['statut' => 'publie', 'date_publication' => now()]);
+
+        Mail::assertSent(PublicationNewsletterMail::class, 2);
+
+        $verse = Verset::query()->create([
+            'reference' => 'Psaume 23:1',
+            'reference_fr' => 'Psaume 23:1',
+            'reference_en' => 'Psalm 23:1',
+            'texte' => 'Le Seigneur est mon berger.',
+            'texte_fr' => 'Le Seigneur est mon berger.',
+            'texte_en' => 'The Lord is my shepherd.',
+            'version' => 'LSG',
+            'version_fr' => 'LSG',
+            'version_en' => 'KJV',
+            'actif' => false,
+            'afficher_accueil' => false,
+            'ordre' => 1,
+        ]);
+
+        $verse->update(['actif' => true]);
+
+        Mail::assertSent(PublicationNewsletterMail::class, 3);
+        $this->assertDatabaseHas('newsletters', [
+            'content_type' => Verset::class,
+            'content_id' => $verse->id,
+            'recipients_count' => 1,
         ]);
     }
 

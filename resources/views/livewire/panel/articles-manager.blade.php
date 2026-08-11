@@ -1,4 +1,4 @@
-<div class="panel-stack" wire:poll.30s>
+<div class="panel-stack" wire:poll.30s="poll">
     @if (session('panel_success'))
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
@@ -68,21 +68,9 @@
                     @enderror
                 </label>
 
-                <label class="panel-field panel-field-span">
-                    <span>Contenu FR</span>
-                    <textarea wire:model="contenuFr" rows="7"></textarea>
-                    @error('contenuFr')
-                        <small>{{ $message }}</small>
-                    @enderror
-                </label>
+                <x-rich-text-editor model="contenuFr" label="Contenu FR" />
 
-                <label class="panel-field panel-field-span">
-                    <span>Content EN</span>
-                    <textarea wire:model="contenuEn" rows="7"></textarea>
-                    @error('contenuEn')
-                        <small>{{ $message }}</small>
-                    @enderror
-                </label>
+                <x-rich-text-editor model="contenuEn" label="Content EN" />
 
                 <label class="panel-field">
                     <span>Méta-titre FR</span>
@@ -105,10 +93,19 @@
                 </label>
 
                 <label class="panel-field">
-                    <span>{{ __('admin.articles.tags') }}</span>
-                    <input type="text" wire:model="tags"
-                        placeholder="{{ __('admin.articles.tags_placeholder') }}" />
-                    @error('tags')
+                    <span>{{ __('admin.articles.tags_fr') }}</span>
+                    <input type="text" wire:model="tagsFr"
+                        placeholder="{{ __('admin.articles.tags_placeholder_fr') }}" />
+                    @error('tagsFr')
+                        <small>{{ $message }}</small>
+                    @enderror
+                </label>
+
+                <label class="panel-field">
+                    <span>{{ __('admin.articles.tags_en') }}</span>
+                    <input type="text" wire:model="tagsEn"
+                        placeholder="{{ __('admin.articles.tags_placeholder_en') }}" />
+                    @error('tagsEn')
                         <small>{{ $message }}</small>
                     @enderror
                 </label>
@@ -249,6 +246,7 @@
                 <select wire:model.live="statusFilter">
                     <option value="">{{ __('admin.articles.all_statuses') }}</option>
                     <option value="brouillon">{{ __('admin.articles.statuses.brouillon') }}</option>
+                    <option value="programme">{{ __('admin.articles.statuses.programme') }}</option>
                     <option value="publie">{{ __('admin.articles.statuses.publie') }}</option>
                     <option value="archive">{{ __('admin.articles.statuses.archive') }}</option>
                 </select>
@@ -269,6 +267,7 @@
                             <th>{{ __('admin.articles.category') }}</th>
                             <th>{{ __('admin.articles.status') }}</th>
                             <th>{{ __('admin.articles.published') }}</th>
+                            <th>Vues</th>
                             <th>{{ __('admin.articles.images_count') }}</th>
                             <th>{{ __('admin.users.actions') }}</th>
                         </tr>
@@ -281,7 +280,13 @@
                                     <span>{{ $article->publie_le?->format('d/m/Y') ?: '-' }}</span>
                                 </td>
                                 <td>{{ $article->category?->nom ?: '-' }}</td>
-                                <td>{{ __('admin.articles.statuses.' . $article->statut) }}</td>
+                                <td>
+                                    @if ($article->auto_publish && $article->scheduled_for)
+                                        <span class="panel-badge">{{ __('admin.articles.statuses.programme') }}</span>
+                                    @else
+                                        {{ __('admin.articles.statuses.' . $article->statut) }}
+                                    @endif
+                                </td>
                                 <td>
                                     @if ($article->auto_publish && $article->scheduled_for)
                                         <span class="panel-badge">
@@ -291,6 +296,7 @@
                                         {{ $article->publie_le?->format('d/m/Y') ?: '-' }}
                                     @endif
                                 </td>
+                                <td>{{ number_format($article->vues ?? 0, 0, ',', ' ') }}</td>
                                 <td>{{ $article->images->count() }}/5</td>
                                 <td class="panel-inline-actions">
                                     <a href="{{ route('articles.show', $article->slug) }}" target="_blank"

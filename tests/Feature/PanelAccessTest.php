@@ -41,10 +41,40 @@ class PanelAccessTest extends TestCase
             'pays' => 'Benin',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
+            'personal_data_consent' => true,
         ]));
 
         $response->assertRedirect(route('verification.notice'));
         $this->assertAuthenticated();
+        $this->assertDatabaseHas('users', [
+            'email' => 'marie@example.com',
+            'personal_data_consent_version' => '2026-07-24',
+        ]);
+    }
+
+    public function test_registration_requires_personal_data_consent(): void
+    {
+        Role::query()->firstOrCreate([
+            'nom' => 'user',
+        ], [
+            'libelle' => 'Utilisateur',
+            'permissions' => json_encode(['view_public']),
+            'actif' => true,
+        ]);
+
+        $response = $this->withFormCaptcha()
+            ->from(route('register.user'))
+            ->post(route('register.user.store'), $this->captchaPayload([
+                'prenom' => 'Marie',
+                'nom' => 'Sans consentement',
+                'email' => 'sans-consentement@example.com',
+                'password' => 'Password123',
+                'password_confirmation' => 'Password123',
+            ]));
+
+        $response->assertRedirect(route('register.user'));
+        $response->assertSessionHasErrors('personal_data_consent');
+        $this->assertDatabaseMissing('users', ['email' => 'sans-consentement@example.com']);
     }
 
     public function test_super_admin_can_access_admin_dashboard(): void
@@ -312,7 +342,7 @@ class PanelAccessTest extends TestCase
 
     private function assertMenuBadge(string $html, string $route, string $badge): void
     {
-        $pattern = '/<a href="' . preg_quote($route, '/') . '" class="[^"]*">.*?<span class="panel-nav-badge">' . preg_quote($badge, '/') . '<\/span>/s';
+        $pattern = '/<a href="'.preg_quote($route, '/').'" class="[^"]*">.*?<span class="panel-nav-badge">'.preg_quote($badge, '/').'<\/span>/s';
 
         $this->assertMatchesRegularExpression($pattern, $html);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasScheduledPublication;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -10,6 +11,7 @@ use Illuminate\Support\Str;
 class Service extends Model
 {
     use Bilingual;
+    use HasScheduledPublication;
 
     protected $table = 'services';
 
@@ -87,6 +89,6 @@ class Service extends Model
             return asset($this->image);
         }
 
-        return asset('storage/' . ltrim(Str::replace('\\', '/', (string) $this->image), '/'));
+        return asset('storage/'.ltrim(Str::replace('\\', '/', (string) $this->image), '/'));
     }
 }

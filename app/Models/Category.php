@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasScheduledPublication;
 use Illuminate\Database\Eloquent\Model;
 
 class Category extends Model
 {
     use Bilingual;
+    use HasScheduledPublication;
 
     protected $table = 'categories';
 

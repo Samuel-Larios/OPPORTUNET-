@@ -331,6 +331,13 @@ return [
             'submit' => 'Submit my request',
         ],
         'newsletter' => [
+            'preference_all_short' => 'All publications',
+            'preference_all_detail' => 'Opportunities, Bible verses, and inspiring content',
+            'preference_offers_short' => 'Job opportunities',
+            'preference_offers_detail' => 'New opportunities only',
+            'preference_label' => 'I would like to receive',
+            'preference_all' => 'All publications: opportunities, Bible verses, and other content',
+            'preference_offers_only' => 'New job opportunities only',
             'success' => 'Your newsletter subscription has been saved.',
             'prenom' => 'Your first name',
             'email' => 'Your email',
@@ -371,6 +378,7 @@ return [
         'autre' => 'Opportunity',
     ],
     'footer' => [
+        'legal' => 'Legal notice',
         'description' => 'A clear and inspiring space to connect calling, skills, and opportunities.',
         'product' => 'Platform',
         'company' => 'Organization',

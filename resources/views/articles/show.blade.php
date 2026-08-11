@@ -137,7 +137,7 @@
                         @endif
 
                         <div class="article-detail-richtext">
-                            {!! nl2br(e($article->contenu)) !!}
+                            {!! \App\Support\RichText::sanitize($article->contenu) !!}
                         </div>
                     </article>
 
@@ -278,13 +278,12 @@
                             @endphp
                             <article class="article-card reveal reveal-delay-{{ min($index + 1, 4) }}">
                                 <div class="article-card-visual" style="--article-accent: {{ $relatedAccent }};">
+                                    <div class="article-card-placeholder">
+                                        <span>{{ $relatedArticle->category?->nom ?: __('articles.card.default_badge') }}</span>
+                                        <strong>{{ $relatedArticle->titre }}</strong>
+                                    </div>
                                     @if ($relatedImageUrl)
-                                        <img src="{{ $relatedImageUrl }}" alt="{{ $relatedImageAlt }}">
-                                    @else
-                                        <div class="article-card-placeholder">
-                                            <span>{{ $relatedArticle->category?->nom ?: __('articles.card.default_badge') }}</span>
-                                            <strong>{{ $relatedArticle->titre }}</strong>
-                                        </div>
+                                        <img src="{{ $relatedImageUrl }}" alt="" onerror="this.remove()">
                                     @endif
                                 </div>
                                 <div class="article-card-body">

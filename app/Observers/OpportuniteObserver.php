@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Opportunite;
 use App\Services\PublicationNewsletterService;
+use Throwable;
 
 class OpportuniteObserver
 {
@@ -16,6 +17,10 @@ class OpportuniteObserver
             return;
         }
 
-        app(PublicationNewsletterService::class)->sendForPublishedOpportunity($opportunite);
+        try {
+            app(PublicationNewsletterService::class)->sendForPublishedOpportunity($opportunite);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 }

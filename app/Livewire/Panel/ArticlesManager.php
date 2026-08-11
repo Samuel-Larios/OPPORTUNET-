@@ -5,6 +5,7 @@ namespace App\Livewire\Panel;
 use App\Models\BlogArticle;
 use App\Models\BlogArticleImage;
 use App\Models\Category;
+use App\Support\RichText;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
@@ -43,6 +44,8 @@ class ArticlesManager extends Component
     public string $metaTitreEn = '';
     public string $metaDescriptionFr = '';
     public string $metaDescriptionEn = '';
+    public string $tagsFr = '';
+    public string $tagsEn = '';
     public string $tags = '';
     public string $tempsLecture = '';
     public string $datePublication = '';
@@ -141,7 +144,9 @@ class ArticlesManager extends Component
         $this->metaTitreEn = (string) ($article->getRawOriginal('meta_titre_en') ?? $article->meta_titre ?? '');
         $this->metaDescriptionFr = (string) ($article->getRawOriginal('meta_description_fr') ?? $article->meta_description ?? '');
         $this->metaDescriptionEn = (string) ($article->getRawOriginal('meta_description_en') ?? $article->meta_description ?? '');
-        $this->tags = implode(', ', $article->tags ?? []);
+        $this->tagsFr = implode(', ', $article->tags_fr ?? $article->tags ?? []);
+        $this->tagsEn = implode(', ', $article->tags_en ?? $article->tags ?? []);
+        $this->tags = $this->tagsFr;
         $this->tempsLecture = (string) ($article->temps_lecture ?? '');
         $this->datePublication = $article->publie_le?->format('Y-m-d') ?? '';
         $this->statut = (string) $article->statut;
@@ -189,6 +194,8 @@ class ArticlesManager extends Component
             'metaTitreEn',
             'metaDescriptionFr',
             'metaDescriptionEn',
+            'tagsFr',
+            'tagsEn',
             'tags',
             'tempsLecture',
             'datePublication',
@@ -323,16 +330,18 @@ class ArticlesManager extends Component
                 'extrait' => $validated['extraitFr'] ?: null,
                 'extrait_fr' => $validated['extraitFr'] ?: null,
                 'extrait_en' => $validated['extraitEn'] !== '' ? $validated['extraitEn'] : ($validated['extraitFr'] ?: null),
-                'contenu' => $validated['contenuFr'],
-                'contenu_fr' => $validated['contenuFr'],
-                'contenu_en' => $validated['contenuEn'] !== '' ? $validated['contenuEn'] : $validated['contenuFr'],
+                'contenu' => RichText::sanitize($validated['contenuFr']),
+                'contenu_fr' => RichText::sanitize($validated['contenuFr']),
+                'contenu_en' => RichText::sanitize($validated['contenuEn'] !== '' ? $validated['contenuEn'] : $validated['contenuFr']),
                 'meta_titre' => $validated['metaTitreFr'] ?: null,
                 'meta_titre_fr' => $validated['metaTitreFr'] ?: null,
                 'meta_titre_en' => $validated['metaTitreEn'] !== '' ? $validated['metaTitreEn'] : ($validated['metaTitreFr'] ?: null),
                 'meta_description' => $validated['metaDescriptionFr'] ?: null,
                 'meta_description_fr' => $validated['metaDescriptionFr'] ?: null,
                 'meta_description_en' => $validated['metaDescriptionEn'] !== '' ? $validated['metaDescriptionEn'] : ($validated['metaDescriptionFr'] ?: null),
-                'tags' => $this->parseTags($validated['tags']),
+                'tags' => $this->parseTags($validated['tagsFr'] !== '' ? $validated['tagsFr'] : $validated['tags']),
+                'tags_fr' => $this->parseTags($validated['tagsFr'] !== '' ? $validated['tagsFr'] : $validated['tags']),
+                'tags_en' => $this->parseTags($validated['tagsEn'] !== '' ? $validated['tagsEn'] : ($validated['tagsFr'] !== '' ? $validated['tagsFr'] : $validated['tags'])),
                 'statut' => $scheduledFor ? 'brouillon' : $targetStatus,
                 'publie_le' => $scheduledFor
                     ? null
@@ -399,7 +408,11 @@ class ArticlesManager extends Component
                         ->orWhere('extrait_en', 'like', $term);
                 });
             })
-            ->when($this->statusFilter !== '', fn($query) => $query->where('statut', $this->statusFilter))
+            ->when(
+                $this->statusFilter === 'programme',
+                fn ($query) => $query->where('auto_publish', true)->whereNotNull('scheduled_for'),
+                fn ($query) => $query->when($this->statusFilter !== '', fn ($statusQuery) => $statusQuery->where('statut', $this->statusFilter))
+            )
             ->when($this->categoryFilter !== '', fn($query) => $query->whereHas(
                 'category',
                 fn($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
@@ -430,6 +443,8 @@ class ArticlesManager extends Component
             'metaTitreEn' => ['nullable', 'string', 'max:200'],
             'metaDescriptionFr' => ['nullable', 'string'],
             'metaDescriptionEn' => ['nullable', 'string'],
+            'tagsFr' => ['nullable', 'string', 'max:600'],
+            'tagsEn' => ['nullable', 'string', 'max:600'],
             'tags' => ['nullable', 'string', 'max:600'],
             'tempsLecture' => ['nullable', 'string', 'max:20'],
             'datePublication' => ['nullable', 'date'],

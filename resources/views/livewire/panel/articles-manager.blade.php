@@ -1,4 +1,4 @@
-<div class="panel-stack" wire:poll.30s="poll">
+<div class="panel-stack">
     @if (session('panel_success'))
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
@@ -10,10 +10,21 @@
                 <p>{{ __('admin.articles.images_hint') }}</p>
             </div>
 
-            <form wire:submit="saveArticle" class="panel-form-grid" enctype="multipart/form-data">
+            <form wire:submit.prevent="saveArticle" class="panel-form-grid" enctype="multipart/form-data">
+                @if ($errors->any())
+                    <div class="panel-alert-error panel-field-span" role="alert">
+                        <strong>{{ app()->getLocale() === 'fr' ? 'La publication nécessite quelques corrections :' : 'Please correct the following before publishing:' }}</strong>
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
                 <label class="panel-field">
                     <span>Titre FR</span>
-                    <input type="text" wire:model="titreFr" />
+                    <input type="text" wire:model="titreFr" maxlength="90" />
                     @error('titreFr')
                         <small>{{ $message }}</small>
                     @enderror
@@ -21,7 +32,7 @@
 
                 <label class="panel-field">
                     <span>Title EN</span>
-                    <input type="text" wire:model="titreEn" />
+                    <input type="text" wire:model="titreEn" maxlength="90" />
                     @error('titreEn')
                         <small>{{ $message }}</small>
                     @enderror
@@ -54,7 +65,7 @@
 
                 <label class="panel-field panel-field-span">
                     <span>Extrait FR</span>
-                    <textarea wire:model="extraitFr" rows="3"></textarea>
+                    <textarea wire:model="extraitFr" rows="3" maxlength="220"></textarea>
                     @error('extraitFr')
                         <small>{{ $message }}</small>
                     @enderror
@@ -62,34 +73,47 @@
 
                 <label class="panel-field panel-field-span">
                     <span>Excerpt EN</span>
-                    <textarea wire:model="extraitEn" rows="3"></textarea>
+                    <textarea wire:model="extraitEn" rows="3" maxlength="220"></textarea>
                     @error('extraitEn')
                         <small>{{ $message }}</small>
                     @enderror
                 </label>
 
-                <x-rich-text-editor model="contenuFr" label="Contenu FR" />
+                <label class="panel-field panel-field-span">
+                    <span>Contenu FR</span>
+                    <textarea wire:model.live="contenuFr" rows="12" maxlength="20000"></textarea>
+                    <small>Vous pouvez rédiger ou coller le contenu de l’article ici.</small>
+                    @error('contenuFr')
+                        <small>{{ $message }}</small>
+                    @enderror
+                </label>
 
-                <x-rich-text-editor model="contenuEn" label="Content EN" />
+                <label class="panel-field panel-field-span">
+                    <span>Content EN</span>
+                    <textarea wire:model.live="contenuEn" rows="12" maxlength="20000"></textarea>
+                    @error('contenuEn')
+                        <small>{{ $message }}</small>
+                    @enderror
+                </label>
 
                 <label class="panel-field">
                     <span>Méta-titre FR</span>
-                    <input type="text" wire:model="metaTitreFr" />
+                    <input type="text" wire:model="metaTitreFr" maxlength="60" />
                 </label>
 
                 <label class="panel-field">
                     <span>Meta title EN</span>
-                    <input type="text" wire:model="metaTitreEn" />
+                    <input type="text" wire:model="metaTitreEn" maxlength="60" />
                 </label>
 
                 <label class="panel-field panel-field-span">
                     <span>Méta-description FR</span>
-                    <textarea wire:model="metaDescriptionFr" rows="3"></textarea>
+                    <textarea wire:model="metaDescriptionFr" rows="3" maxlength="160"></textarea>
                 </label>
 
                 <label class="panel-field panel-field-span">
                     <span>Meta description EN</span>
-                    <textarea wire:model="metaDescriptionEn" rows="3"></textarea>
+                    <textarea wire:model="metaDescriptionEn" rows="3" maxlength="160"></textarea>
                 </label>
 
                 <label class="panel-field">

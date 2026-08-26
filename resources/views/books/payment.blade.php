@@ -1,0 +1,1 @@
+<x-layouts.panel :title="'Paiement du livre'"><section class="panel-card"><h1>{{ $book->title }}</h1><p>{{ number_format($book->price,0,',',' ') }} FCFA</p><form method="POST" action="{{ route('books.checkout',$book) }}">@csrf<button class="panel-primary-btn">Payer avec FedaPay</button></form></section></x-layouts.panel>

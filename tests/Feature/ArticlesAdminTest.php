@@ -101,6 +101,31 @@ class ArticlesAdminTest extends TestCase
         }
     }
 
+    public function test_first_uploaded_image_is_used_as_featured_image_when_none_is_selected(): void
+    {
+        Storage::fake('public');
+
+        $editor = User::factory()->create([
+            'role_id' => $this->firstOrCreateRole('editeur', 'Editeur')->id,
+            'actif' => true,
+        ]);
+
+        $this->actingAs($editor);
+
+        Livewire::test(ArticlesManager::class)
+            ->set('titreFr', 'Publication sans choix de couverture')
+            ->set('contenuFr', 'Le contenu est suffisant pour publier cet article.')
+            ->set('statut', 'publie')
+            ->set('newImages', [UploadedFile::fake()->create('couverture.jpg', 120, 'image/jpeg')])
+            ->call('saveArticle')
+            ->assertHasNoErrors();
+
+        $article = BlogArticle::query()->where('slug', 'publication-sans-choix-de-couverture')->firstOrFail();
+
+        $this->assertSame('publie', $article->statut);
+        $this->assertTrue((bool) $article->images()->firstOrFail()->is_featured);
+    }
+
     private function firstOrCreateRole(string $name, string $label): Role
     {
         return Role::query()->firstOrCreate([

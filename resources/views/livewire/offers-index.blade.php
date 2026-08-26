@@ -98,6 +98,9 @@
                                 @if ($opportunity->teletravail)
                                     <span class="offer-remote-badge">{{ __('offers.badges.remote') }}</span>
                                 @endif
+                                @if ($opportunity->is_premium)
+                                    <span class="opportunity-urgent">{{ app()->getLocale() === 'fr' ? 'Premium' : 'Premium' }}</span>
+                                @endif
                             </div>
                             @if ($opportunity->date_publication)
                                 <span class="offer-date">{{ __('offers.card.published') }} {{ $opportunity->date_publication->locale(app()->getLocale())->translatedFormat('d M Y') }}</span>
@@ -105,7 +108,7 @@
                         </div>
 
                         <h2>{{ $opportunity->titre }}</h2>
-                        <p>{{ \Illuminate\Support\Str::limit($opportunity->description, 180) }}</p>
+                        <p>{{ $opportunity->is_premium ? (app()->getLocale() === 'fr' ? 'Aperçu disponible. Abonnement requis pour lire l’offre complète et postuler.' : 'Preview available. A subscription is required to read the full offer and apply.') : \Illuminate\Support\Str::limit($opportunity->description, 180) }}</p>
 
                         <div class="offer-meta-list">
                             <span>{{ $opportunity->organisation ?: __('offers.card.organization_fallback') }}</span>

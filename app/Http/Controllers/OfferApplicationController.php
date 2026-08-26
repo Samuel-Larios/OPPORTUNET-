@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CandidatureOffre;
 use App\Models\Opportunite;
 use App\Notifications\PlatformDatabaseNotification;
+use App\Services\JobSubscriptionService;
 use App\Support\NotificationRecipients;
 use App\Support\SubmissionGuard;
 use Illuminate\Http\RedirectResponse;
@@ -25,11 +26,11 @@ class OfferApplicationController extends Controller
             return redirect()->route('verification.notice');
         }
 
-        if (! $request->user()->hasRole('user')) {
-            return redirect()->route($request->user()->dashboardRouteName());
+        if ($opportunite->is_premium && ! app(JobSubscriptionService::class)->hasActiveSubscription($request->user())) {
+            return redirect()->route('subscriptions.index')->with('subscription_pending', 'Un abonnement actif est nécessaire pour postuler à cette offre premium.');
         }
 
-        return redirect()->to(route('offers.show', $opportunite->slug) . '#application-form');
+        return redirect()->to(route('offers.show', $opportunite->slug).'#application-form');
     }
 
     public function store(Request $request, Opportunite $opportunite): RedirectResponse
@@ -37,6 +38,10 @@ class OfferApplicationController extends Controller
         abort_unless($opportunite->statut === 'publie', 404);
 
         $user = $request->user();
+
+        if ($opportunite->is_premium && ! app(JobSubscriptionService::class)->hasActiveSubscription($user)) {
+            return redirect()->route('subscriptions.index')->with('subscription_pending', 'Un abonnement actif est nécessaire pour postuler à cette offre premium.');
+        }
 
         SubmissionGuard::ensureSafeRequest($request, [
             'pays',
@@ -62,7 +67,7 @@ class OfferApplicationController extends Controller
 
         if (CandidatureOffre::query()->where('user_id', $user->id)->where('opportunite_id', $opportunite->id)->exists()) {
             return redirect()
-                ->to(route('offers.show', $opportunite->slug) . '#application-form')
+                ->to(route('offers.show', $opportunite->slug).'#application-form')
                 ->withErrors(['application' => __('offers.application.validation.already_applied')]);
         }
 
@@ -118,7 +123,7 @@ class OfferApplicationController extends Controller
         }
 
         return redirect()
-            ->to(route('offers.show', $opportunite->slug) . '#application-form')
+            ->to(route('offers.show', $opportunite->slug).'#application-form')
             ->with('offer_application_success', __('offers.application.success'));
     }
 }

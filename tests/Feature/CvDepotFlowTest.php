@@ -52,6 +52,7 @@ class CvDepotFlowTest extends TestCase
             ->set('telephone', '+22900000000')
             ->set('whatsapp', '+22900000000')
             ->set('pays', 'Benin')
+            ->set('genre', 'homme')
             ->set('ville', 'Cotonou')
             ->set('titrePoste', 'Chef de projet')
             ->set('niveauEtude', 'Master')
@@ -91,6 +92,9 @@ class CvDepotFlowTest extends TestCase
         $this->actingAs($admin);
 
         Livewire::test(CvDepotsManager::class)
+            ->assertSee('Benin (1)')
+            ->assertSee('Gestion de projet (1)')
+            ->assertSee('Master (1)')
             ->call('selectCvDepot', $cvDepot->id)
             ->set('processingStatus', 'en_traitement')
             ->set('adminNotes', 'Dossier en cours de revue.')

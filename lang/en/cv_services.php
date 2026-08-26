@@ -2,19 +2,19 @@
 
 return [
     'meta' => [
-        'title' => 'CV Submission / Services',
+        'title' => 'I want an opportunity',
     ],
     'page' => [
-        'label' => 'CV Submission / Services',
-        'title' => 'Submit your CV and choose the right support',
-        'subtitle' => 'Upload your CV in PDF, tell us what you need, and let us guide you to the most useful service.',
-        'primary' => 'Submit my CV',
+        'label' => 'I want an opportunity',
+        'title' => 'Tell us which opportunity you are looking for',
+        'subtitle' => 'Your request helps us publish opportunities tailored to the most represented profiles and countries.',
+        'primary' => 'Share my need',
         'secondary' => 'Chat on WhatsApp',
     ],
     'form' => [
-        'label' => 'CV form',
-        'title' => 'CV submission form',
-        'subtitle' => 'Share your profile, your goal, and your PDF file so we can support you effectively.',
+        'label' => 'I want an opportunity',
+        'title' => 'Share your need',
+        'subtitle' => 'Tell us the field you are looking for and attach your CV. We use these requests to better target published opportunities.',
         'success' => 'Your CV service request has been received successfully. We will get back to you after review.',
         'errors_title' => 'Please correct the fields below:',
         'pdf_title' => 'Accepted format',
@@ -46,6 +46,8 @@ return [
             'type_contrat_placeholder' => 'Preferred contract type',
             'teletravail' => 'I am open to remote work',
             'objectif' => 'Your professional goal',
+            'besoin_exact' => 'Exact need: what type of opportunity are you looking for?',
+            'observation' => 'Observation (optional)',
             'secteurs_interet' => 'Sectors of interest',
             'linkedin_url' => 'LinkedIn URL',
             'portfolio_url' => 'Portfolio URL',
@@ -67,6 +69,8 @@ return [
         'subtitle' => 'Practical services to strengthen your application, clarify your direction, and help you move forward.',
         'meta_default' => 'Support',
         'on_request' => 'On request',
+        'details_cta' => 'See more',
+        'back_cta' => 'All services',
         'whatsapp_cta' => 'Request this service',
     ],
     'whatsapp' => [

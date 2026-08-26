@@ -19,3 +19,8 @@ Schedule::command('content:publish-scheduled')
     ->everyMinute()
     ->withoutOverlapping()
     ->timezone($scheduleTimezone);
+
+Schedule::command('subscriptions:send-expiry-reminders')
+    ->dailyAt('09:00')
+    ->withoutOverlapping()
+    ->timezone($scheduleTimezone);

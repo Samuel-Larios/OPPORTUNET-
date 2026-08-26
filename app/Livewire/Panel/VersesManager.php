@@ -26,15 +26,25 @@ class VersesManager extends Component
     public ?int $editingVerseId = null;
 
     public string $referenceFr = '';
+
     public string $referenceEn = '';
+
     public string $texteFr = '';
+
     public string $texteEn = '';
+
     public string $versionFr = 'LSG';
+
     public string $versionEn = 'LSG';
+
     public string $ordre = '0';
+
     public bool $actif = true;
+
     public bool $afficherAccueil = false;
+
     public bool $scheduleEnabled = false;
+
     public string $scheduleAt = '';
 
     protected ?bool $referenceLocalizationAvailable = null;
@@ -119,10 +129,10 @@ class VersesManager extends Component
     public function saveVerse(): void
     {
         $validated = $this->validate([
-            'referenceFr' => ['required', 'string'],
-            'referenceEn' => ['nullable', 'string'],
-            'texteFr' => ['required', 'string'],
-            'texteEn' => ['nullable', 'string'],
+            'referenceFr' => ['required', 'string', 'max:100'],
+            'referenceEn' => ['nullable', 'string', 'max:100'],
+            'texteFr' => ['required', 'string', 'max:1200'],
+            'texteEn' => ['nullable', 'string', 'max:1200'],
             'versionFr' => ['required', 'string', 'max:50'],
             'versionEn' => ['nullable', 'string', 'max:50'],
             'ordre' => ['nullable', 'integer', 'min:0'],
@@ -183,7 +193,7 @@ class VersesManager extends Component
 
         $verses = Verset::query()
             ->when($search !== '', function ($query) use ($search, $hasReferenceLocalization) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $query->where(function ($nested) use ($term, $hasReferenceLocalization) {
                     $nested
@@ -202,8 +212,8 @@ class VersesManager extends Component
                     }
                 });
             })
-            ->when($this->activeFilter !== '', fn($query) => $query->where('actif', $this->activeFilter === '1'))
-            ->when($this->homeFilter !== '', fn($query) => $query->where('afficher_accueil', $this->homeFilter === '1'))
+            ->when($this->activeFilter !== '', fn ($query) => $query->where('actif', $this->activeFilter === '1'))
+            ->when($this->homeFilter !== '', fn ($query) => $query->where('afficher_accueil', $this->homeFilter === '1'))
             ->orderByDesc('afficher_accueil')
             ->orderByDesc('actif')
             ->orderBy('ordre')

@@ -50,12 +50,22 @@
             margin: 0;
             font-size: 1.3rem;
             color: #0d2e35;
+            display: -webkit-box;
+            min-height: 3.2em;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
         }
 
         .spiritual-card p {
             margin: 0;
             color: #395a64;
             line-height: 1.8;
+            display: -webkit-box;
+            min-height: 7.2em;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            overflow: hidden;
         }
 
         .spiritual-ref {
@@ -147,11 +157,7 @@
                                 <div style="display: grid; gap: 10px;">
                                     <h2>{{ $item->titre }}</h2>
 
-                                    @if ($item->extrait)
-                                        <p>{{ $item->extrait }}</p>
-                                    @endif
-
-                                    <p>{{ \Illuminate\Support\Str::limit($item->contenu, 220) }}</p>
+                                    <p>{{ \Illuminate\Support\Str::limit($item->extrait ?: $item->contenu, 220) }}</p>
                                 </div>
 
                                 @if ($item->auteur)

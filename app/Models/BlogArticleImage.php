@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class BlogArticleImage extends Model
 {
@@ -45,7 +46,13 @@ class BlogArticleImage extends Model
             return asset($this->image_path);
         }
 
-        return asset('storage/' . ltrim($this->image_path, '/'));
+        $path = ltrim($this->image_path, '/');
+
+        if (Storage::disk('public')->exists($path)) {
+            return asset('storage/' . $path);
+        }
+
+        return asset('images/tm-622-screen-01.jpg');
     }
 
     public function altText(string $fallback = ''): string

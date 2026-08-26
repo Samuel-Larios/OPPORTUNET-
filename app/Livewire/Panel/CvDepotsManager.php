@@ -99,6 +99,20 @@ class CvDepotsManager extends Component
     {
         $search = trim($this->search);
 
+        $analyticsQuery = CvDepot::query();
+        $topValues = static function (string $column) use ($analyticsQuery) {
+            return (clone $analyticsQuery)
+                ->whereNotNull($column)
+                ->where($column, '!=', '')
+                ->select($column)
+                ->selectRaw('COUNT(*) as total')
+                ->groupBy($column)
+                ->orderByDesc('total')
+                ->orderBy($column)
+                ->limit(5)
+                ->get();
+        };
+
         $cvDepots = CvDepot::query()
             ->with(['messages', 'processedBy'])
             ->when($search !== '', function ($query) use ($search) {
@@ -131,6 +145,12 @@ class CvDepotsManager extends Component
         return view('livewire.panel.cv-depots-manager', [
             'cvDepots' => $cvDepots,
             'selectedCvDepot' => $selectedCvDepot,
+            'analytics' => [
+                'total' => $analyticsQuery->count(),
+                'countries' => $topValues('pays'),
+                'fields' => $topValues('domaine_etude'),
+                'degrees' => $topValues('niveau_etude'),
+            ],
         ]);
     }
 

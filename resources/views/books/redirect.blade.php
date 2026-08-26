@@ -1,0 +1,1 @@
+<x-layouts.panel title="Redirection vers FedaPay"><section class="panel-card"><p>Ouverture du paiement sécurisé…</p><a class="panel-primary-btn" href="{{ $order->checkout_url }}">Ouvrir FedaPay</a></section><script>window.setTimeout(()=>window.location.assign(@json($order->checkout_url)),500)</script></x-layouts.panel>

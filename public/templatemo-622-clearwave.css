@@ -2541,6 +2541,46 @@ Free for personal and commercial use
         linear-gradient(160deg, rgba(191, 145, 58, 0.96), rgba(37, 108, 125, 0.9));
     }
 
+    /* The “Qui sommes-nous ?” panel is treated as a compact editorial card:
+       the project marker anchors the copy and the verse balances the lower area. */
+    .hero-panel-secondary.has-verse {
+      padding: 34px 36px;
+      background:
+        radial-gradient(circle at 92% 10%, rgba(255, 255, 255, 0.2), transparent 23%),
+        linear-gradient(145deg, #b98d3c 0%, #947d51 42%, #1f7080 100%);
+    }
+
+    .hero-panel-secondary.has-verse::before {
+      background:
+        linear-gradient(90deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+        linear-gradient(145deg, rgba(255, 255, 255, 0.16), transparent 46%);
+      background-size: 48px 48px, auto;
+      opacity: 0.5;
+    }
+
+    .hero-panel-secondary .hero-project-chip {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-top: 22px;
+      padding: 16px 0 0;
+    }
+
+    .hero-panel-secondary .hero-project-chip strong {
+      font-size: 1.04rem;
+      text-align: right;
+    }
+
+    .hero-panel-secondary.has-verse .hero-verse-snippet {
+      margin-top: auto;
+      margin-right: 0;
+      padding: 20px 22px 20px 28px;
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(6, 48, 60, 0.18);
+      box-shadow: 0 18px 32px rgba(10, 47, 57, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+    }
+
     .hero-panel-tag {
       display: inline-flex;
       align-items: center;
@@ -3080,6 +3120,14 @@ Free for personal and commercial use
       color: #0d2c43;
     }
 
+    .service-card h3 {
+      display: -webkit-box;
+      min-height: 3.3em;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+    }
+
     .service-card p,
     .opportunity-card p,
     .testimonial-card-home p,
@@ -3089,6 +3137,72 @@ Free for personal and commercial use
       margin-top: 16px;
       color: #486475;
       line-height: 1.8;
+    }
+
+    .service-card p {
+      display: -webkit-box;
+      min-height: 9em;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 5;
+      overflow: hidden;
+    }
+
+    .service-detail-section {
+      padding: 30px 0 96px;
+    }
+
+    .service-detail-card {
+      display: grid;
+      grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+      gap: 32px;
+      padding: 34px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 24px 44px rgba(8, 39, 60, 0.08);
+    }
+
+    .service-detail-card--without-image {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .service-detail-image {
+      width: 100%;
+      height: 100%;
+      min-height: 260px;
+      border-radius: 20px;
+      object-fit: cover;
+    }
+
+    .service-detail-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .service-detail-meta span {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(10, 89, 128, 0.08);
+      color: #0f5a83;
+      font-size: 0.84rem;
+      font-weight: 700;
+    }
+
+    .service-detail-content {
+      color: #36576a;
+      line-height: 1.85;
+    }
+
+    @media (max-width: 760px) {
+      .service-detail-card {
+        grid-template-columns: 1fr;
+        padding: 24px;
+      }
+
+      .service-detail-image {
+        min-height: 200px;
+      }
     }
 
     .opportunity-grid,
@@ -3262,6 +3376,24 @@ Free for personal and commercial use
 
     .prayer-verse .prayer-card-label {
       background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Home previews stay compact; the complete meditation is available via
+       the “Voir les détails” action on each card. */
+    .prayer-verse-card h3 {
+      display: -webkit-box;
+      min-height: 3.3em;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
+    }
+
+    .prayer-verse-card > p {
+      display: -webkit-box;
+      min-height: 9em;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 5;
+      overflow: hidden;
     }
 
     .prayer-testimony-card::before {
@@ -4353,6 +4485,8 @@ Free for personal and commercial use
       position: relative;
       overflow: hidden;
       padding: 24px;
+      display: flex;
+      flex-direction: column;
       border-radius: 28px;
       border: 1px solid rgba(255, 255, 255, 0.82);
       background:
@@ -4416,24 +4550,57 @@ Free for personal and commercial use
       line-height: 1.12;
       letter-spacing: -0.04em;
       color: #0d2c43;
+      display: -webkit-box;
+      min-height: 3.36em;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
     }
 
     .offer-list-card p {
       margin-top: 14px;
       color: #4d6878;
       line-height: 1.82;
+      display: -webkit-box;
+      min-height: 7.28em;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 4;
+      overflow: hidden;
     }
 
     .offer-meta-list {
       display: grid;
       gap: 10px;
       margin-top: 18px;
+      min-height: 6.3em;
       color: #60798a;
       font-size: 0.92rem;
     }
 
     .offer-card-actions {
-      margin-top: 22px;
+      margin-top: auto;
+      padding-top: 22px;
+    }
+
+    .subscription-plan-price {
+      margin: 18px 0 0;
+      color: #0d5a82;
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .subscription-plan-actions {
+      display: flex;
+      padding-top: 24px;
+    }
+
+    .subscription-plan-actions .solid-submit {
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .subscription-information {
+      margin-top: 28px;
     }
 
     .offers-pagination {
@@ -4948,6 +5115,10 @@ Free for personal and commercial use
     .article-card-placeholder strong {
       font-size: 1.3rem;
       line-height: 1.25;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
     }
 
     .article-card-body {
@@ -5011,12 +5182,22 @@ Free for personal and commercial use
       color: #0d2c43;
       font-size: 1.32rem;
       line-height: 1.3;
+      display: -webkit-box;
+      min-height: 3.9em;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      overflow: hidden;
     }
 
     .article-card p {
       margin: 0;
       color: #4d6878;
       line-height: 1.75;
+      display: -webkit-box;
+      min-height: 7em;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 4;
+      overflow: hidden;
     }
 
     .article-meta-list {
@@ -5426,7 +5607,8 @@ Free for personal and commercial use
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin-top: 20px;
+      margin-top: auto;
+      padding-top: 20px;
       position: relative;
       z-index: 1;
     }
@@ -5434,6 +5616,13 @@ Free for personal and commercial use
     .cv-service-footer strong {
       color: #0d2c43;
       font-size: 0.98rem;
+    }
+
+    .cv-service-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
     }
 
     .cv-whatsapp-section {
@@ -5481,7 +5670,8 @@ Free for personal and commercial use
       }
 
       .cv-services-hero-actions,
-      .cv-service-footer {
+      .cv-service-footer,
+      .cv-service-actions {
         justify-content: flex-start;
       }
     }
@@ -6251,6 +6441,7 @@ Free for personal and commercial use
     /* Keep the hero content compact: no artificial gap before the verse card. */
     .hero-frame-wide { min-height: 0; }
     .hero-slider { min-height: 0; }
+    .hero { min-height: 0; }
     .header-slider-controls { margin-top: 22px; }
     .hero-panel-card.has-verse { justify-content: flex-start; }
     .hero-panel-card.has-verse .hero-verse-snippet {
@@ -6273,5 +6464,78 @@ Free for personal and commercial use
 
       .hero-panel-card.has-verse h3 {
         max-width: none;
+      }
+    }
+
+    @media (min-width: 1025px) {
+      .hero-panel-secondary.has-verse .hero-verse-snippet {
+        margin-top: auto;
+      }
+
+      /* Do not stretch the visual panel to the height of the editorial copy.
+         Each slide keeps a compact, intentional card instead of an empty block. */
+      .hero-slide-panel {
+        align-self: start;
+      }
+
+    .hero-panel-card.has-verse {
+      min-height: 0;
+    }
+  }
+
+    /* Keep every desktop navigation label on one deliberate line. */
+    .nav-links a {
+      white-space: nowrap;
+    }
+
+    /* The mobile drawer has a light surface: the ghost action needs dark text. */
+    .mobile-menu .mobile-secondary.btn-ghost {
+      color: #0a2f49;
+      background: rgba(255, 255, 255, 0.96);
+      border-color: rgba(10, 47, 73, 0.18);
+      box-shadow: 0 8px 20px rgba(10, 47, 73, 0.08);
+    }
+
+    .mobile-menu .mobile-secondary.btn-ghost:hover {
+      color: #0a2f49;
+      background: #ffffff;
+      border-color: rgba(10, 47, 73, 0.3);
+    }
+
+    @media (min-width: 981px) and (max-width: 1600px) {
+      .nav-inner {
+        column-gap: 10px;
+        padding: 12px 24px;
+      }
+
+      .nav-logo-mark {
+        width: 152px;
+        height: 88px;
+        padding: 12px 14px;
+        transform: translateY(12px);
+      }
+
+      .nav-links {
+        gap: 2px;
+        padding: 4px 5px;
+      }
+
+      .nav-links a {
+        min-height: 38px;
+        padding: 0 8px;
+        line-height: 38px;
+        font-size: 0.72rem;
+      }
+
+      .nav-cta {
+        gap: 6px;
+      }
+
+      .nav-cta .btn-ghost,
+      .nav-cta .btn-primary {
+        min-height: 40px;
+        padding: 0 12px;
+        font-size: 0.75rem;
+        white-space: nowrap;
       }
     }

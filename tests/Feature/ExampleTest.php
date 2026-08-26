@@ -150,8 +150,8 @@ class ExampleTest extends TestCase
         ])->get('/depot-cv-services');
 
         $response->assertOk();
-        $response->assertSeeText('Demandez votre service CV et choisissez le bon accompagnement');
-        $response->assertSeeText('Formulaire de service CV');
+        $response->assertSeeText('Dites-nous quelle opportunité vous recherchez');
+        $response->assertSeeText('Exprimez votre besoin');
     }
 
     public function test_guest_must_log_in_before_submitting_cv(): void

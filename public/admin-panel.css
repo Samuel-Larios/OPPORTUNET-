@@ -203,6 +203,72 @@
   font-size: 0.82rem;
 }
 
+/* Subscription actions are deliberately kept apart from the explanatory text. */
+.subscription-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.subscription-redirect-copy {
+  display: grid;
+  gap: 10px;
+}
+
+.subscription-redirect-copy .panel-section-intro {
+  margin: 0;
+}
+
+.subscription-redirect-copy + .subscription-action-group {
+  margin-top: 28px;
+}
+
+.subscription-action-group .panel-primary-btn,
+.subscription-action-group .panel-secondary-btn,
+.subscription-history-actions .panel-primary-btn,
+.subscription-history-actions .panel-secondary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.subscription-action-group .panel-secondary-btn,
+.subscription-history-actions .panel-secondary-btn {
+  border-color: rgba(26, 122, 110, 0.22);
+}
+
+.subscription-plan-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.subscription-plan-card .subscription-action-group {
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+.subscription-history-actions {
+  min-width: 178px;
+}
+
+.subscription-history-actions form {
+  display: inline-flex;
+  margin: 6px 6px 0 0;
+}
+
+.subscription-status-check {
+  display: block;
+  min-width: 130px;
+  color: var(--text-2);
+  line-height: 1.45;
+}
+
 .panel-auth-alt {
   color: var(--text-2);
 }
@@ -1262,6 +1328,19 @@
   .panel-site-topbar .site-topbar-right {
     gap: 8px;
   }
+
+  .subscription-action-group {
+    align-items: stretch;
+  }
+
+  .subscription-action-group .panel-primary-btn,
+  .subscription-action-group .panel-secondary-btn {
+    width: 100%;
+  }
+
+  .subscription-history-actions {
+    min-width: 155px;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1274,4 +1353,11 @@
   .panel-pagination nav > div:last-child {
     display: none;
   }
+}
+.character-counter {
+    display: block;
+    margin-top: 6px;
+    color: #607788;
+    font-size: 0.78rem;
+    text-align: right;
 }

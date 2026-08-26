@@ -143,6 +143,7 @@ $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
             'meta' => $services->get('redaction_cv')?->duree ?? __('home.sections.services.meta_cv'),
             'badge' => 'CV',
             'tone' => 'blue',
+            'url' => $services->get('redaction_cv') ? route('cv.services.show', $services->get('redaction_cv')->slug) : route('cv.services.index'),
         ],
         [
             'title' => $services->get('coaching')?->titre ?? __('home.sections.services.coaching_title'),
@@ -150,6 +151,7 @@ $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
             'meta' => $services->get('coaching')?->duree ?? __('home.sections.services.meta_coaching'),
             'badge' => 'CO',
             'tone' => 'gold',
+            'url' => $services->get('coaching') ? route('cv.services.show', $services->get('coaching')->slug) : route('cv.services.index'),
         ],
         [
             'title' => $services->get('orientation')?->titre ?? __('home.sections.services.orientation_title'),
@@ -157,6 +159,7 @@ $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
             'meta' => $services->get('orientation')?->duree ?? __('home.sections.services.meta_orientation'),
             'badge' => 'OR',
             'tone' => 'teal',
+            'url' => $services->get('orientation') ? route('cv.services.show', $services->get('orientation')->slug) : route('cv.services.index'),
         ],
         [
             'title' => $featuredFormation?->titre ?? __('home.sections.services.training_title'),
@@ -166,6 +169,7 @@ $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
                 : __('home.sections.services.meta_training'),
             'badge' => 'FO',
             'tone' => 'slate',
+            'url' => $featuredFormation ? route('trainings.index', ['formation' => $featuredFormation->id]) . '#training-details' : route('trainings.index'),
         ],
     ];
 @endphp
@@ -565,6 +569,13 @@ $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
         gap: 16px;
     }
 
+    .home-support-input {
+        width: 100%; padding: 14px 16px; border-radius: 14px;
+        border: 1px solid rgba(122, 224, 255, 0.2); background: rgba(13, 30, 58, 0.94);
+        color: #fff; font: inherit;
+    }
+    .home-support-input::placeholder { color: rgba(206, 232, 245, 0.68); }
+
     .home-support-lane {
         position: relative;
         overflow: hidden;
@@ -820,6 +831,7 @@ $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
                             </div>
                             <h3>{{ $card['title'] }}</h3>
                             <p>{{ $card['description'] }}</p>
+                            <a href="{{ $card['url'] }}" class="opportunity-link">{{ __('cv_services.services.details_cta') }}</a>
                         </article>
                     @endforeach
                 </div>
@@ -1479,24 +1491,17 @@ $siteWhatsapp = $siteWhatsapp ?? '+2290166441840';
                                 <span class="home-support-signal">{{ $isFrench ? "Canaux valid\u{00E9}s" : 'Approved channels' }}</span>
                             </div>
 
-                            <div class="home-support-lanes">
-                                @foreach ($supportChannels as $channel)
-                                    <article class="home-support-lane is-{{ $channel['tone'] }}">
-                                        <div class="home-support-lane-top">
-                                            <span class="home-support-chip">{{ $channel['badge'] }}</span>
-                                            <strong class="home-support-operator">{{ $channel['operator'] }}</strong>
-                                        </div>
-                                        <div class="home-support-number">{{ $channel['number'] }}</div>
-                                        <p class="home-support-caption">
-                                            {{ $isFrench ? "Envoyez votre soutien sur ce num\u{00E9}ro Mobile Money." : 'Send your support to this Mobile Money number.' }}
-                                        </p>
-                                    </article>
-                                @endforeach
-                            </div>
-
-                            <p class="home-support-mini-note">
-                                {{ $isFrench ? "Utilisez uniquement ces deux num\u{00E9}ros pour tout soutien financier affich\u{00E9} sur cette page." : 'Use only these two numbers for any financial support shown on this page.' }}
-                            </p>
+                            @if (session('donation_success'))<p class="home-support-mini-note">{{ session('donation_success') }}</p>@endif
+                            @error('donation')<p class="home-support-mini-note">{{ $message }}</p>@enderror
+                            <form method="POST" action="/don/checkout" class="home-support-lanes">
+                                @csrf
+                                <input class="home-support-input" type="number" name="amount" min="100" max="5000" value="{{ old('amount') }}" placeholder="{{ $isFrench ? 'Montant du don' : 'Donation amount' }}" required>
+                                <input class="home-support-input" type="text" name="name" value="{{ old('name') }}" placeholder="{{ $isFrench ? 'Nom et prénom' : 'Full name' }}" required>
+                                <input class="home-support-input" type="email" name="email" value="{{ old('email') }}" placeholder="Email" required>
+                                <input class="home-support-input" type="tel" name="phone" value="{{ old('phone') }}" placeholder="{{ $isFrench ? 'Téléphone Mobile Money' : 'Mobile Money phone' }}" required>
+                                <button class="solid-submit" type="submit">{{ $isFrench ? 'Faire un don avec FedaPay' : 'Donate with FedaPay' }}</button>
+                            </form>
+                            <p class="home-support-mini-note">{{ $isFrench ? 'Vous choisirez MTN MoMo, Moov Money ou le moyen disponible sur la page sécurisée FedaPay.' : 'Choose MTN MoMo, Moov Money or another available method on FedaPay’s secure page.' }}</p>
                         </div>
                     </div>
                 </div>

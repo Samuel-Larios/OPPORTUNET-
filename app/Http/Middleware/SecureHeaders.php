@@ -13,12 +13,19 @@ class SecureHeaders
         /** @var Response $response */
         $response = $next($request);
 
+        $formActionSources = ["'self'"];
+
+        if (app()->environment('local')) {
+            $formActionSources[] = 'http://127.0.0.1:8000';
+            $formActionSources[] = 'http://localhost:8000';
+        }
+
         $contentSecurityPolicy = implode('; ', [
             "default-src 'self'",
             "base-uri 'self'",
             "connect-src 'self'",
             "font-src 'self' https://fonts.gstatic.com data:",
-            "form-action 'self'",
+            'form-action '.implode(' ', $formActionSources),
             "frame-ancestors 'self'",
             "img-src 'self' data: https:",
             "object-src 'none'",

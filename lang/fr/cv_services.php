@@ -2,19 +2,19 @@
 
 return [
     'meta' => [
-        'title' => 'Service CV',
+        'title' => 'Je veux une opportunité',
     ],
     'page' => [
-        'label' => 'Service CV',
-        'title' => 'Demandez votre service CV et choisissez le bon accompagnement',
-        'subtitle' => 'Envoyez votre CV en PDF, indiquez vos besoins, puis laissez-nous vous orienter vers le service le plus utile.',
-        'primary' => 'Demander mon service CV',
+        'label' => 'Je veux une opportunité',
+        'title' => 'Dites-nous quelle opportunité vous recherchez',
+        'subtitle' => 'Votre demande nous aide à publier des opportunités adaptées aux profils et aux pays les plus représentés.',
+        'primary' => 'Exprimer mon besoin',
         'secondary' => 'Parler sur WhatsApp',
     ],
     'form' => [
-        'label' => 'Formulaire service CV',
-        'title' => 'Formulaire de service CV',
-        'subtitle' => 'Partagez votre profil, votre objectif et votre fichier PDF afin que nous puissions vous accompagner efficacement.',
+        'label' => 'Je veux une opportunité',
+        'title' => 'Exprimez votre besoin',
+        'subtitle' => 'Indiquez le domaine que vous recherchez et joignez votre CV. Nous analyserons les demandes pour mieux cibler les opportunités publiées.',
         'success' => 'Votre demande de service CV a bien été reçue. Nous reviendrons vers vous après analyse.',
         'errors_title' => 'Merci de corriger les champs ci-dessous :',
         'pdf_title' => 'Format accepté',
@@ -46,6 +46,8 @@ return [
             'type_contrat_placeholder' => 'Type de contrat recherché',
             'teletravail' => 'Je souhaite du télétravail',
             'objectif' => 'Votre objectif professionnel',
+            'besoin_exact' => 'Besoin exact : quel type d’opportunité recherchez-vous ?',
+            'observation' => 'Observation (facultatif)',
             'secteurs_interet' => "Secteurs d'intérêt",
             'linkedin_url' => 'Lien LinkedIn',
             'portfolio_url' => 'Lien portfolio',
@@ -67,6 +69,8 @@ return [
         'subtitle' => 'Des services concrets pour renforcer votre candidature, clarifier votre direction et vous aider à progresser.',
         'meta_default' => 'Accompagnement',
         'on_request' => 'Sur demande',
+        'details_cta' => 'Voir plus',
+        'back_cta' => 'Tous les services',
         'whatsapp_cta' => 'Demander ce service',
     ],
     'whatsapp' => [

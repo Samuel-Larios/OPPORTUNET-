@@ -35,30 +35,51 @@ class ServicesManager extends Component
     public ?int $editingServiceId = null;
 
     public string $categorieId = '';
+
     public string $titreFr = '';
+
     public string $titreEn = '';
+
     public string $descriptionCourteFr = '';
+
     public string $descriptionCourteEn = '';
+
     public string $descriptionLongueFr = '';
+
     public string $descriptionLongueEn = '';
+
     public string $icone = '';
+
     public string $type = 'autre';
+
     public string $prix = '';
+
     public string $devise = 'XOF';
+
     public string $dureeFr = '';
+
     public string $dureeEn = '';
+
     public string $whatsappMessageFr = '';
+
     public string $whatsappMessageEn = '';
+
     public string $ordre = '0';
+
     public bool $actif = true;
+
     public bool $enVedette = false;
 
     public ?TemporaryUploadedFile $image = null;
 
     public string $existingImagePath = '';
+
     public string $currentImageUrl = '';
+
     public bool $removeCurrentImage = false;
+
     public bool $scheduleEnabled = false;
+
     public string $scheduleAt = '';
 
     public function updatingSearch(): void
@@ -192,7 +213,7 @@ class ServicesManager extends Component
             : null;
         $service = $this->editingServiceId
             ? Service::query()->findOrFail($this->editingServiceId)
-            : new Service();
+            : new Service;
 
         $slug = $service->exists ? $service->slug : $this->uniqueSlug(Str::slug($validated['titreFr']));
 
@@ -272,7 +293,7 @@ class ServicesManager extends Component
         $services = Service::query()
             ->with('category')
             ->when($search !== '', function ($query) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $query->where(function ($nested) use ($term) {
                     $nested
@@ -284,11 +305,11 @@ class ServicesManager extends Component
                         ->orWhere('description_courte_en', 'like', $term);
                 });
             })
-            ->when($this->typeFilter !== '', fn($query) => $query->where('type', $this->typeFilter))
-            ->when($this->activeFilter !== '', fn($query) => $query->where('actif', $this->activeFilter === '1'))
-            ->when($this->categoryFilter !== '', fn($query) => $query->whereHas(
+            ->when($this->typeFilter !== '', fn ($query) => $query->where('type', $this->typeFilter))
+            ->when($this->activeFilter !== '', fn ($query) => $query->where('actif', $this->activeFilter === '1'))
+            ->when($this->categoryFilter !== '', fn ($query) => $query->whereHas(
                 'category',
-                fn($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
+                fn ($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
             ))
             ->orderByDesc('en_vedette')
             ->orderBy('ordre')
@@ -310,14 +331,14 @@ class ServicesManager extends Component
         return [
             'categorieId' => [
                 'nullable',
-                Rule::exists('categories', 'id')->where(fn($query) => $query->where('type', 'service')),
+                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('type', 'service')),
             ],
-            'titreFr' => ['required', 'string', 'max:150'],
-            'titreEn' => ['nullable', 'string', 'max:150'],
-            'descriptionCourteFr' => ['required', 'string'],
-            'descriptionCourteEn' => ['nullable', 'string'],
-            'descriptionLongueFr' => ['nullable', 'string'],
-            'descriptionLongueEn' => ['nullable', 'string'],
+            'titreFr' => ['required', 'string', 'max:90'],
+            'titreEn' => ['nullable', 'string', 'max:90'],
+            'descriptionCourteFr' => ['required', 'string', 'max:240'],
+            'descriptionCourteEn' => ['nullable', 'string', 'max:240'],
+            'descriptionLongueFr' => ['nullable', 'string', 'max:8000'],
+            'descriptionLongueEn' => ['nullable', 'string', 'max:8000'],
             'icone' => ['nullable', 'string', 'max:80'],
             'image' => ['nullable', 'image', 'max:4096'],
             'type' => ['required', Rule::in(['redaction_cv', 'coaching', 'orientation', 'accompagnement', 'autre'])],
@@ -342,7 +363,7 @@ class ServicesManager extends Component
         $counter = 1;
 
         while (Service::query()->where('slug', $slug)->exists()) {
-            $slug = $original . '-' . $counter;
+            $slug = $original.'-'.$counter;
             $counter++;
         }
 

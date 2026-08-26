@@ -36,50 +36,93 @@ class FormationsManager extends Component
     public ?int $editingFormationId = null;
 
     public string $categorieId = '';
+
     public string $formateurId = '';
+
     public string $titreFr = '';
+
     public string $titreEn = '';
+
     public string $slug = '';
+
     public string $descriptionCourteFr = '';
+
     public string $descriptionCourteEn = '';
+
     public string $descriptionLongueFr = '';
+
     public string $descriptionLongueEn = '';
+
     public string $mode = 'en_ligne';
+
     public string $lieuFr = '';
+
     public string $lieuEn = '';
+
     public string $lienEnLigne = '';
+
     public string $prix = '';
+
     public string $devise = 'XOF';
+
     public bool $gratuit = false;
+
     public string $dureeHeures = '';
+
     public string $nbSeances = '';
+
     public string $dateDebut = '';
+
     public string $dateFin = '';
+
     public string $heureDebut = '';
+
     public string $fuseauHoraire = 'Africa/Cotonou';
+
     public string $placesMax = '';
+
     public string $placesRestantes = '';
+
     public string $niveauFr = '';
+
     public string $niveauEn = '';
+
     public string $prerequisFr = '';
+
     public string $prerequisEn = '';
+
     public string $objectifsFr = '';
+
     public string $objectifsEn = '';
+
     public string $programmeFr = '';
+
     public string $programmeEn = '';
+
     public string $certificatFr = '';
+
     public string $certificatEn = '';
+
     public string $statut = 'brouillon';
+
     public bool $inscriptionsOuvertes = true;
+
     public bool $enVedette = false;
+
     public string $whatsappMessageFr = '';
+
     public string $whatsappMessageEn = '';
+
     public bool $scheduleEnabled = false;
+
     public string $scheduleAt = '';
 
     public ?TemporaryUploadedFile $imageCouverture = null;
+
     public string $existingImagePath = '';
+
     public string $currentImageUrl = '';
+
     public bool $removeCurrentImage = false;
 
     public function updatingSearch(): void
@@ -264,7 +307,7 @@ class FormationsManager extends Component
 
         $formation = $this->editingFormationId
             ? Formation::query()->findOrFail($this->editingFormationId)
-            : new Formation();
+            : new Formation;
 
         $coverPath = $formation->image_couverture;
 
@@ -380,7 +423,7 @@ class FormationsManager extends Component
         $formations = Formation::query()
             ->with(['category', 'formateur'])
             ->when($search !== '', function ($query) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $query->where(function ($nested) use ($term) {
                     $nested
@@ -392,9 +435,9 @@ class FormationsManager extends Component
                         ->orWhere('description_courte_en', 'like', $term);
                 });
             })
-            ->when($this->statusFilter !== '', fn($query) => $query->where('statut', $this->statusFilter))
-            ->when($this->modeFilter !== '', fn($query) => $query->where('mode', $this->modeFilter))
-            ->when($this->categoryFilter !== '', fn($query) => $query->where('categorie_id', (int) $this->categoryFilter))
+            ->when($this->statusFilter !== '', fn ($query) => $query->where('statut', $this->statusFilter))
+            ->when($this->modeFilter !== '', fn ($query) => $query->where('mode', $this->modeFilter))
+            ->when($this->categoryFilter !== '', fn ($query) => $query->where('categorie_id', (int) $this->categoryFilter))
             ->orderByDesc('en_vedette')
             ->orderBy('date_debut')
             ->latest('updated_at')
@@ -414,15 +457,15 @@ class FormationsManager extends Component
         return [
             'categorieId' => [
                 'nullable',
-                Rule::exists('categories', 'id')->where(fn($query) => $query->where('type', 'formation')),
+                Rule::exists('categories', 'id')->where(fn ($query) => $query->where('type', 'formation')),
             ],
             'formateurId' => ['nullable', 'exists:users,id'],
-            'titreFr' => ['required', 'string', 'max:200'],
-            'titreEn' => ['nullable', 'string', 'max:200'],
-            'descriptionCourteFr' => ['required', 'string'],
-            'descriptionCourteEn' => ['nullable', 'string'],
-            'descriptionLongueFr' => ['nullable', 'string'],
-            'descriptionLongueEn' => ['nullable', 'string'],
+            'titreFr' => ['required', 'string', 'max:100'],
+            'titreEn' => ['nullable', 'string', 'max:100'],
+            'descriptionCourteFr' => ['required', 'string', 'max:240'],
+            'descriptionCourteEn' => ['nullable', 'string', 'max:240'],
+            'descriptionLongueFr' => ['nullable', 'string', 'max:8000'],
+            'descriptionLongueEn' => ['nullable', 'string', 'max:8000'],
             'imageCouverture' => ['nullable', 'image', 'max:4096'],
             'mode' => ['required', Rule::in(['presentiel', 'en_ligne', 'hybride'])],
             'lieuFr' => ['nullable', 'string', 'max:200'],
@@ -441,12 +484,12 @@ class FormationsManager extends Component
             'placesRestantes' => ['nullable', 'integer', 'min:0'],
             'niveauFr' => ['nullable', 'string', 'max:80'],
             'niveauEn' => ['nullable', 'string', 'max:80'],
-            'prerequisFr' => ['nullable', 'string'],
-            'prerequisEn' => ['nullable', 'string'],
-            'objectifsFr' => ['nullable', 'string'],
-            'objectifsEn' => ['nullable', 'string'],
-            'programmeFr' => ['nullable', 'string'],
-            'programmeEn' => ['nullable', 'string'],
+            'prerequisFr' => ['nullable', 'string', 'max:3000'],
+            'prerequisEn' => ['nullable', 'string', 'max:3000'],
+            'objectifsFr' => ['nullable', 'string', 'max:3000'],
+            'objectifsEn' => ['nullable', 'string', 'max:3000'],
+            'programmeFr' => ['nullable', 'string', 'max:6000'],
+            'programmeEn' => ['nullable', 'string', 'max:6000'],
             'certificatFr' => ['nullable', 'string', 'max:100'],
             'certificatEn' => ['nullable', 'string', 'max:100'],
             'statut' => ['required', Rule::in(['brouillon', 'ouverte', 'complete', 'terminee', 'annulee'])],
@@ -471,11 +514,11 @@ class FormationsManager extends Component
         $counter = 1;
 
         while (Formation::query()
-            ->when($this->editingFormationId, fn($query) => $query->whereKeyNot($this->editingFormationId))
+            ->when($this->editingFormationId, fn ($query) => $query->whereKeyNot($this->editingFormationId))
             ->where('slug', $slug)
             ->exists()
         ) {
-            $slug = $original . '-' . $counter;
+            $slug = $original.'-'.$counter;
             $counter++;
         }
 

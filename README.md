@@ -78,10 +78,24 @@ Points à régler avant mise en ligne:
 php artisan queue:work --tries=3
 ```
 
-10. Planifier le scheduler Laravel si utilisé:
+10. Activer le scheduler Laravel en production. La commande `schedule:run` ne
+   reste pas active : elle doit être lancée chaque minute par le système.
+   Ajoutez cette entrée crontab (en adaptant le chemin et la version de PHP) :
+
+```cron
+* * * * * cd /var/www/opportunetmondiale && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
+```
+
+   Avec cPanel/Plesk, créez la même tâche planifiée avec la fréquence
+   « Every minute ». Ne pas utiliser `schedule:work` dans un cron : cette
+   commande est réservée à un processus supervisé en continu.
+
+   Vérification après installation :
 
 ```bash
+php artisan schedule:list
 php artisan schedule:run
+tail -f storage/logs/laravel.log
 ```
 
 ## Checklist de déploiement

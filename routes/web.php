@@ -3,6 +3,8 @@
 use App\Http\Controllers\AdminOfferApplicationAttachmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CvDepotAttachmentController;
+use App\Http\Controllers\JobSubscriptionController;
+use App\Http\Controllers\BookPurchaseController;
 use App\Http\Controllers\NotificationRedirectController;
 use App\Http\Controllers\OfferApplicationController;
 use App\Http\Controllers\TrainingRegistrationAttachmentController;
@@ -12,6 +14,7 @@ use App\Mail\TrainingRegistrationReceivedMail;
 use App\Models\Banniere;
 use App\Models\BlogArticle;
 use App\Models\BlogCommentaire;
+use App\Models\Book;
 use App\Models\CandidatureOffre;
 use App\Models\Contact;
 use App\Models\CvDepot;
@@ -28,6 +31,7 @@ use App\Models\Temoignage;
 use App\Models\User;
 use App\Models\Verset;
 use App\Notifications\PlatformDatabaseNotification;
+use App\Services\JobSubscriptionService;
 use App\Support\NotificationRecipients;
 use App\Support\Seo;
 use App\Support\SubmissionGuard;
@@ -297,6 +301,19 @@ Route::middleware('guest')->group(function () {
 Route::get('/offres-opportunites/{opportunite:slug}/postuler', [OfferApplicationController::class, 'entry'])
     ->name('offers.apply.entry');
 
+Route::get('/abonnement/paiement/{payment:reference}/retour', [JobSubscriptionController::class, 'callback'])
+    ->name('subscriptions.callback');
+Route::get('/livres', [BookPurchaseController::class, 'index'])->name('books.index');
+Route::get('/livres/{book:slug}', [BookPurchaseController::class, 'show'])->name('books.show');
+Route::get('/livres/{book:slug}/acheter', [BookPurchaseController::class, 'begin'])->name('books.begin');
+Route::get('/abonnement', [JobSubscriptionController::class, 'plans'])
+    ->name('subscriptions.plans');
+Route::get('/abonnement/{weeks}/payer', [JobSubscriptionController::class, 'begin'])
+    ->whereNumber('weeks')
+    ->name('subscriptions.begin');
+Route::post('/webhooks/fedapay', [JobSubscriptionController::class, 'webhook'])
+    ->name('subscriptions.webhook');
+
 Route::middleware('auth')->group(function () {
     Route::post('/deconnexion', [AuthController::class, 'logout'])->name('logout');
     Route::get('/verification-email', [AuthController::class, 'createVerifyEmail'])->name('verification.notice');
@@ -309,9 +326,26 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/livres/{book:slug}/paiement', [BookPurchaseController::class, 'payment'])->name('books.payment');
+    Route::post('/livres/{book:slug}/paiement', [BookPurchaseController::class, 'checkout'])->middleware('throttle:user-form')->name('books.checkout');
+    Route::get('/livres/paiements/{order:reference}/fedapay', [BookPurchaseController::class, 'redirect'])->name('books.checkout.redirect');
+    Route::get('/livres/paiements/{order:reference}/retour', [BookPurchaseController::class, 'callback'])->name('books.callback');
+
+    Route::get('/mon-abonnement', [JobSubscriptionController::class, 'index'])
+        ->name('subscriptions.index');
+    Route::get('/mon-abonnement/payer/{weeks}', [JobSubscriptionController::class, 'payment'])
+        ->whereNumber('weeks')
+        ->name('subscriptions.payment');
+    Route::post('/mon-abonnement/paiement', [JobSubscriptionController::class, 'checkout'])
+        ->middleware('throttle:user-form')
+        ->name('subscriptions.checkout');
+    Route::get('/mon-abonnement/paiements/{payment:reference}/fedapay', [JobSubscriptionController::class, 'redirectToFeda'])
+        ->name('subscriptions.checkout.redirect');
+    Route::post('/mon-abonnement/paiements/{payment:reference}/actualiser', [JobSubscriptionController::class, 'refresh'])
+        ->name('subscriptions.refresh');
 
     Route::post('/offres-opportunites/{opportunite:slug}/candidatures', [OfferApplicationController::class, 'store'])
-        ->middleware(['role:user', 'throttle:user-form'])
+        ->middleware('throttle:user-form')
         ->name('offers.apply.store');
 
     Route::get('/tableau-de-bord', function () {
@@ -334,6 +368,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::view('/admin/articles', 'panel.editor.articles')
         ->middleware('role:super_admin,admin,editeur')
         ->name('panel.editor.articles');
+    Route::view('/admin/livres', 'panel.editor.books')
+        ->middleware('role:super_admin,admin,editeur')
+        ->name('panel.editor.books');
 
     Route::view('/admin/articles/commentaires', 'panel.admin.article-comments')
         ->middleware('role:super_admin,admin')
@@ -665,6 +702,46 @@ Route::post('/newsletter/abonnement', function (Request $request) use ($resolveR
         ->with('newsletter_success', __('home.forms.newsletter.success'));
 })->middleware('throttle:public-form')->name('newsletter.subscribe');
 
+Route::post('/don/checkout', function (Request $request) {
+    return app(\App\Http\Controllers\DonationController::class)->checkout($request);
+
+    $data = $request->validate([
+        'amount' => ['required', 'integer', 'min:100', 'max:5000'],
+        'name' => ['required', 'string', 'max:160'],
+        'email' => ['required', 'email', 'max:191'],
+        'phone' => ['required', 'string', 'max:30'],
+    ]);
+    $phone = preg_replace('/\D+/', '', $data['phone']);
+    $phone = str_starts_with($phone, '0') ? '229'.$phone : $phone;
+
+    if (! config('services.fedapay.secret_key')) {
+        return back()->withInput()->withErrors(['donation' => 'Le paiement est indisponible : la configuration FedaPay est incomplète.']);
+    }
+
+    \FedaPay\FedaPay::setApiKey((string) config('services.fedapay.secret_key'));
+    \FedaPay\FedaPay::setEnvironment((string) config('services.fedapay.environment', 'sandbox'));
+    try {
+        $transactionPayload = [
+            'amount' => $data['amount'], 'currency' => ['iso' => 'XOF'], 'description' => 'Don Opportunet Mondiale',
+            'customer' => ['firstname' => $data['name'], 'lastname' => '.', 'email' => $data['email'], 'phone' => $phone],
+        ];
+        if (filter_var(config('app.url'), FILTER_VALIDATE_URL) && ! in_array(parse_url(config('app.url'), PHP_URL_HOST), ['127.0.0.1', 'localhost'], true)) {
+            $transactionPayload['callback_url'] = route('donations.success');
+        }
+        $transaction = \FedaPay\Transaction::create($transactionPayload);
+        return redirect()->away($transaction->generateToken()->url);
+    } catch (\Throwable $exception) {
+        \Illuminate\Support\Facades\Log::warning('FedaPay donation checkout could not be created.', [
+            'exception' => $exception->getMessage(),
+            'type' => $exception::class,
+            'response' => method_exists($exception, 'getJsonBody') ? $exception->getJsonBody() : null,
+        ]);
+        return back()->withInput()->withErrors(['donation' => 'Le paiement est momentanément indisponible. Réessayez dans quelques instants.']);
+    }
+})->middleware('throttle:public-form')->name('donations.checkout');
+Route::get('/don/{donation:reference}/fedapay', [\App\Http\Controllers\DonationController::class, 'redirect'])->name('donations.redirect');
+Route::get('/don/{donation:reference}/retour', [\App\Http\Controllers\DonationController::class, 'callback'])->name('donations.callback');
+
 Route::post('/depot-cv-services', function (Request $request) {
     $data = $request->validate([
         'prenom' => ['required', 'string', 'max:80'],
@@ -895,6 +972,7 @@ Route::get('/offres-opportunites/{opportunite:slug}', function (Opportunite $opp
     $settings = $siteSettings();
     $opportunite->increment('vues');
     $opportunite->refresh();
+    $hasPremiumAccess = ! $opportunite->is_premium || app(JobSubscriptionService::class)->hasActiveSubscription(auth()->user());
     $currentApplication = auth()->check()
         ? CandidatureOffre::query()
             ->where('user_id', auth()->id())
@@ -926,6 +1004,7 @@ Route::get('/offres-opportunites/{opportunite:slug}', function (Opportunite $opp
         'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
         'opportunity' => $opportunite,
         'currentApplication' => $currentApplication,
+        'hasPremiumAccess' => $hasPremiumAccess,
         'relatedOpportunities' => $relatedOpportunities,
     ]);
 })->name('offers.show');
@@ -950,6 +1029,23 @@ Route::get('/depot-cv-services', function () use ($siteSettings) {
         'services' => $services,
     ]);
 })->name('cv.services.index');
+
+Route::get('/depot-cv-services/{service:slug}', function (Service $service) use ($siteSettings) {
+    abort_unless($service->actif, 404);
+
+    $settings = $siteSettings();
+
+    return view('cv-services.show', [
+        'siteName' => $settings->get('site_nom')?->valeur ?? 'Opportunet Mondiale',
+        'siteSlogan' => $settings->get('site_slogan')?->valeur ?? __('home.hero.badge'),
+        'siteEmail' => $settings->get('site_email')?->valeur ?? 'contact@opportunetmondiale.com',
+        'siteHours' => $settings->get('site_horaires')?->valeur ?? 'Lundi - Samedi 08:00 - 22:00',
+        'siteAddress' => $settings->get('site_adresse')?->valeur ?? "En face de la Mairie de Miss\u{00E9}r\u{00E9}t\u{00E9}, Ou\u{00E9}m\u{00E9}, BJ",
+        'siteWhatsapp' => $settings->get('whatsapp_numero')?->valeur ?? '+2290167229575',
+        'siteWhatsappMessage' => $settings->get('whatsapp_message_defaut')?->valeur ?? __('home.forms.whatsapp_default'),
+        'service' => $service,
+    ]);
+})->name('cv.services.show');
 
 Route::get('/formations', function (Request $request) use ($siteSettings) {
     $settings = $siteSettings();

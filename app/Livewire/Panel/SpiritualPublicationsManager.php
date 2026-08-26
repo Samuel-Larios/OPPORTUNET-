@@ -28,19 +28,33 @@ class SpiritualPublicationsManager extends Component
     public ?int $editingPublicationId = null;
 
     public string $titleFr = '';
+
     public string $titleEn = '';
+
     public string $excerptFr = '';
+
     public string $excerptEn = '';
+
     public string $referenceFr = '';
+
     public string $referenceEn = '';
+
     public string $authorFr = '';
+
     public string $authorEn = '';
+
     public string $contentFr = '';
+
     public string $contentEn = '';
+
     public string $order = '0';
+
     public bool $active = true;
+
     public bool $showOnHome = false;
+
     public bool $scheduleEnabled = false;
+
     public string $scheduleAt = '';
 
     public function mount(string $type): void
@@ -142,16 +156,16 @@ class SpiritualPublicationsManager extends Component
             : null;
 
         $validated = $this->validate([
-            'titleFr' => ['required', 'string', 'max:180'],
-            'titleEn' => ['nullable', 'string', 'max:180'],
-            'excerptFr' => ['nullable', 'string'],
-            'excerptEn' => ['nullable', 'string'],
-            'referenceFr' => ['nullable', 'string', 'max:180'],
-            'referenceEn' => ['nullable', 'string', 'max:180'],
-            'authorFr' => ['nullable', 'string', 'max:180'],
-            'authorEn' => ['nullable', 'string', 'max:180'],
-            'contentFr' => ['required', 'string'],
-            'contentEn' => ['nullable', 'string'],
+            'titleFr' => ['required', 'string', 'max:90'],
+            'titleEn' => ['nullable', 'string', 'max:90'],
+            'excerptFr' => ['nullable', 'string', 'max:220'],
+            'excerptEn' => ['nullable', 'string', 'max:220'],
+            'referenceFr' => ['nullable', 'string', 'max:100'],
+            'referenceEn' => ['nullable', 'string', 'max:100'],
+            'authorFr' => ['nullable', 'string', 'max:100'],
+            'authorEn' => ['nullable', 'string', 'max:100'],
+            'contentFr' => ['required', 'string', 'max:8000'],
+            'contentEn' => ['nullable', 'string', 'max:8000'],
             'order' => ['nullable', 'integer', 'min:0'],
             'active' => ['boolean'],
             'showOnHome' => ['boolean'],
@@ -221,7 +235,7 @@ class SpiritualPublicationsManager extends Component
 
         $publications = $this->query()
             ->when($search !== '', function ($query) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $query->where(function ($nested) use ($term) {
                     $nested
@@ -236,8 +250,8 @@ class SpiritualPublicationsManager extends Component
                         ->orWhere('reference_en', 'like', $term);
                 });
             })
-            ->when($this->activeFilter !== '', fn($query) => $query->where('actif', $this->activeFilter === '1'))
-            ->when($this->homeFilter !== '', fn($query) => $query->where('afficher_accueil', $this->homeFilter === '1'))
+            ->when($this->activeFilter !== '', fn ($query) => $query->where('actif', $this->activeFilter === '1'))
+            ->when($this->homeFilter !== '', fn ($query) => $query->where('afficher_accueil', $this->homeFilter === '1'))
             ->orderByDesc('afficher_accueil')
             ->orderByDesc('actif')
             ->orderBy('ordre')
@@ -281,11 +295,11 @@ class SpiritualPublicationsManager extends Component
         $counter = 1;
 
         while (SpiritualPublication::query()
-            ->when($ignoreId, fn($query) => $query->whereKeyNot($ignoreId))
+            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
             ->where('slug', $slug)
             ->exists()
         ) {
-            $slug = $original . '-' . $counter;
+            $slug = $original.'-'.$counter;
             $counter++;
         }
 

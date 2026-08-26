@@ -16,6 +16,7 @@
 
         .verse-card {
             display: grid;
+            grid-template-rows: auto minmax(2.8em, auto) 12.6em auto auto auto;
             gap: 14px;
             padding: 24px;
             border-radius: 28px;
@@ -28,6 +29,19 @@
         .verse-card h2 {
             margin: 0;
             color: #18301f;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            overflow: hidden;
+        }
+
+        .verse-card p {
+            color: #395545;
+            line-height: 1.8;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 7;
+            overflow: hidden;
         }
 
         .verse-card p,
@@ -96,7 +110,7 @@
                         >
                             <span class="section-label">{{ $isFrench ? 'Référence' : 'Reference' }}</span>
                             <h2>{{ $verse->reference }}</h2>
-                            <p>{{ $verse->texte }}</p>
+                            <p>{{ \Illuminate\Support\Str::words($verse->texte, 32, '…') }}</p>
                             <strong class="verse-version">{{ $verse->version }}</strong>
 
                             <div class="verse-card-actions">

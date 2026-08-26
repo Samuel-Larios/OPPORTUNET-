@@ -3,6 +3,31 @@
         <div class="panel-alert-success">{{ session('panel_success') }}</div>
     @endif
 
+    <section class="panel-card">
+        <div class="panel-card-head">
+            <h2>{{ app()->getLocale() === 'fr' ? 'Tendances des opportunités demandées' : 'Requested opportunity trends' }}</h2>
+            <p>{{ app()->getLocale() === 'fr' ? 'Ces données vous aident à cibler les offres et les abonnements.' : 'Use this data to target opportunities and subscriptions.' }}</p>
+        </div>
+        <div class="panel-application-meta">
+            <div>
+                <span>{{ app()->getLocale() === 'fr' ? 'Demandes reçues' : 'Requests received' }}</span>
+                <strong>{{ number_format($analytics['total'], 0, ',', ' ') }}</strong>
+            </div>
+            <div>
+                <span>{{ app()->getLocale() === 'fr' ? 'Pays les plus demandés' : 'Top countries' }}</span>
+                <strong>{{ $analytics['countries']->map(fn ($item) => $item->pays.' ('.$item->total.')')->join(' · ') ?: '—' }}</strong>
+            </div>
+            <div>
+                <span>{{ app()->getLocale() === 'fr' ? 'Domaines les plus demandés' : 'Top fields' }}</span>
+                <strong>{{ $analytics['fields']->map(fn ($item) => $item->domaine_etude.' ('.$item->total.')')->join(' · ') ?: '—' }}</strong>
+            </div>
+            <div>
+                <span>{{ app()->getLocale() === 'fr' ? 'Diplômes les plus représentés' : 'Top education levels' }}</span>
+                <strong>{{ $analytics['degrees']->map(fn ($item) => $item->niveau_etude.' ('.$item->total.')')->join(' · ') ?: '—' }}</strong>
+            </div>
+        </div>
+    </section>
+
     <section class="panel-grid-2 panel-grid-2-wide">
         <article class="panel-card">
             <div class="panel-card-head">

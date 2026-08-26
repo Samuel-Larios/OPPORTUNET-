@@ -1,0 +1,1 @@
+<p>Bonjour {{ $order->user->fullName() }},</p><p>Votre achat <strong>{{ $order->book->title }}</strong> est confirmé.</p><p>Votre exemplaire PDF verrouillé est joint à cet e-mail.</p><p>Code personnel d’ouverture : <strong>{{ $order->unlock_code }}</strong></p><p>Conservez ce code de manière confidentielle.</p>

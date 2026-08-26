@@ -187,13 +187,16 @@
                                 </div>
 
                                 <div class="article-card-actions">
+                                    <a href="{{ route('cv.services.show', $service->slug) }}" class="opportunity-link">
+                                        {{ __('cv_services.services.details_cta') }}
+                                    </a>
                                     <a href="{{ $serviceWhatsappHref }}" class="opportunity-link" target="_blank"
                                         rel="noopener">
                                         {{ __('offers.services.whatsapp_cta') }}
                                     </a>
                                 </div>
                                 <x-share-buttons
-                                    :url="$localizedOffersUrl . '#offers-services'"
+                                    :url="route('cv.services.show', $service->slug)"
                                     :title="$service->titre"
                                     :text="$service->description_courte"
                                     variant="compact"

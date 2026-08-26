@@ -172,6 +172,10 @@
                             <span>{{ __('admin.offers.urgent') }}</span>
                         </label>
                     @endunless
+                    <label class="panel-checkline">
+                        <input type="checkbox" wire:model="isPremium" />
+                        <span>{{ app()->getLocale() === 'fr' ? 'Offre premium — abonnement requis' : 'Premium offer — subscription required' }}</span>
+                    </label>
                 </div>
 
                 @unless ($isCompanyUser)

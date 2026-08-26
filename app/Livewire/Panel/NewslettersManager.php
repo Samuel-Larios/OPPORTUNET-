@@ -22,11 +22,17 @@ class NewslettersManager extends Component
     public ?int $editingNewsletterId = null;
 
     public string $subject = '';
+
     public string $contentType = '';
+
     public string $contentTitle = '';
+
     public string $audience = 'platform_users_and_subscribers';
+
     public string $status = 'draft';
+
     public bool $scheduleEnabled = false;
+
     public string $scheduleAt = '';
 
     public function updatingSearch(): void
@@ -72,9 +78,9 @@ class NewslettersManager extends Component
     public function saveNewsletter(): void
     {
         $validated = $this->validate([
-            'subject' => ['required', 'string', 'max:255'],
+            'subject' => ['required', 'string', 'max:150'],
             'contentType' => ['nullable', 'string', 'max:120'],
-            'contentTitle' => ['required', 'string', 'max:255'],
+            'contentTitle' => ['required', 'string', 'max:100'],
             'audience' => ['required', 'string', 'max:80'],
             'status' => ['required', 'string', 'in:draft,scheduled,sent,failed'],
             'scheduleEnabled' => ['boolean'],
@@ -144,7 +150,7 @@ class NewslettersManager extends Component
 
         $newsletters = Newsletter::query()
             ->when($search !== '', function ($query) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $query->where(function ($nested) use ($term) {
                     $nested
@@ -152,7 +158,7 @@ class NewslettersManager extends Component
                         ->orWhere('content_title', 'like', $term);
                 });
             })
-            ->when($this->statusFilter !== '', fn($query) => $query->where('status', $this->statusFilter))
+            ->when($this->statusFilter !== '', fn ($query) => $query->where('status', $this->statusFilter))
             ->orderByRaw("CASE WHEN status = 'draft' THEN 0 WHEN status = 'scheduled' THEN 1 WHEN status = 'sent' THEN 2 ELSE 3 END")
             ->latest('updated_at')
             ->paginate(10);

@@ -108,7 +108,7 @@ class OfferApplicationFlowTest extends TestCase
         $response->assertRedirect(route('offers.show', $opportunity->slug) . '?upload_error=post_too_large#application-form');
     }
 
-    public function test_non_simple_user_is_redirected_to_own_dashboard_from_application_entry(): void
+    public function test_authenticated_user_can_open_application_entry(): void
     {
         $editorRole = $this->firstOrCreateRole('editeur', 'Editeur');
         $editor = User::factory()->create([
@@ -121,7 +121,7 @@ class OfferApplicationFlowTest extends TestCase
 
         $this->actingAs($editor)
             ->get(route('offers.apply.entry', $opportunity->slug))
-            ->assertRedirect(route('panel.editor.offers'));
+            ->assertRedirect(route('offers.show', $opportunity->slug).'#application-form');
     }
 
     public function test_admin_can_process_application_and_send_email(): void

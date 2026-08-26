@@ -74,6 +74,7 @@
                         'route' => 'panel.admin.dashboard',
                         'visible' => true,
                     ],
+                    ['label' => app()->getLocale() === 'fr' ? 'Mon abonnement' : 'My subscription', 'route' => 'subscriptions.index', 'visible' => true],
                 ],
             ],
             [
@@ -81,6 +82,7 @@
                 'items' => [
                     ['label' => __('admin.nav.offers'), 'route' => 'panel.editor.offers', 'visible' => true, 'badge' => $menuBadges['panel.editor.offers'] ?? 0],
                     ['label' => __('admin.nav.articles'), 'route' => 'panel.editor.articles', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Livres' : 'Books', 'route' => 'panel.editor.books', 'visible' => true],
                     ['label' => __('admin.nav.services'), 'route' => 'panel.editor.services', 'visible' => true],
                     ['label' => __('admin.nav.trainings'), 'route' => 'panel.editor.trainings', 'visible' => true],
                     ['label' => __('admin.nav.categories'), 'route' => 'panel.editor.categories', 'visible' => true],
@@ -129,6 +131,7 @@
                 'items' => [
                     ['label' => __('admin.nav.offers'), 'route' => 'panel.editor.offers', 'visible' => true, 'badge' => $menuBadges['panel.editor.offers'] ?? 0],
                     ['label' => __('admin.nav.articles'), 'route' => 'panel.editor.articles', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Livres' : 'Books', 'route' => 'panel.editor.books', 'visible' => true],
                     ['label' => __('admin.nav.services'), 'route' => 'panel.editor.services', 'visible' => true],
                     ['label' => __('admin.nav.trainings'), 'route' => 'panel.editor.trainings', 'visible' => true],
                     ['label' => __('admin.nav.categories'), 'route' => 'panel.editor.categories', 'visible' => true],
@@ -172,6 +175,7 @@
                     ['label' => __('admin.nav.my_applications'), 'route' => 'panel.user.applications', 'visible' => true, 'badge' => $menuBadges['panel.user.applications'] ?? 0],
                     ['label' => __('admin.nav.my_cv_depots'), 'route' => 'panel.user.cv-depots', 'visible' => true],
                     ['label' => __('admin.nav.my_trainings'), 'route' => 'panel.user.trainings', 'visible' => true],
+                    ['label' => app()->getLocale() === 'fr' ? 'Mon abonnement' : 'My subscription', 'route' => 'subscriptions.index', 'visible' => true],
                 ],
             ],
             [
@@ -330,5 +334,49 @@
     </div>
 
     @livewireScripts
+    <script>
+        (() => {
+            const limits = {
+                titreFr: 90, titreEn: 90, titleFr: 90, titleEn: 90,
+                nomFr: 60, nomEn: 60,
+                extraitFr: 220, extraitEn: 220, excerptFr: 220, excerptEn: 220,
+                descriptionCourteFr: 240, descriptionCourteEn: 240,
+                descriptionLongueFr: 8000, descriptionLongueEn: 8000,
+                descriptionFr: 6000, descriptionEn: 6000,
+                profilFr: 4000, profilEn: 4000, avantagesFr: 3000, avantagesEn: 3000,
+                prerequisFr: 3000, prerequisEn: 3000, objectifsFr: 3000, objectifsEn: 3000,
+                programmeFr: 6000, programmeEn: 6000,
+                metaTitreFr: 60, metaTitreEn: 60, metaDescriptionFr: 160, metaDescriptionEn: 160,
+                tagsFr: 180, tagsEn: 180, referenceFr: 100, referenceEn: 100,
+                authorFr: 100, authorEn: 100, contentFr: 8000, contentEn: 8000,
+                texteFr: 1200, texteEn: 1200, subject: 150, contentTitle: 100,
+                content: 4000
+            };
+
+            const enhance = (root = document) => root.querySelectorAll('input, textarea').forEach((field) => {
+                if (field.dataset.characterCounterReady) return;
+                const binding = field.getAttributeNames().find((name) => name.startsWith('wire:model'));
+                if (!binding) return;
+                const model = field.getAttribute(binding).split('.').pop();
+                const limit = limits[model];
+                if (!limit || ['checkbox', 'radio', 'file'].includes(field.type)) return;
+
+                field.maxLength = limit;
+                field.dataset.characterCounterReady = 'true';
+                const counter = document.createElement('small');
+                counter.className = 'character-counter';
+                const update = () => counter.textContent = `${field.value.length} / ${limit}`;
+                update();
+                field.addEventListener('input', update);
+                field.insertAdjacentElement('afterend', counter);
+            });
+
+            enhance();
+            new MutationObserver((mutations) => mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
+                if (node.nodeType !== Node.ELEMENT_NODE) return;
+                enhance(node.parentElement || document);
+            }))).observe(document.body, { childList: true, subtree: true });
+        })();
+    </script>
 </body>
 </html>

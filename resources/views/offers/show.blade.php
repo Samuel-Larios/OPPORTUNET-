@@ -23,6 +23,12 @@
             ? 'Chaque fichier doit rester sous 5 Mo. Pour cette candidature, gardez le total des fichiers sous 64 Mo.'
             : 'Each file must stay under 5 MB. For this application, keep the total upload under 64 MB.';
     $salarySummary = null;
+    $hasPremiumAccess = $hasPremiumAccess ?? ! $opportunity->is_premium;
+    $visibleDescription = $hasPremiumAccess
+        ? $opportunity->description
+        : (app()->getLocale() === 'fr'
+            ? 'Les détails de cette opportunité sont accessibles avec un abonnement premium actif.'
+            : 'The details of this opportunity are available with an active premium subscription.');
 
     if ($opportunity->salaire_min !== null || $opportunity->salaire_max !== null) {
         $salaryParts = [];
@@ -46,14 +52,14 @@
     ])->filter()->implode(' | ');
     $seoDescription = \App\Support\Seo::description(
         trim(
-            $opportunity->description
+            $visibleDescription
             . ($location !== '' ? ' ' . $location . '.' : '')
             . ($opportunity->organisation ? ' ' . $opportunity->organisation . '.' : '')
         ),
         190,
     );
     $jobPostingDescription = collect([
-        $opportunity->description,
+        $visibleDescription,
         $opportunity->profil_recherche ? __('offers.detail.sections.profile') . ': ' . $opportunity->profil_recherche : null,
         $opportunity->avantages ? __('offers.detail.sections.benefits') . ': ' . $opportunity->avantages : null,
     ])->filter()->map(function (string $section): string {
@@ -151,12 +157,15 @@
                             @if ($opportunity->urgent)
                                 <span class="opportunity-urgent">{{ __('offers.badges.urgent') }}</span>
                             @endif
-                            @if ($opportunity->teletravail)
-                                <span class="offer-remote-badge">{{ __('offers.badges.remote') }}</span>
-                            @endif
+                             @if ($opportunity->teletravail)
+                                 <span class="offer-remote-badge">{{ __('offers.badges.remote') }}</span>
+                             @endif
+                             @if ($opportunity->is_premium)
+                                 <span class="opportunity-urgent">{{ app()->getLocale() === 'fr' ? 'Premium' : 'Premium' }}</span>
+                             @endif
                         </div>
                         <h1 class="section-title">{{ $opportunity->titre }}</h1>
-                        <p class="section-sub">{{ $opportunity->description }}</p>
+                        <p class="section-sub">{{ $visibleDescription }}</p>
 
                         <div class="offers-detail-meta">
                             <span>{{ $opportunity->organisation ?: __('offers.card.organization_fallback') }}</span>
@@ -182,13 +191,16 @@
                             <p>{{ __('offers.detail.action_text') }}</p>
 
                             <div class="offers-detail-actions">
-                                <a href="{{ route('offers.apply.entry', $opportunity->slug) }}"
-                                    class="solid-submit">{{ __('offers.application.apply_now') }}</a>
+                                @if ($hasPremiumAccess)
+                                    <a href="{{ route('offers.apply.entry', $opportunity->slug) }}" class="solid-submit">{{ __('offers.application.apply_now') }}</a>
+                                @else
+                                    <a href="{{ auth()->check() ? route('subscriptions.index') : route('subscriptions.plans') }}" class="solid-submit">{{ app()->getLocale() === 'fr' ? 'Débloquer avec un abonnement' : 'Unlock with a subscription' }}</a>
+                                @endif
 
-                                @if ($opportunity->lien_candidature)
+                                @if ($hasPremiumAccess && $opportunity->lien_candidature)
                                     <a href="{{ $opportunity->lien_candidature }}" class="ghost-submit" target="_blank"
                                         rel="noopener">{{ __('offers.detail.external_link') }}</a>
-                                @else
+                                @elseif ($hasPremiumAccess)
                                     <a href="{{ $whatsappHref }}" class="ghost-submit" target="_blank"
                                         rel="noopener">{{ __('offers.card.ask_more') }}</a>
                                 @endif
@@ -213,6 +225,7 @@
             <div class="container">
                 <div class="offers-detail-layout">
                     <article class="offers-detail-main reveal">
+                        @if ($hasPremiumAccess)
                         <div class="offers-detail-section">
                             <h2>{{ __('offers.detail.sections.description') }}</h2>
                             <p>{{ $opportunity->description }}</p>
@@ -352,6 +365,13 @@
                                 </div>
                             @endauth
                         </div>
+                        @else
+                            <div class="offers-detail-section">
+                                <h2>{{ app()->getLocale() === 'fr' ? 'Contenu premium' : 'Premium content' }}</h2>
+                                <p>{{ app()->getLocale() === 'fr' ? 'Cette offre est réservée aux abonnés : consultez tous les détails, les critères et postulez directement après activation de votre abonnement.' : 'This offer is reserved for subscribers: view full details, criteria and apply directly after activating your subscription.' }}</p>
+                                <a class="solid-submit" href="{{ auth()->check() ? route('subscriptions.index') : route('subscriptions.plans') }}">{{ app()->getLocale() === 'fr' ? 'Voir les abonnements' : 'View subscriptions' }}</a>
+                            </div>
+                        @endif
                     </article>
 
                     <aside class="offers-detail-aside reveal reveal-delay-1">

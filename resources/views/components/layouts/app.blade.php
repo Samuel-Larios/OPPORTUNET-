@@ -119,6 +119,8 @@
     $headerVerses = collect($headerVerses ?? [])->take(2)->values();
     $headerVerseOne = $headerVerses->get(0);
     $headerVerseTwo = $headerVerses->get(1);
+    $subscriptionUrl = \App\Support\Seo::localizedUrl(route('subscriptions.plans'), $locale);
+    $booksUrl = \App\Support\Seo::localizedUrl(route('books.index'), $locale);
     $heroSecondaryHref =
         $banner?->bouton2_style === 'whatsapp'
             ? $whatsappCtaHref
@@ -136,9 +138,19 @@
             'active' => request()->routeIs('offers.index'),
         ],
         [
+            'label' => $locale === 'fr' ? 'Abonnement' : 'Subscription',
+            'href' => $subscriptionUrl,
+            'active' => request()->routeIs('subscriptions.plans', 'subscriptions.index'),
+        ],
+        [
             'label' => __('home.nav.services'),
             'href' => $cvServicesUrl,
             'active' => request()->routeIs('cv.services.index'),
+        ],
+        [
+            'label' => __('home.nav.books'),
+            'href' => $booksUrl,
+            'active' => request()->routeIs('books.index', 'books.show'),
         ],
         [
             'label' => __('home.nav.trainings'),
@@ -200,7 +212,7 @@
         href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=Playfair+Display:ital,wght@0,700;1,600&display=swap"
         rel="stylesheet" />
 
-    <link rel="stylesheet" href="{{ asset('templatemo-622-clearwave.css') }}" />
+    <link rel="stylesheet" href="{{ asset('templatemo-622-clearwave.css') }}?v={{ filemtime(public_path('templatemo-622-clearwave.css')) }}" />
     @livewireStyles
 
     <link rel="icon" type="image/png" href="{{ asset('images/logo/imgi_4_LE-TRANSFIGURANT-2.png') }}" />
@@ -400,9 +412,11 @@
             </div>
             <div class="mobile-menu-actions">
                 @auth
-                    <a href="{{ route('dashboard') }}" class="btn-ghost mobile-secondary">{{ __('admin.nav.user_dashboard') }}</a>
+                    <a href="{{ route('subscriptions.index') }}" class="btn-primary mobile-cta">{{ app()->getLocale() === 'fr' ? 'Mon abonnement' : 'My subscription' }}</a>
+                    <a href="{{ route('dashboard') }}" class="btn-primary mobile-secondary">{{ __('admin.nav.user_dashboard') }}</a>
                 @else
-                    <a href="{{ route('login') }}" class="btn-ghost mobile-secondary">{{ __('admin.auth.login_submit') }}</a>
+                    <a href="{{ route('subscriptions.plans') }}" class="btn-primary mobile-cta">{{ app()->getLocale() === 'fr' ? 'S’abonner' : 'Subscribe' }}</a>
+                    <a href="{{ route('login') }}" class="btn-primary mobile-secondary">{{ __('admin.auth.login_submit') }}</a>
                 @endauth
                 <a href="{{ $whatsappCtaHref }}" class="mobile-cta btn-primary" target="_blank"
                     rel="noopener">{{ __('home.nav.start_trial') }}</a>
@@ -440,10 +454,12 @@
                 <div class="nav-cta">
                     @auth
                         <a href="{{ route('dashboard') }}" class="btn-ghost">{{ __('admin.nav.user_dashboard') }}</a>
+                        <a href="{{ route('subscriptions.index') }}" class="btn-primary">{{ app()->getLocale() === 'fr' ? 'Mon abonnement' : 'My subscription' }}</a>
                     @else
                         <a href="{{ route('login') }}" class="btn-ghost">{{ __('admin.auth.login_submit') }}</a>
+                        <a href="{{ route('subscriptions.plans') }}" class="btn-primary">{{ app()->getLocale() === 'fr' ? 'S’abonner' : 'Subscribe' }}</a>
                     @endauth
-                    <a href="{{ $whatsappCtaHref }}" class="btn-primary" target="_blank"
+                    <a href="{{ $whatsappCtaHref }}" class="btn-ghost" target="_blank"
                         rel="noopener">{{ __('home.nav.start_trial') }}</a>
                 </div>
 
@@ -659,6 +675,7 @@
                         <a href="{{ $homeUrl }}">{{ __('home.nav.app') }}</a>
                         <a href="{{ $offersUrl }}">{{ __('home.nav.features') }}</a>
                         <a href="{{ $cvServicesUrl }}">{{ __('home.nav.services') }}</a>
+                        <a href="{{ $booksUrl }}">{{ __('home.nav.books') }}</a>
                         <a href="{{ $trainingsUrl }}">{{ __('home.nav.trainings') }}</a>
                         <a href="{{ $articlesUrl }}">{{ __('home.nav.blog') }}</a>
                         <a href="{{ $contactPrayerUrl }}">{{ __('home.nav.contact_page') }}</a>

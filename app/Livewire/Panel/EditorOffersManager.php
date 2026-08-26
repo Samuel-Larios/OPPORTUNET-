@@ -7,10 +7,10 @@ use App\Models\Opportunite;
 use App\Notifications\PlatformDatabaseNotification;
 use App\Support\NotificationRecipients;
 use Illuminate\Contracts\View\View;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Carbon;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -29,28 +29,53 @@ class EditorOffersManager extends Component
     public ?int $editingOfferId = null;
 
     public string $categorieId = '';
+
     public string $titreFr = '';
+
     public string $titreEn = '';
+
     public string $organisation = '';
+
     public string $type = 'emploi';
+
     public string $contrat = 'cdd';
+
     public string $lieu = '';
+
     public string $pays = '';
+
     public bool $teletravail = false;
+
     public string $descriptionFr = '';
+
     public string $descriptionEn = '';
+
     public string $profilFr = '';
+
     public string $profilEn = '';
+
     public string $avantagesFr = '';
+
     public string $avantagesEn = '';
+
     public string $lienCandidature = '';
+
     public string $emailCandidature = '';
+
     public string $datePublication = '';
+
     public string $dateExpiration = '';
+
     public string $statut = 'brouillon';
+
     public bool $enVedette = false;
+
     public bool $urgent = false;
+
+    public bool $isPremium = false;
+
     public bool $scheduleEnabled = false;
+
     public string $scheduleAt = '';
 
     public function updatingSearch(): void
@@ -124,6 +149,7 @@ class EditorOffersManager extends Component
                 : (string) $offer->statut);
         $this->enVedette = (bool) $offer->en_vedette;
         $this->urgent = (bool) $offer->urgent;
+        $this->isPremium = (bool) $offer->is_premium;
     }
 
     public function resetForm(): void
@@ -155,6 +181,7 @@ class EditorOffersManager extends Component
         $this->statut = 'brouillon';
         $this->enVedette = false;
         $this->urgent = false;
+        $this->isPremium = false;
         $this->scheduleEnabled = false;
         $this->resetValidation();
     }
@@ -168,20 +195,20 @@ class EditorOffersManager extends Component
 
         $validated = $this->validate([
             'categorieId' => ['nullable', 'exists:categories,id'],
-            'titreFr' => ['required', 'string', 'max:200'],
-            'titreEn' => ['nullable', 'string', 'max:200'],
+            'titreFr' => ['required', 'string', 'max:100'],
+            'titreEn' => ['nullable', 'string', 'max:100'],
             'organisation' => ['nullable', 'string', 'max:150'],
             'type' => ['required', Rule::in(['emploi', 'stage', 'bourse', 'appel_offre', 'volontariat', 'formation_externe', 'autre'])],
             'contrat' => ['nullable', Rule::in(['cdi', 'cdd', 'stage', 'freelance', 'temps_partiel', 'bénévolat', 'non_applicable'])],
             'lieu' => ['nullable', 'string', 'max:150'],
             'pays' => ['nullable', 'string', 'max:80'],
             'teletravail' => ['boolean'],
-            'descriptionFr' => ['required', 'string'],
-            'descriptionEn' => ['nullable', 'string'],
-            'profilFr' => ['nullable', 'string'],
-            'profilEn' => ['nullable', 'string'],
-            'avantagesFr' => ['nullable', 'string'],
-            'avantagesEn' => ['nullable', 'string'],
+            'descriptionFr' => ['required', 'string', 'max:6000'],
+            'descriptionEn' => ['nullable', 'string', 'max:6000'],
+            'profilFr' => ['nullable', 'string', 'max:4000'],
+            'profilEn' => ['nullable', 'string', 'max:4000'],
+            'avantagesFr' => ['nullable', 'string', 'max:3000'],
+            'avantagesEn' => ['nullable', 'string', 'max:3000'],
             'lienCandidature' => ['nullable', 'url'],
             'emailCandidature' => ['nullable', 'email'],
             'datePublication' => ['nullable', 'date'],
@@ -189,6 +216,7 @@ class EditorOffersManager extends Component
             'statut' => ['required', Rule::in($this->allowedStatuses())],
             'enVedette' => ['boolean'],
             'urgent' => ['boolean'],
+            'isPremium' => ['boolean'],
             'scheduleEnabled' => ['boolean'],
             'scheduleAt' => ['nullable', 'date_format:Y-m-d\\TH:i', 'required_if:scheduleEnabled,true', 'after:now'],
         ]);
@@ -246,6 +274,7 @@ class EditorOffersManager extends Component
                 'notes_validation_admin' => $existingOffer?->notes_validation_admin,
                 'en_vedette' => ! $isCompany && $targetStatus === 'publie' ? $validated['enVedette'] : false,
                 'urgent' => ! $isCompany && $targetStatus === 'publie' ? $validated['urgent'] : false,
+                'is_premium' => $validated['isPremium'],
                 'auto_publish' => $scheduledFor !== null,
                 'scheduled_for' => $scheduledFor,
                 'scheduled_status' => $scheduledFor ? $targetStatus : null,
@@ -322,9 +351,9 @@ class EditorOffersManager extends Component
         $search = trim($this->search);
 
         $offers = Opportunite::query()
-            ->when($this->isCompanyUser(), fn($query) => $query->where('user_id', auth()->id()))
+            ->when($this->isCompanyUser(), fn ($query) => $query->where('user_id', auth()->id()))
             ->when($search !== '', function ($query) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $query->where(function ($nested) use ($term) {
                     $nested
@@ -333,7 +362,7 @@ class EditorOffersManager extends Component
                         ->orWhere('organisation', 'like', $term);
                 });
             })
-            ->when($this->statusFilter !== '', fn($query) => $query->where('statut', $this->statusFilter))
+            ->when($this->statusFilter !== '', fn ($query) => $query->where('statut', $this->statusFilter))
             ->latest()
             ->paginate(10);
 
@@ -349,7 +378,7 @@ class EditorOffersManager extends Component
     protected function offersQuery()
     {
         return Opportunite::query()
-            ->when($this->isCompanyUser(), fn($query) => $query->where('user_id', auth()->id()));
+            ->when($this->isCompanyUser(), fn ($query) => $query->where('user_id', auth()->id()));
     }
 
     protected function isCompanyUser(): bool
@@ -378,7 +407,7 @@ class EditorOffersManager extends Component
         $counter = 1;
 
         while (Opportunite::query()->where('slug', $slug)->exists()) {
-            $slug = $original . '-' . $counter;
+            $slug = $original.'-'.$counter;
             $counter++;
         }
 

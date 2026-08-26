@@ -34,25 +34,45 @@ class ArticlesManager extends Component
     public ?int $editingArticleId = null;
 
     public string $categorieId = '';
+
     public string $titreFr = '';
+
     public string $titreEn = '';
+
     public string $extraitFr = '';
+
     public string $extraitEn = '';
+
     public string $contenuFr = '';
+
     public string $contenuEn = '';
+
     public string $metaTitreFr = '';
+
     public string $metaTitreEn = '';
+
     public string $metaDescriptionFr = '';
+
     public string $metaDescriptionEn = '';
+
     public string $tagsFr = '';
+
     public string $tagsEn = '';
+
     public string $tags = '';
+
     public string $tempsLecture = '';
+
     public string $datePublication = '';
+
     public string $statut = 'brouillon';
+
     public bool $enVedette = false;
+
     public bool $commentairesActifs = true;
+
     public bool $scheduleEnabled = false;
+
     public string $scheduleAt = '';
 
     /** @var array<int, TemporaryUploadedFile> */
@@ -159,7 +179,7 @@ class ArticlesManager extends Component
         $this->newImageAltsFr = [];
         $this->newImageAltsEn = [];
 
-        $this->existingImages = $article->images->map(fn(BlogArticleImage $image) => [
+        $this->existingImages = $article->images->map(fn (BlogArticleImage $image) => [
             'id' => $image->id,
             'path' => $image->image_path,
             'url' => $image->publicUrl(),
@@ -168,15 +188,15 @@ class ArticlesManager extends Component
         ])->values()->all();
 
         $this->existingImageAltsFr = $article->images
-            ->mapWithKeys(fn(BlogArticleImage $image) => [$image->id => (string) ($image->getRawOriginal('alt_fr') ?? $image->alt ?? '')])
+            ->mapWithKeys(fn (BlogArticleImage $image) => [$image->id => (string) ($image->getRawOriginal('alt_fr') ?? $image->alt ?? '')])
             ->all();
 
         $this->existingImageAltsEn = $article->images
-            ->mapWithKeys(fn(BlogArticleImage $image) => [$image->id => (string) ($image->getRawOriginal('alt_en') ?? $image->alt ?? '')])
+            ->mapWithKeys(fn (BlogArticleImage $image) => [$image->id => (string) ($image->getRawOriginal('alt_en') ?? $image->alt ?? '')])
             ->all();
 
         $featuredExisting = $article->images->firstWhere('is_featured', true);
-        $this->featuredImageSelection = $featuredExisting ? 'existing:' . $featuredExisting->id : '';
+        $this->featuredImageSelection = $featuredExisting ? 'existing:'.$featuredExisting->id : '';
     }
 
     public function resetForm(): void
@@ -224,19 +244,19 @@ class ArticlesManager extends Component
             return;
         }
 
-        $wasFeatured = $this->featuredImageSelection === 'existing:' . $imageId;
+        $wasFeatured = $this->featuredImageSelection === 'existing:'.$imageId;
         $this->cleanupStoredImage($image->image_path);
         $image->delete();
 
         unset($this->existingImageAltsFr[$imageId], $this->existingImageAltsEn[$imageId]);
         $this->existingImages = array_values(array_filter(
             $this->existingImages,
-            fn(array $existingImage) => (int) $existingImage['id'] !== $imageId
+            fn (array $existingImage) => (int) $existingImage['id'] !== $imageId
         ));
 
         if ($wasFeatured) {
             $this->featuredImageSelection = $this->existingImages !== []
-                ? 'existing:' . $this->existingImages[0]['id']
+                ? 'existing:'.$this->existingImages[0]['id']
                 : ($this->newImages !== [] ? 'new:0' : '');
         }
     }
@@ -259,9 +279,9 @@ class ArticlesManager extends Component
         unset($newAltsEn[$index]);
         $this->newImageAltsEn = array_values($newAltsEn);
 
-        if ($this->featuredImageSelection === 'new:' . $index) {
+        if ($this->featuredImageSelection === 'new:'.$index) {
             $this->featuredImageSelection = $this->existingImages !== []
-                ? 'existing:' . $this->existingImages[0]['id']
+                ? 'existing:'.$this->existingImages[0]['id']
                 : ($this->newImages !== [] ? 'new:0' : '');
         } else {
             $this->reindexFeaturedSelectionForNewImages($index);
@@ -285,23 +305,36 @@ class ArticlesManager extends Component
 
         if ($totalImages < 1) {
             $this->addError('newImages', __('admin.articles.validation.image_required'));
+
             return;
         }
 
         if ($totalImages > 5) {
             $this->addError('newImages', __('admin.articles.validation.image_limit'));
+
             return;
+        }
+
+        // File uploads are synchronized asynchronously by Livewire. If an image
+        // was just added, use the first available image as the cover rather than
+        // rejecting an otherwise valid publication.
+        if ($this->featuredImageSelection === '') {
+            $this->featuredImageSelection = $this->existingImages !== []
+                ? 'existing:'.$this->existingImages[0]['id']
+                : ($this->newImages !== [] ? 'new:0' : '');
         }
 
         if ($this->featuredImageSelection === '') {
             $this->addError('featuredImageSelection', __('admin.articles.validation.featured_required'));
+
             return;
         }
 
         if (str_starts_with($this->featuredImageSelection, 'existing:')) {
             $imageId = (int) Str::after($this->featuredImageSelection, 'existing:');
-            if (! collect($this->existingImages)->contains(fn(array $image) => (int) $image['id'] === $imageId)) {
+            if (! collect($this->existingImages)->contains(fn (array $image) => (int) $image['id'] === $imageId)) {
                 $this->addError('featuredImageSelection', __('admin.articles.validation.featured_required'));
+
                 return;
             }
         }
@@ -310,6 +343,7 @@ class ArticlesManager extends Component
             $newIndex = (int) Str::after($this->featuredImageSelection, 'new:');
             if (! isset($this->newImages[$newIndex])) {
                 $this->addError('featuredImageSelection', __('admin.articles.validation.featured_required'));
+
                 return;
             }
         }
@@ -396,7 +430,7 @@ class ArticlesManager extends Component
         $articles = BlogArticle::query()
             ->with(['category', 'images'])
             ->when($search !== '', function ($query) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $query->where(function ($nested) use ($term) {
                     $nested
@@ -413,9 +447,9 @@ class ArticlesManager extends Component
                 fn ($query) => $query->where('auto_publish', true)->whereNotNull('scheduled_for'),
                 fn ($query) => $query->when($this->statusFilter !== '', fn ($statusQuery) => $statusQuery->where('statut', $this->statusFilter))
             )
-            ->when($this->categoryFilter !== '', fn($query) => $query->whereHas(
+            ->when($this->categoryFilter !== '', fn ($query) => $query->whereHas(
                 'category',
-                fn($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
+                fn ($categoryQuery) => $categoryQuery->where('slug', $this->categoryFilter)
             ))
             ->latest()
             ->paginate(10);
@@ -433,19 +467,19 @@ class ArticlesManager extends Component
     {
         return [
             'categorieId' => ['nullable', 'exists:categories,id'],
-            'titreFr' => ['required', 'string', 'max:250'],
-            'titreEn' => ['nullable', 'string', 'max:250'],
-            'extraitFr' => ['nullable', 'string'],
-            'extraitEn' => ['nullable', 'string'],
-            'contenuFr' => ['required', 'string'],
-            'contenuEn' => ['nullable', 'string'],
-            'metaTitreFr' => ['nullable', 'string', 'max:200'],
-            'metaTitreEn' => ['nullable', 'string', 'max:200'],
-            'metaDescriptionFr' => ['nullable', 'string'],
-            'metaDescriptionEn' => ['nullable', 'string'],
-            'tagsFr' => ['nullable', 'string', 'max:600'],
-            'tagsEn' => ['nullable', 'string', 'max:600'],
-            'tags' => ['nullable', 'string', 'max:600'],
+            'titreFr' => ['required', 'string', 'max:90'],
+            'titreEn' => ['nullable', 'string', 'max:90'],
+            'extraitFr' => ['nullable', 'string', 'max:220'],
+            'extraitEn' => ['nullable', 'string', 'max:220'],
+            'contenuFr' => ['required', 'string', 'max:20000'],
+            'contenuEn' => ['nullable', 'string', 'max:20000'],
+            'metaTitreFr' => ['nullable', 'string', 'max:60'],
+            'metaTitreEn' => ['nullable', 'string', 'max:60'],
+            'metaDescriptionFr' => ['nullable', 'string', 'max:160'],
+            'metaDescriptionEn' => ['nullable', 'string', 'max:160'],
+            'tagsFr' => ['nullable', 'string', 'max:180'],
+            'tagsEn' => ['nullable', 'string', 'max:180'],
+            'tags' => ['nullable', 'string', 'max:180'],
             'tempsLecture' => ['nullable', 'string', 'max:20'],
             'datePublication' => ['nullable', 'date'],
             'statut' => ['required', Rule::in(['brouillon', 'publie', 'archive'])],
@@ -473,7 +507,7 @@ class ArticlesManager extends Component
         $counter = 1;
 
         while (BlogArticle::query()->where('slug', $slug)->exists()) {
-            $slug = $original . '-' . $counter;
+            $slug = $original.'-'.$counter;
             $counter++;
         }
 
@@ -483,7 +517,7 @@ class ArticlesManager extends Component
     protected function parseTags(string $tags): array
     {
         return collect(explode(',', $tags))
-            ->map(fn(string $tag) => trim($tag))
+            ->map(fn (string $tag) => trim($tag))
             ->filter()
             ->values()
             ->all();
@@ -509,7 +543,7 @@ class ArticlesManager extends Component
         $currentIndex = (int) Str::after($this->featuredImageSelection, 'new:');
 
         if ($currentIndex > $removedIndex) {
-            $this->featuredImageSelection = 'new:' . ($currentIndex - 1);
+            $this->featuredImageSelection = 'new:'.($currentIndex - 1);
         }
     }
 
@@ -541,8 +575,8 @@ class ArticlesManager extends Component
                 'sort_order' => $article->images()->max('sort_order') + 1,
             ]);
 
-            if ($this->featuredImageSelection === 'new:' . $index) {
-                $this->featuredImageSelection = 'existing:' . $createdImage->id;
+            if ($this->featuredImageSelection === 'new:'.$index) {
+                $this->featuredImageSelection = 'existing:'.$createdImage->id;
             }
         }
     }

@@ -27,16 +27,27 @@ class CategoriesManager extends Component
     public ?int $editingCategoryId = null;
 
     public string $type = 'offre';
+
     public string $nomFr = '';
+
     public string $nomEn = '';
+
     public string $slug = '';
+
     public string $icone = '';
+
     public string $couleur = '';
+
     public string $descriptionFr = '';
+
     public string $descriptionEn = '';
+
     public string $ordre = '0';
+
     public bool $actif = true;
+
     public bool $scheduleEnabled = false;
+
     public string $scheduleAt = '';
 
     public function updatingSearch(): void
@@ -181,7 +192,7 @@ class CategoriesManager extends Component
 
         $categories = Category::query()
             ->when($search !== '', function ($query) use ($search) {
-                $term = '%' . $search . '%';
+                $term = '%'.$search.'%';
 
                 $query->where(function ($nested) use ($term) {
                     $nested
@@ -192,8 +203,8 @@ class CategoriesManager extends Component
                         ->orWhere('description', 'like', $term);
                 });
             })
-            ->when($this->typeFilter !== '', fn($query) => $query->where('type', $this->typeFilter))
-            ->when($this->activeFilter !== '', fn($query) => $query->where('actif', $this->activeFilter === '1'))
+            ->when($this->typeFilter !== '', fn ($query) => $query->where('type', $this->typeFilter))
+            ->when($this->activeFilter !== '', fn ($query) => $query->where('actif', $this->activeFilter === '1'))
             ->orderBy('type')
             ->orderBy('ordre')
             ->latest('updated_at')
@@ -212,13 +223,13 @@ class CategoriesManager extends Component
     {
         return [
             'type' => ['required', Rule::in(['offre', 'formation', 'blog', 'service'])],
-            'nomFr' => ['required', 'string', 'max:120'],
-            'nomEn' => ['nullable', 'string', 'max:120'],
+            'nomFr' => ['required', 'string', 'max:60'],
+            'nomEn' => ['nullable', 'string', 'max:60'],
             'slug' => ['nullable', 'string', 'max:150'],
             'icone' => ['nullable', 'string', 'max:80'],
             'couleur' => ['nullable', 'string', 'max:20'],
-            'descriptionFr' => ['nullable', 'string'],
-            'descriptionEn' => ['nullable', 'string'],
+            'descriptionFr' => ['nullable', 'string', 'max:240'],
+            'descriptionEn' => ['nullable', 'string', 'max:240'],
             'ordre' => ['nullable', 'integer', 'min:0'],
             'actif' => ['boolean'],
             'scheduleEnabled' => ['boolean'],
@@ -233,11 +244,11 @@ class CategoriesManager extends Component
         $counter = 1;
 
         while (Category::query()
-            ->when($ignoreId, fn($query) => $query->whereKeyNot($ignoreId))
+            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
             ->where('slug', $slug)
             ->exists()
         ) {
-            $slug = $original . '-' . $counter;
+            $slug = $original.'-'.$counter;
             $counter++;
         }
 

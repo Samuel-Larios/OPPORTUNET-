@@ -88,8 +88,11 @@
                                         {{ __('cv_services.services.on_request') }}
                                     @endif
                                 </strong>
-                                <a href="{{ $serviceWhatsappHref }}" class="opportunity-link" target="_blank"
-                                    rel="noopener">{{ __('cv_services.services.whatsapp_cta') }}</a>
+                                <div class="cv-service-actions">
+                                    <a href="{{ route('cv.services.show', $service->slug) }}" class="opportunity-link">{{ __('cv_services.services.details_cta') }}</a>
+                                    <a href="{{ $serviceWhatsappHref }}" class="opportunity-link" target="_blank"
+                                        rel="noopener">{{ __('cv_services.services.whatsapp_cta') }}</a>
+                                </div>
                             </div>
                             <x-share-buttons :url="route('cv.services.index')" :title="$service->titre" variant="compact" />
                         </article>

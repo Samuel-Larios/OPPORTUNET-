@@ -715,7 +715,7 @@ Route::post('/don/checkout', function (Request $request) {
     $phone = str_starts_with($phone, '0') ? '229'.$phone : $phone;
 
     if (! config('services.fedapay.secret_key')) {
-        return back()->withInput()->withErrors(['donation' => 'Le paiement est indisponible : la configuration FedaPay est incomplète.']);
+        return back()->withInput()->withErrors(['donation' => 'Le paiement est momentanément indisponible. Veuillez réessayer plus tard.']);
     }
 
     \FedaPay\FedaPay::setApiKey((string) config('services.fedapay.secret_key'));

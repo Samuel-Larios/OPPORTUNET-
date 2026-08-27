@@ -102,7 +102,7 @@ class JobSubscriptionController extends Controller
         if (! config('services.fedapay.secret_key')) {
             $payment->update(['status' => 'configuration_error']);
 
-            return back()->withErrors(['payment' => 'Le paiement est momentanément indisponible. La clé FedaPay doit être configurée.']);
+            return back()->withErrors(['payment' => 'Le paiement est momentanément indisponible. Veuillez réessayer plus tard.']);
         }
 
         try {

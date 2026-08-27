@@ -37,7 +37,7 @@ class DonationController extends Controller
         if (! config('services.fedapay.secret_key')) {
             $donation->update(['status' => 'configuration_error']);
 
-            return back()->withInput()->withErrors(['donation' => 'Le paiement est indisponible : la configuration FedaPay est incomplète.']);
+            return back()->withInput()->withErrors(['donation' => 'Le paiement est momentanément indisponible. Veuillez réessayer plus tard.']);
         }
 
         try {
